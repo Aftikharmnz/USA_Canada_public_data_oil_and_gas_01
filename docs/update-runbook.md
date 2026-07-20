@@ -14,7 +14,7 @@ The current local Canada refresh is `canada-20260720T192043Z` (initial activatio
 
 The standalone forecast layer is activated locally with build ID `observed-2026-07-20.1_forecast-2026-07-20.4` and forecast methodology `2026-07-20.4`. Provider-free rebuild `analytics-20260720T152511Z` remains the current USA run, while Canada refresh `canada-20260720T192043Z` rebuilt 404 matching observed/forecast asset pairs. The generated country `forecast_summary` is authoritative for the current vintage: USA has 248 ready and 1 limited-history record; Canada has 360 ready, 18 limited-history, and 26 unavailable records with explicit reasons. Forecasts cover exactly 3 source periods and use latest-revised pseudo-out-of-sample diagnostics rather than first-release vintage backtests or machine learning. Ready records export aligned residual samples for strict browser-computed regional intervals. Most records are univariate statistical projections; national weekly distillate and jet stocks additionally compare a registered fundamental net-balance candidate built from the same release's flow series.
 
-The repository is initialized and connected to `Aftikharmnz/USA_Canada_public_data_oil_and_gas_01`; initial push, Pages activation, and workflow verification are in progress. Automated EIA refresh still requires rotation of the exposed key and a replacement `EIA_API_KEY` GitHub secret. Canada itself needs no secret. The existing `python -m pipeline.energy_dashboard.cli plan` command remains an informational Phase 1 planner, not a live refresh.
+The repository is published at `Aftikharmnz/USA_Canada_public_data_oil_and_gas_01`, and the verified Pages site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. The initial CI and Pages deployment passed. Automated EIA refresh still requires rotation of the exposed key and a replacement `EIA_API_KEY` GitHub secret. Canada itself needs no secret. The existing `python -m pipeline.energy_dashboard.cli plan` command remains an informational Phase 1 planner, not a live refresh.
 
 The current generation store writes:
 
@@ -146,7 +146,9 @@ The current UI calls the 80%/90%/95% ranges **prediction intervals**, not confid
 
 ### First-time GitHub publication checklist
 
-The working folder is connected to its GitHub repository. Complete and verify the remaining one-time publication steps in this order:
+The repository is connected and Pages is configured for GitHub Actions. Complete and verify the remaining one-time data-automation steps in this order:
+
+Current publication state: the initial `main` push, CI validation, and Pages deployment have passed. The remaining activation step is to rotate the exposed EIA key, add the replacement as `EIA_API_KEY`, and run the first dry-run/live refresh checks. The numbered bootstrap items below are retained as historical setup guidance.
 
 1. **Rotate the EIA key first.** The previously shared key is exposed. Request a new key at <https://www.eia.gov/opendata/register.php>, keep it only in the `EIA_API_KEY` environment variable locally, and deactivate the old key. Never commit or paste it anywhere.
 2. **Verify the ignore rules before the first commit.** `.gitignore` must exclude `/*.pdf` (local reference books are copyrighted and ~250 MB), `.env*`, `node_modules/`, `.pnpm-store/`, and `dist/`. `data/cache/` and `public/data/` are deliberately tracked — the refresh workflows commit them.
