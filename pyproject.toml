@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "north-american-energy-dashboard-pipeline"
+version = "0.1.0"
+description = "Revision-aware public-energy-data pipeline for the North American Energy Market Monitor"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Energy Market Lens contributors" }]
+dependencies = []
+
+[tool.setuptools]
+package-dir = { "" = "pipeline" }
+
+[tool.setuptools.packages.find]
+where = ["pipeline"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

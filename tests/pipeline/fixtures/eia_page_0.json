@@ -1,0 +1,11 @@
+{
+  "response": {
+    "total": "3",
+    "dateFormat": "YYYY-MM-DD",
+    "frequency": "weekly",
+    "data": [
+      {"period": "2026-07-10", "duoarea": "R20", "value": "89.1"},
+      {"period": "2026-07-03", "duoarea": "R10", "value": "91.2"}
+    ]
+  }
+}

@@ -1,0 +1,230 @@
+name: Refresh Canada data and deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate the Canada plan without network calls or writes
+        required: true
+        default: false
+        type: boolean
+      period_start:
+        description: Optional period lower bound for all selected Canada series
+        required: false
+        type: string
+      period_end:
+        description: Optional period upper bound for all selected Canada series
+        required: false
+        type: string
+      expected_monthly_period:
+        description: Optional expected Statistics Canada month (YYYY-MM)
+        required: false
+        type: string
+      expected_weekly_period:
+        description: Optional expected CER week ending date (YYYY-MM-DD)
+        required: false
+        type: string
+      publish_unchanged:
+        description: Force a generation when values, statuses, and freshness are unchanged
+        required: true
+        default: false
+        type: boolean
+  # Statistics Canada releases at 08:30 Eastern on business days. Two
+  # non-round polls provide an automatic retry window and also cover delayed
+  # monthly tables. CER weekly releases are captured by the same schedule.
+  schedule:
+    - cron: "53 10 * * 1-5"
+      timezone: America/Toronto
+    - cron: "23 14 * * 1-5"
+      timezone: America/Toronto
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  refresh-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      changed: ${{ steps.refresh.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate pipeline contracts
+        env:
+          PYTHONPATH: pipeline
+        run: python -m unittest discover -s tests/pipeline -p "test_*.py" -v
+
+      - name: Refresh verified Canada series
+        id: refresh
+        shell: bash
+        env:
+          PYTHONPATH: pipeline
+          REFRESH_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+          PERIOD_START: ${{ inputs.period_start || '' }}
+          PERIOD_END: ${{ inputs.period_end || '' }}
+          EXPECTED_MONTHLY_PERIOD: ${{ inputs.expected_monthly_period || '' }}
+          EXPECTED_WEEKLY_PERIOD: ${{ inputs.expected_weekly_period || '' }}
+          PUBLISH_UNCHANGED: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_unchanged && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+
+          refresh_args=(
+            refresh-canada
+            --store data/cache/canada
+            --promote-to public/data/canada
+            --retain-generations 2
+          )
+
+          if [[ "$REFRESH_DRY_RUN" == "true" ]]; then
+            refresh_args+=(--dry-run)
+          fi
+          if [[ -n "$PERIOD_START" ]]; then
+            refresh_args+=(--period-start "$PERIOD_START")
+          fi
+          if [[ -n "$PERIOD_END" ]]; then
+            refresh_args+=(--period-end "$PERIOD_END")
+          fi
+          if [[ -n "$EXPECTED_MONTHLY_PERIOD" ]]; then
+            refresh_args+=(--expected-monthly-period "$EXPECTED_MONTHLY_PERIOD")
+          fi
+          if [[ -n "$EXPECTED_WEEKLY_PERIOD" ]]; then
+            refresh_args+=(--expected-weekly-period "$EXPECTED_WEEKLY_PERIOD")
+          fi
+          if [[ "$PUBLISH_UNCHANGED" == "true" ]]; then
+            refresh_args+=(--publish-unchanged)
+          fi
+
+          python -m energy_dashboard.cli "${refresh_args[@]}" > "$RUNNER_TEMP/refresh-canada.json"
+          python -m json.tool "$RUNNER_TEMP/refresh-canada.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "refresh-canada.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"changed={'true' if result.get('changed') is True else 'false'}\n")
+          PY
+
+      - name: Verify promoted Canada generation
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          PYTHONPATH: pipeline
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from energy_dashboard.promotion import verify_public_generation
+
+          public_root = Path("public/data/canada")
+          manifest = verify_public_generation(public_root)
+          forbidden = (
+              b"api_key=",
+              b'"api_key"',
+              b'"eia_api_key"',
+              b"authorization: bearer",
+          )
+          for root in (Path("data/cache/canada"), public_root):
+              for path in root.rglob("*"):
+                  if path.is_file():
+                      payload = path.read_bytes().lower()
+                      if any(marker in payload for marker in forbidden):
+                          raise SystemExit(f"Credential-like material in generated file: {path}")
+          providers = {
+              item["source"]["name"] for item in manifest["series"]
+          }
+          if providers != {"Statistics Canada", "Canada Energy Regulator"}:
+              raise SystemExit(f"Canada manifest provider set drifted: {sorted(providers)}")
+          print(
+              json.dumps(
+                  {
+                      "run_id": manifest["run_id"],
+                      "series_count": len(manifest["series"]),
+                      "asset_count": len(manifest["integrity"]),
+                      "providers": sorted(providers),
+                      "secret_scan": "passed",
+                  },
+                  indent=2,
+              )
+          )
+          PY
+
+      - uses: pnpm/action-setup@v4
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v6
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        if: steps.refresh.outputs.changed == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate frontend
+        if: steps.refresh.outputs.changed == 'true'
+        run: pnpm run check
+
+      - name: Build repository-scoped Pages artifact
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: pnpm run build
+
+      - name: Commit refreshed Canada cache and public assets
+        if: steps.refresh.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -- data/cache/canada public/data/canada
+          if git diff --cached --quiet; then
+            echo "The Canada refresh reported changes but produced no tracked data diff." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: refresh Canada assets"
+          # A human push while this run was working must not fail the refresh:
+          # replay the data commit on the updated branch head before pushing.
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
+
+      - uses: actions/configure-pages@v5
+        if: steps.refresh.outputs.changed == 'true'
+
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          path: dist
+
+  deploy:
+    if: needs.refresh-build.outputs.changed == 'true'
+    needs: refresh-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

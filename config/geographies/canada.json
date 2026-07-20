@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "registry_version": "2026-07-19.canada-live",
+  "country_code": "CAN",
+  "activation_status": "active",
+  "rank_semantics": "Lower granularity_rank is finer; rank orders the UI only and never authorizes aggregation.",
+  "levels": [
+    {"id": "city", "label": "City / official local area", "granularity_rank": 10},
+    {"id": "census_metropolitan_area", "label": "Census metropolitan area", "granularity_rank": 20},
+    {"id": "province_territory", "label": "Province / territory", "granularity_rank": 30},
+    {"id": "source_region", "label": "Source-defined region", "granularity_rank": 40},
+    {"id": "national", "label": "Canada", "granularity_rank": 100}
+  ],
+  "nodes": [
+    {"id": "ca", "name": "Canada", "level_id": "national", "country_code": "CAN", "parent_ids": [], "provider_codes": {"iso_3166_1_alpha_2": "CA", "statcan_label": "Canada", "statcan_dguid": "2021A000011124"}},
+    {"id": "ca.statcan.atlantic", "name": "Atlantic provinces", "level_id": "source_region", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"statcan_label": "Atlantic provinces", "statcan_dguid": "2021A00011"}},
+    {"id": "ca.cer.western", "name": "Western Canada", "level_id": "source_region", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"cer_label": "Western Canada"}},
+    {"id": "ca.cer.ontario", "name": "Ontario", "level_id": "source_region", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"cer_label": "Ontario"}},
+    {"id": "ca.cer.quebec_eastern", "name": "Quebec & Eastern Canada", "level_id": "source_region", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"cer_label": "Quebec & Eastern Canada"}},
+    {"id": "ca.ab", "name": "Alberta", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.western", "ca"], "provider_codes": {"iso_3166_2": "CA-AB", "statcan_label": "Alberta", "statcan_dguid": "2021A000248"}},
+    {"id": "ca.bc", "name": "British Columbia", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.western", "ca"], "provider_codes": {"iso_3166_2": "CA-BC", "statcan_label": "British Columbia", "statcan_dguid": "2021A000259"}},
+    {"id": "ca.mb", "name": "Manitoba", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.western", "ca"], "provider_codes": {"iso_3166_2": "CA-MB", "statcan_label": "Manitoba", "statcan_dguid": "2021A000246"}},
+    {"id": "ca.nb", "name": "New Brunswick", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.quebec_eastern", "ca"], "provider_codes": {"iso_3166_2": "CA-NB", "statcan_label": "New Brunswick", "statcan_dguid": "2021A000213"}},
+    {"id": "ca.nl", "name": "Newfoundland and Labrador", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.quebec_eastern", "ca"], "provider_codes": {"iso_3166_2": "CA-NL", "statcan_label": "Newfoundland and Labrador", "statcan_dguid": "2021A000210"}},
+    {"id": "ca.ns", "name": "Nova Scotia", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.quebec_eastern", "ca"], "provider_codes": {"iso_3166_2": "CA-NS", "statcan_label": "Nova Scotia", "statcan_dguid": "2021A000212"}},
+    {"id": "ca.nt", "name": "Northwest Territories", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"iso_3166_2": "CA-NT", "statcan_label": "Northwest Territories", "statcan_dguid": "2021A000261"}},
+    {"id": "ca.nu", "name": "Nunavut", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"iso_3166_2": "CA-NU", "statcan_label": "Nunavut", "statcan_dguid": "2021A000262"}},
+    {"id": "ca.on", "name": "Ontario", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.ontario", "ca"], "provider_codes": {"iso_3166_2": "CA-ON", "statcan_label": "Ontario", "statcan_dguid": "2021A000235"}},
+    {"id": "ca.pe", "name": "Prince Edward Island", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.quebec_eastern", "ca"], "provider_codes": {"iso_3166_2": "CA-PE", "statcan_label": "Prince Edward Island", "statcan_dguid": "2021A000211"}},
+    {"id": "ca.qc", "name": "Quebec", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.quebec_eastern", "ca"], "provider_codes": {"iso_3166_2": "CA-QC", "statcan_label": "Quebec", "statcan_dguid": "2021A000224"}},
+    {"id": "ca.sk", "name": "Saskatchewan", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca.cer.western", "ca"], "provider_codes": {"iso_3166_2": "CA-SK", "statcan_label": "Saskatchewan", "statcan_dguid": "2021A000247"}},
+    {"id": "ca.yt", "name": "Yukon", "level_id": "province_territory", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"iso_3166_2": "CA-YT", "statcan_label": "Yukon", "statcan_dguid": "2021A000260"}}
+  ],
+  "policies": {
+    "universal_control": true,
+    "city_nodes_present": false,
+    "cma_nodes_present": false,
+    "unsupported_local_reason": "No city/CMA nodes are activated until an official compatible local series is verified.",
+    "source_region_note": "CER regions are confidentiality groupings and are not assumed equivalent to Statistics Canada regions.",
+    "parent_edge_authorizes_aggregation": false,
+    "default_computed_rollup_coverage_ratio": 1.0
+  }
+}

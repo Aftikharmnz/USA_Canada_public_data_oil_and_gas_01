@@ -1,0 +1,4384 @@
+{
+  "schema_version": "1.0.0",
+  "registry_version": "2026-07-19.phase3-refined-products",
+  "country_code": "USA",
+  "activation_status": "mixed_phase_3",
+  "bootstrap_period_start_by_frequency": {
+    "weekly": "2014-01-01",
+    "monthly": "2014-01"
+  },
+  "providers": [
+    {
+      "id": "eia",
+      "name": "U.S. Energy Information Administration",
+      "homepage": "https://www.eia.gov/",
+      "countries": ["USA"],
+      "timezone": "America/New_York"
+    }
+  ],
+  "series": [
+    {
+      "id": "usa.eia.refinery.gross_input.weekly",
+      "provider_id": "eia",
+      "metric_id": "refinery_gross_input",
+      "name": "Refinery gross inputs",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Inputs & Utilization",
+        "route_template": "/v2/petroleum/pnp/wiup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wiup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"product": ["EPXXX2"], "process": ["YIY"]},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["process"],
+      "period_semantics": "week_ending",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this weekly measure at city level."},
+          {"level_id": "county", "reason": "EIA does not publish this weekly refinery-input measure at county level."},
+          {"level_id": "state_or_area", "reason": "EIA publishes this selected weekly gross-input measure at PADD and U.S. levels, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "The selected gross-input series is not published for PADD subdistricts."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "activation_status": "verified_supporting_phase_2"
+    },
+    {
+      "id": "usa.eia.refinery.operable_capacity.weekly",
+      "provider_id": "eia",
+      "metric_id": "refinery_operable_capacity",
+      "name": "Refinery operable capacity",
+      "unit": "thousand_barrels_per_calendar_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Inputs & Utilization",
+        "route_template": "/v2/petroleum/pnp/wiup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wiup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"process": ["YRL"]},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["process"],
+      "period_semantics": "week_ending_capacity_basis",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "City/refinery capacity is not supplied by this weekly aggregate route."},
+          {"level_id": "county", "reason": "County refinery capacity is not supplied by this weekly aggregate route."},
+          {"level_id": "state_or_area", "reason": "State capacity is not published by this weekly aggregate route."},
+          {"level_id": "padd_subdistrict", "reason": "The selected weekly capacity series is published at PADD and U.S. levels only."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "activation_status": "verified_supporting_phase_2"
+    },
+    {
+      "id": "usa.eia.refinery.utilization.weekly",
+      "provider_id": "eia",
+      "metric_id": "refinery_utilization",
+      "name": "Refinery utilization",
+      "unit": "percent",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "ratio_of_sums",
+        "numerator_series_id": "usa.eia.refinery.gross_input.weekly",
+        "denominator_series_id": "usa.eia.refinery.operable_capacity.weekly",
+        "scale": 100
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Inputs & Utilization",
+        "route_template": "/v2/petroleum/pnp/wiup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wiup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {
+            "series": [
+              "W_NA_YUP_R10_PER",
+              "W_NA_YUP_R20_PER",
+              "W_NA_YUP_R30_PER",
+              "W_NA_YUP_R40_PER",
+              "W_NA_YUP_R50_PER",
+              "WPULEUS3"
+            ]
+          },
+          "expected_unit": "%"
+        }
+      },
+      "dimensions": ["process"],
+      "period_semantics": "week_ending",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "Weekly refinery utilization is not published for cities or individual refineries."},
+          {"level_id": "county", "reason": "Weekly refinery utilization is not published at county level."},
+          {"level_id": "state_or_area", "reason": "Do not allocate PADD utilization to states."},
+          {"level_id": "padd_subdistrict", "reason": "The selected utilization measure is published at PADD and U.S. levels only."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "caveats": [
+        "Never average child percentages; aggregate compatible inputs and capacity first.",
+        "Published utilization can legitimately exceed 100 percent and must not be capped."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 2
+    },
+    {
+      "id": "usa.eia.petroleum.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "petroleum_stocks",
+      "name": "Petroleum ending stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY"
+      },
+      "dimensions": ["product", "process"],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd_subdistrict", "padd", "national"],
+        "allowed_rollup_geography_level_ids": ["padd", "national"],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "Weekly public stock data is not assumed below the official EIA area."},
+          {"level_id": "county", "reason": "Weekly public stock data is not assumed at county level."},
+          {"level_id": "state_or_area", "reason": "Availability varies by product; state detail must be verified from an official series."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "activation_status": "illustrative_phase_1"
+    },
+    {
+      "id": "usa.eia.petroleum.imports_exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "petroleum_imports_exports",
+      "name": "Petroleum imports and exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports & Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY"
+      },
+      "dimensions": ["product", "flow_direction", "series"],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "allowed_rollup_geography_level_ids": ["national"],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly route does not establish city-level flow observations."},
+          {"level_id": "county", "reason": "This weekly route does not establish county-level flow observations."},
+          {"level_id": "state_or_area", "reason": "Import/export reporting area depends on product and flow; do not infer states."},
+          {"level_id": "padd_subdistrict", "reason": "Subdistrict availability is not assumed for weekly import/export flows."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "caveats": ["Only sum mutually exclusive flow components; never sum net and gross series together."],
+      "activation_status": "illustrative_phase_1"
+    },
+    {
+      "id": "usa.eia.product_supplied.weekly",
+      "provider_id": "eia",
+      "metric_id": "product_supplied_implied_demand",
+      "name": "Total petroleum products supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Product Supplied",
+        "route_template": "/v2/petroleum/cons/wpsup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/cons/wpsup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WRPUPUS2"]},
+          "expected_facets": {"duoarea": "NUS", "product": "EPP0", "process": "VPP"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["product"],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA publishes this selected weekly implied-demand series at the U.S. level only."},
+          {"level_id": "county", "reason": "Do not allocate national product supplied to counties."},
+          {"level_id": "state_or_area", "reason": "Do not allocate national product supplied to states."},
+          {"level_id": "padd_subdistrict", "reason": "Do not allocate national product supplied to PADD subdistricts."},
+          {"level_id": "padd", "reason": "EIA publishes this selected total-product series at the U.S. level only."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "caveats": [
+        "Label as implied demand/product supplied, not measured end-user consumption.",
+        "Weekly values are preliminary estimates and can be revised."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 2
+    },
+    {
+      "id": "usa.eia.crude.production.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_production",
+      "name": "Crude oil production",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "state_or_area",
+      "source": {
+        "dataset": "Crude Oil Production",
+        "route_template": "/v2/petroleum/crd/crpdn/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/crd/crpdn",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "monthly",
+          "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["FPF"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["process"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["state_or_area", "padd", "national"],
+        "source_geography_ids": [
+          "us.al", "us.ak", "us.ak.south", "us.az", "us.ar", "us.ca", "us.co",
+          "us.area.gulf_offshore", "us.area.pacific_offshore", "us.fl", "us.id",
+          "us.il", "us.in", "us.ks", "us.ky", "us.la", "us.mi", "us.ms", "us.mo",
+          "us.mt", "us.ne", "us.nv", "us.nm", "us.ny", "us.nd", "us.oh", "us.ok",
+          "us.pa", "us.sd", "us.tn", "us.tx", "us.ut", "us.va", "us.wv", "us.wy",
+          "us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA monthly crude production is not published as city observations."},
+          {"level_id": "county", "reason": "EIA monthly crude production is not published as county observations."},
+          {"level_id": "padd_subdistrict", "reason": "PADD subdistrict is not a registered publication level for this monthly production series."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "caveats": [
+        "This EIA monthly field-production concept includes lease condensate.",
+        "Special producing areas can overlap broader state or PADD rows; prefer official PADD and U.S. totals rather than summing every displayed area."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 2
+    },
+    {
+      "id": "usa.eia.refined.gasoline.total.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_motor_gasoline_stocks",
+      "name": "Total motor gasoline stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd_subdistrict",
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1a",
+          "us.padd.1b",
+          "us.padd.1c",
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly total motor gasoline stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly total motor gasoline stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly total motor gasoline stocks series by state or producing area."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "total-motor-gasoline",
+        "product_label": "Total motor gasoline",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "total-motor-gasoline",
+          "petroleum-stocks"
+        ],
+        "display_order": 101
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Total motor gasoline is the inclusive gasoline headline: finished motor gasoline and motor gasoline blending components sit within its hierarchy. Never stack this parent with either child, and reconcile children to the published total before using a component sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.finished.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "finished_motor_gasoline_stocks",
+      "name": "Finished motor gasoline stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0F"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0F",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly finished motor gasoline stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly finished motor gasoline stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly finished motor gasoline stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly finished motor gasoline stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "finished-motor-gasoline",
+        "product_label": "Finished motor gasoline",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "finished-product",
+        "parent_product_id": "total-motor-gasoline",
+        "reference_term_ids": [
+          "finished-motor-gasoline",
+          "petroleum-stocks"
+        ],
+        "display_order": 201
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Finished motor gasoline is inside total motor gasoline; conventional and reformulated gasoline are children of finished gasoline. Never add a parent and child or stack hierarchy levels without reconciliation."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.conventional.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "conventional_motor_gasoline_stocks",
+      "name": "Conventional motor gasoline stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0C"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0C",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly conventional motor gasoline stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly conventional motor gasoline stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly conventional motor gasoline stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly conventional motor gasoline stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "conventional-motor-gasoline",
+        "product_label": "Conventional motor gasoline",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "finished-product",
+        "parent_product_id": "finished-motor-gasoline",
+        "reference_term_ids": [
+          "conventional-gasoline",
+          "petroleum-stocks"
+        ],
+        "display_order": 301
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Conventional motor gasoline is a component of finished motor gasoline. Do not add it to finished or total motor gasoline, and do not assume the visible children fully reconcile without checking the published totals."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.reformulated.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "reformulated_motor_gasoline_stocks",
+      "name": "Reformulated motor gasoline stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0R"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0R",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly reformulated motor gasoline stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly reformulated motor gasoline stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly reformulated motor gasoline stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly reformulated motor gasoline stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "reformulated-motor-gasoline",
+        "product_label": "Reformulated motor gasoline",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "finished-product",
+        "parent_product_id": "finished-motor-gasoline",
+        "reference_term_ids": [
+          "reformulated-gasoline",
+          "petroleum-stocks"
+        ],
+        "display_order": 401
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Reformulated motor gasoline is a component of finished motor gasoline. RBOB remains a blendstock until oxygenate blending is complete; do not add this child to its finished or total parent."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.blending_components.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "motor_gasoline_blending_components_stocks",
+      "name": "Motor gasoline blending components stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOBG"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOBG",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly motor gasoline blending components stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly motor gasoline blending components stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly motor gasoline blending components stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly motor gasoline blending components stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "motor-gasoline-blending-components",
+        "product_label": "Motor gasoline blending components",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "blendstock",
+        "parent_product_id": "total-motor-gasoline",
+        "reference_term_ids": [
+          "motor-gasoline-blending-components",
+          "petroleum-stocks"
+        ],
+        "display_order": 501
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Motor gasoline blending components are inside total motor gasoline. CBOB and RBOB are children, but other blending components also exist; never stack the parent and children or infer a complete total from CBOB plus RBOB alone."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.cbob.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "cbob_stocks",
+      "name": "CBOB stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOBGCC"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOBGCC",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly cbob stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly cbob stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly cbob stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly cbob stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "cbob",
+        "product_label": "CBOB",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "blendstock",
+        "parent_product_id": "motor-gasoline-blending-components",
+        "reference_term_ids": [
+          "conventional-blendstock-for-oxygenate-blending",
+          "motor-gasoline-blending-components",
+          "petroleum-stocks"
+        ],
+        "display_order": 601
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "CBOB is an unfinished blendstock inside motor gasoline blending components. Do not add it to that parent or treat CBOB plus RBOB as the entire blending-components pool."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.rbob.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "rbob_stocks",
+      "name": "RBOB stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOBGRR"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOBGRR",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly rbob stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly rbob stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly rbob stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly rbob stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "rbob",
+        "product_label": "RBOB",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "blendstock",
+        "parent_product_id": "motor-gasoline-blending-components",
+        "reference_term_ids": [
+          "reformulated-blendstock-for-oxygenate-blending",
+          "motor-gasoline-blending-components",
+          "petroleum-stocks"
+        ],
+        "display_order": 701
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "RBOB is an unfinished blendstock inside motor gasoline blending components, not finished reformulated gasoline. Do not add it to its parent or treat CBOB plus RBOB as a complete component total."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.fuel_ethanol.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "fuel_ethanol_stocks",
+      "name": "Fuel ethanol stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOOXE"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOOXE",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly fuel ethanol stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly fuel ethanol stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly fuel ethanol stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly fuel ethanol stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "fuel-ethanol",
+        "product_label": "Fuel ethanol",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "biofuel",
+        "reference_term_ids": [
+          "fuel-ethanol",
+          "petroleum-stocks"
+        ],
+        "display_order": 801
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Fuel ethanol is a contextual oxygenate and is not an EIA motor-gasoline blending component. Do not add it mechanically to total or finished gasoline; use a documented supply balance that respects when blending occurs."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.total.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_distillate_fuel_oil_stocks",
+      "name": "Total distillate fuel oil stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD0"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD0",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd_subdistrict",
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1a",
+          "us.padd.1b",
+          "us.padd.1c",
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly total distillate fuel oil stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly total distillate fuel oil stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly total distillate fuel oil stocks series by state or producing area."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "total-distillate-fuel-oil",
+        "product_label": "Total distillate fuel oil",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "distillate-fuel-oil",
+          "petroleum-stocks"
+        ],
+        "display_order": 1001
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Total distillate fuel oil is the inclusive headline for the displayed sulfur buckets. Never stack this total with its sulfur children; reconcile mutually exclusive buckets to the published total before using a component sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_0_15ppm.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_0_to_15_ppm_sulfur_stocks",
+      "name": "Distillate fuel oil, 0–15 ppm sulfur stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPDXL0"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPDXL0",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd_subdistrict",
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1a",
+          "us.padd.1b",
+          "us.padd.1c",
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, 0–15 ppm sulfur stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, 0–15 ppm sulfur stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, 0–15 ppm sulfur stocks series by state or producing area."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-0-to-15-ppm-sulfur",
+        "product_label": "Distillate fuel oil, 0–15 ppm sulfur",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "ultra-low-sulfur-distillate",
+          "distillate-fuel-oil",
+          "petroleum-stocks"
+        ],
+        "display_order": 1101
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "The 0–15 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent; combine sulfur buckets only after exact period, unit, geography, and coverage reconciliation."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_over_15_500ppm.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_over_15_to_500_ppm_sulfur_stocks",
+      "name": "Distillate fuel oil, >15–500 ppm sulfur stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPDM10"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPDM10",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd_subdistrict",
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1a",
+          "us.padd.1b",
+          "us.padd.1c",
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, >15–500 ppm sulfur stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, >15–500 ppm sulfur stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, >15–500 ppm sulfur stocks series by state or producing area."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-over-15-to-500-ppm-sulfur",
+        "product_label": "Distillate fuel oil, >15–500 ppm sulfur",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "low-sulfur-diesel",
+          "distillate-fuel-oil",
+          "petroleum-stocks"
+        ],
+        "display_order": 1201
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "The >15–500 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent, and preserve EIA's exact interval endpoints when comparing history or combining compatible buckets."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_over_500ppm.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_over_500_ppm_sulfur_stocks",
+      "name": "Distillate fuel oil, >500 ppm sulfur stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD00H"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD00H",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd_subdistrict",
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1a",
+          "us.padd.1b",
+          "us.padd.1c",
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, >500 ppm sulfur stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, >500 ppm sulfur stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, >500 ppm sulfur stocks series by state or producing area."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-over-500-ppm-sulfur",
+        "product_label": "Distillate fuel oil, >500 ppm sulfur",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "high-sulfur-diesel",
+          "distillate-fuel-oil",
+          "petroleum-stocks"
+        ],
+        "display_order": 1301
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "The >500 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent; reconcile all sulfur components at the same period, unit, and geography before summing."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.jet.kerosene_type.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "kerosene_type_jet_fuel_stocks",
+      "name": "Kerosene-type jet fuel stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Stocks",
+        "route_template": "/v2/petroleum/stoc/wstk/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/stoc/wstk",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPJK"
+            ],
+            "process": [
+              "SAE"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPJK",
+            "process": "SAE"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel stocks at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel stocks at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly kerosene-type jet fuel stocks series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly kerosene-type jet fuel stocks series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "jet-fuel",
+        "product_family_label": "Jet fuel",
+        "product_id": "kerosene-type-jet-fuel",
+        "product_label": "Kerosene-type jet fuel",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "kerosene-type-jet-fuel",
+          "petroleum-stocks"
+        ],
+        "display_order": 1501
+      },
+      "caveats": [
+        "This is an end-of-week inventory level, not a weekly flow, demand measure, or available storage capacity. Weekly estimates are preliminary and can be revised.",
+        "Kerosene-type jet fuel is a separate finished-product family. Do not combine it with distillate or gasoline totals merely because all are petroleum products."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.finished.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "finished_motor_gasoline_production",
+      "name": "Unadjusted EIA refiner and blender net production — Finished motor gasoline",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0F"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0F",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly finished motor gasoline production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly finished motor gasoline production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly finished motor gasoline production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly finished motor gasoline production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "finished-motor-gasoline",
+        "product_label": "Finished motor gasoline",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "finished-product",
+        "parent_product_id": "total-motor-gasoline",
+        "reference_term_ids": [
+          "finished-motor-gasoline",
+          "refinery-production"
+        ],
+        "display_order": 202
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "Finished motor gasoline is inside total motor gasoline; conventional and reformulated gasoline are children of finished gasoline. Never add a parent and child or stack hierarchy levels without reconciliation.",
+        "This unadjusted finished-motor-gasoline route excludes EIA's fuel-ethanol and motor-gasoline-blending-component adjustments; do not present it as adjusted finished-gasoline production."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.conventional.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "conventional_motor_gasoline_production",
+      "name": "Unadjusted EIA refiner and blender net production — Conventional motor gasoline",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0C"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0C",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly conventional motor gasoline production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly conventional motor gasoline production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly conventional motor gasoline production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly conventional motor gasoline production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "conventional-motor-gasoline",
+        "product_label": "Conventional motor gasoline",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "finished-product",
+        "parent_product_id": "finished-motor-gasoline",
+        "reference_term_ids": [
+          "conventional-gasoline",
+          "refinery-production"
+        ],
+        "display_order": 302
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "Conventional motor gasoline is a component of finished motor gasoline. Do not add it to finished or total motor gasoline, and do not assume the visible children fully reconcile without checking the published totals."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.reformulated.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "reformulated_motor_gasoline_production",
+      "name": "Unadjusted EIA refiner and blender net production — Reformulated motor gasoline",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0R"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0R",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly reformulated motor gasoline production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly reformulated motor gasoline production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly reformulated motor gasoline production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly reformulated motor gasoline production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "reformulated-motor-gasoline",
+        "product_label": "Reformulated motor gasoline",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "finished-product",
+        "parent_product_id": "finished-motor-gasoline",
+        "reference_term_ids": [
+          "reformulated-gasoline",
+          "refinery-production"
+        ],
+        "display_order": 402
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "Reformulated motor gasoline is a component of finished motor gasoline. RBOB remains a blendstock until oxygenate blending is complete; do not add this child to its finished or total parent."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.total.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_distillate_fuel_oil_production",
+      "name": "Unadjusted EIA refiner and blender net production — Total distillate fuel oil",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD0"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD0",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly total distillate fuel oil production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly total distillate fuel oil production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly total distillate fuel oil production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly total distillate fuel oil production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "total-distillate-fuel-oil",
+        "product_label": "Total distillate fuel oil",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "distillate-fuel-oil",
+          "refinery-production"
+        ],
+        "display_order": 1002
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "Total distillate fuel oil is the inclusive headline for the displayed sulfur buckets. Never stack this total with its sulfur children; reconcile mutually exclusive buckets to the published total before using a component sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_0_15ppm.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_0_to_15_ppm_sulfur_production",
+      "name": "Unadjusted EIA refiner and blender net production — Distillate fuel oil, 0–15 ppm sulfur",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPDXL0"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPDXL0",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, 0–15 ppm sulfur production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, 0–15 ppm sulfur production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, 0–15 ppm sulfur production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly distillate fuel oil, 0–15 ppm sulfur production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-0-to-15-ppm-sulfur",
+        "product_label": "Distillate fuel oil, 0–15 ppm sulfur",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "ultra-low-sulfur-distillate",
+          "distillate-fuel-oil",
+          "refinery-production"
+        ],
+        "display_order": 1102
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "The 0–15 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent; combine sulfur buckets only after exact period, unit, geography, and coverage reconciliation."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_over_15_500ppm.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_over_15_to_500_ppm_sulfur_production",
+      "name": "Unadjusted EIA refiner and blender net production — Distillate fuel oil, >15–500 ppm sulfur",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPDM10"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPDM10",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, >15–500 ppm sulfur production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, >15–500 ppm sulfur production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, >15–500 ppm sulfur production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly distillate fuel oil, >15–500 ppm sulfur production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-over-15-to-500-ppm-sulfur",
+        "product_label": "Distillate fuel oil, >15–500 ppm sulfur",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "low-sulfur-diesel",
+          "distillate-fuel-oil",
+          "refinery-production"
+        ],
+        "display_order": 1202
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "The >15–500 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent, and preserve EIA's exact interval endpoints when comparing history or combining compatible buckets."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_over_500ppm.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_over_500_ppm_sulfur_production",
+      "name": "Unadjusted EIA refiner and blender net production — Distillate fuel oil, >500 ppm sulfur",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD00H"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD00H",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, >500 ppm sulfur production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, >500 ppm sulfur production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, >500 ppm sulfur production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly distillate fuel oil, >500 ppm sulfur production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-over-500-ppm-sulfur",
+        "product_label": "Distillate fuel oil, >500 ppm sulfur",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "high-sulfur-diesel",
+          "distillate-fuel-oil",
+          "refinery-production"
+        ],
+        "display_order": 1302
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "The >500 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent; reconcile all sulfur components at the same period, unit, and geography before summing."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.jet.kerosene_type.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "kerosene_type_jet_fuel_production",
+      "name": "Unadjusted EIA refiner and blender net production — Kerosene-type jet fuel",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Refinery and Blender Net Production",
+        "route_template": "/v2/petroleum/pnp/wprodrb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPJK"
+            ],
+            "process": [
+              "YPR"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPJK",
+            "process": "YPR"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel production at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel production at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly kerosene-type jet fuel production series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly kerosene-type jet fuel production series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "jet-fuel",
+        "product_family_label": "Jet fuel",
+        "product_id": "kerosene-type-jet-fuel",
+        "product_label": "Kerosene-type jet fuel",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "kerosene-type-jet-fuel",
+          "refinery-production"
+        ],
+        "display_order": 1502
+      },
+      "caveats": [
+        "This is EIA's unadjusted refiner and blender net production rate; it is not refinery gross output, and valid net-production values can be negative. Weekly estimates are preliminary and can be revised.",
+        "Kerosene-type jet fuel is a separate finished-product family. Do not combine it with distillate or gasoline totals merely because all are petroleum products."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.finished.product_supplied.weekly",
+      "provider_id": "eia",
+      "metric_id": "finished_motor_gasoline_product_supplied",
+      "name": "Finished motor gasoline supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Product Supplied",
+        "route_template": "/v2/petroleum/cons/wpsup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/cons/wpsup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0F"
+            ],
+            "process": [
+              "VPP"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0F",
+            "process": "VPP"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "national"
+        ],
+        "source_geography_ids": [
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly finished motor gasoline product supplied (implied demand) at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly finished motor gasoline product supplied (implied demand) at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly finished motor gasoline product supplied (implied demand) series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly finished motor gasoline product supplied (implied demand) series is published at the U.S. level only, not by PADD subdistrict."
+          },
+          {
+            "level_id": "padd",
+            "reason": "This exact weekly finished motor gasoline product supplied (implied demand) series is published at the U.S. level only, not by PADD."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "finished-motor-gasoline",
+        "product_label": "Finished motor gasoline",
+        "measure_id": "product-supplied",
+        "measure_label": "Product supplied (implied demand)",
+        "component_role": "finished-product",
+        "parent_product_id": "total-motor-gasoline",
+        "reference_term_ids": [
+          "finished-motor-gasoline",
+          "product-supplied-implied-demand"
+        ],
+        "display_order": 203
+      },
+      "caveats": [
+        "Product supplied is an accounting-based implied-demand proxy, not measured end-user consumption. Weekly estimates are preliminary, can be revised, and can move with balancing adjustments.",
+        "Finished motor gasoline is inside total motor gasoline; conventional and reformulated gasoline are children of finished gasoline. Never add a parent and child or stack hierarchy levels without reconciliation."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.total.product_supplied.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_distillate_fuel_oil_product_supplied",
+      "name": "Total distillate fuel oil supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Product Supplied",
+        "route_template": "/v2/petroleum/cons/wpsup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/cons/wpsup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD0"
+            ],
+            "process": [
+              "VPP"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD0",
+            "process": "VPP"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "national"
+        ],
+        "source_geography_ids": [
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly total distillate fuel oil product supplied (implied demand) at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly total distillate fuel oil product supplied (implied demand) at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly total distillate fuel oil product supplied (implied demand) series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly total distillate fuel oil product supplied (implied demand) series is published at the U.S. level only, not by PADD subdistrict."
+          },
+          {
+            "level_id": "padd",
+            "reason": "This exact weekly total distillate fuel oil product supplied (implied demand) series is published at the U.S. level only, not by PADD."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "total-distillate-fuel-oil",
+        "product_label": "Total distillate fuel oil",
+        "measure_id": "product-supplied",
+        "measure_label": "Product supplied (implied demand)",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "distillate-fuel-oil",
+          "product-supplied-implied-demand"
+        ],
+        "display_order": 1003
+      },
+      "caveats": [
+        "Product supplied is an accounting-based implied-demand proxy, not measured end-user consumption. Weekly estimates are preliminary, can be revised, and can move with balancing adjustments.",
+        "Total distillate fuel oil is the inclusive headline for the displayed sulfur buckets. Never stack this total with its sulfur children; reconcile mutually exclusive buckets to the published total before using a component sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.jet.kerosene_type.product_supplied.weekly",
+      "provider_id": "eia",
+      "metric_id": "kerosene_type_jet_fuel_product_supplied",
+      "name": "Kerosene-type jet fuel supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Product Supplied",
+        "route_template": "/v2/petroleum/cons/wpsup/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/cons/wpsup",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPJK"
+            ],
+            "process": [
+              "VPP"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPJK",
+            "process": "VPP"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "national"
+        ],
+        "source_geography_ids": [
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel product supplied (implied demand) at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel product supplied (implied demand) at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly kerosene-type jet fuel product supplied (implied demand) series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly kerosene-type jet fuel product supplied (implied demand) series is published at the U.S. level only, not by PADD subdistrict."
+          },
+          {
+            "level_id": "padd",
+            "reason": "This exact weekly kerosene-type jet fuel product supplied (implied demand) series is published at the U.S. level only, not by PADD."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "jet-fuel",
+        "product_family_label": "Jet fuel",
+        "product_id": "kerosene-type-jet-fuel",
+        "product_label": "Kerosene-type jet fuel",
+        "measure_id": "product-supplied",
+        "measure_label": "Product supplied (implied demand)",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "kerosene-type-jet-fuel",
+          "product-supplied-implied-demand"
+        ],
+        "display_order": 1503
+      },
+      "caveats": [
+        "Product supplied is an accounting-based implied-demand proxy, not measured end-user consumption. Weekly estimates are preliminary, can be revised, and can move with balancing adjustments.",
+        "Kerosene-type jet fuel is a separate finished-product family. Do not combine it with distillate or gasoline totals merely because all are petroleum products."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.finished.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "finished_motor_gasoline_imports",
+      "name": "Finished motor gasoline imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPM0F"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPM0F",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly finished motor gasoline imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly finished motor gasoline imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly finished motor gasoline imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly finished motor gasoline imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "finished-motor-gasoline",
+        "product_label": "Finished motor gasoline",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "finished-product",
+        "parent_product_id": "total-motor-gasoline",
+        "reference_term_ids": [
+          "finished-motor-gasoline",
+          "petroleum-imports"
+        ],
+        "display_order": 204
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "Finished motor gasoline is inside total motor gasoline; conventional and reformulated gasoline are children of finished gasoline. Never add a parent and child or stack hierarchy levels without reconciliation."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.blending_components.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "motor_gasoline_blending_components_imports",
+      "name": "Motor gasoline blending components imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOBG"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOBG",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly motor gasoline blending components imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly motor gasoline blending components imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly motor gasoline blending components imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly motor gasoline blending components imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "motor-gasoline-blending-components",
+        "product_label": "Motor gasoline blending components",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "blendstock",
+        "parent_product_id": "total-motor-gasoline",
+        "reference_term_ids": [
+          "motor-gasoline-blending-components",
+          "petroleum-imports"
+        ],
+        "display_order": 504
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "Motor gasoline blending components are inside total motor gasoline. CBOB and RBOB are children, but other blending components also exist; never stack the parent and children or infer a complete total from CBOB plus RBOB alone."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.cbob.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "cbob_imports",
+      "name": "CBOB imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOBGCC"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOBGCC",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly cbob imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly cbob imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly cbob imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly cbob imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "cbob",
+        "product_label": "CBOB",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "blendstock",
+        "parent_product_id": "motor-gasoline-blending-components",
+        "reference_term_ids": [
+          "conventional-blendstock-for-oxygenate-blending",
+          "motor-gasoline-blending-components",
+          "petroleum-imports"
+        ],
+        "display_order": 604
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "CBOB is an unfinished blendstock inside motor gasoline blending components. Do not add it to that parent or treat CBOB plus RBOB as the entire blending-components pool."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.rbob.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "rbob_imports",
+      "name": "RBOB imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOBGRR"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOBGRR",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly rbob imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly rbob imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly rbob imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly rbob imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "rbob",
+        "product_label": "RBOB",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "blendstock",
+        "parent_product_id": "motor-gasoline-blending-components",
+        "reference_term_ids": [
+          "reformulated-blendstock-for-oxygenate-blending",
+          "motor-gasoline-blending-components",
+          "petroleum-imports"
+        ],
+        "display_order": 704
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "RBOB is an unfinished blendstock inside motor gasoline blending components, not finished reformulated gasoline. Do not add it to its parent or treat CBOB plus RBOB as a complete component total."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.fuel_ethanol.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "fuel_ethanol_imports",
+      "name": "Fuel ethanol imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOOXE"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOOXE",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly fuel ethanol imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly fuel ethanol imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly fuel ethanol imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly fuel ethanol imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "fuel-ethanol",
+        "product_label": "Fuel ethanol",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "biofuel",
+        "reference_term_ids": [
+          "fuel-ethanol",
+          "petroleum-imports"
+        ],
+        "display_order": 804
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "Fuel ethanol is a contextual oxygenate and is not an EIA motor-gasoline blending component. Do not add it mechanically to total or finished gasoline; use a documented supply balance that respects when blending occurs."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.total.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_distillate_fuel_oil_imports",
+      "name": "Total distillate fuel oil imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD0"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD0",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly total distillate fuel oil imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly total distillate fuel oil imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly total distillate fuel oil imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly total distillate fuel oil imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "total-distillate-fuel-oil",
+        "product_label": "Total distillate fuel oil",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "distillate-fuel-oil",
+          "petroleum-imports"
+        ],
+        "display_order": 1004
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "Total distillate fuel oil is the inclusive headline for the displayed sulfur buckets. Never stack this total with its sulfur children; reconcile mutually exclusive buckets to the published total before using a component sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_0_15ppm.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_0_to_15_ppm_sulfur_imports",
+      "name": "Distillate fuel oil, 0–15 ppm sulfur imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPDXL0"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPDXL0",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, 0–15 ppm sulfur imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, 0–15 ppm sulfur imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, 0–15 ppm sulfur imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly distillate fuel oil, 0–15 ppm sulfur imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-0-to-15-ppm-sulfur",
+        "product_label": "Distillate fuel oil, 0–15 ppm sulfur",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "ultra-low-sulfur-distillate",
+          "distillate-fuel-oil",
+          "petroleum-imports"
+        ],
+        "display_order": 1104
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "The 0–15 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent; combine sulfur buckets only after exact period, unit, geography, and coverage reconciliation."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.sulfur_over_15_500ppm.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "distillate_over_15_to_500_ppm_sulfur_imports",
+      "name": "Distillate fuel oil, >15–500 ppm sulfur imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPDM10"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPDM10",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly distillate fuel oil, >15–500 ppm sulfur imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly distillate fuel oil, >15–500 ppm sulfur imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly distillate fuel oil, >15–500 ppm sulfur imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly distillate fuel oil, >15–500 ppm sulfur imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "distillate-over-15-to-500-ppm-sulfur",
+        "product_label": "Distillate fuel oil, >15–500 ppm sulfur",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "component",
+        "parent_product_id": "total-distillate-fuel-oil",
+        "reference_term_ids": [
+          "low-sulfur-diesel",
+          "distillate-fuel-oil",
+          "petroleum-imports"
+        ],
+        "display_order": 1204
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "The >15–500 ppm sulfur bucket is a component of total distillate fuel oil. Do not add it to its parent, and preserve EIA's exact interval endpoints when comparing history or combining compatible buckets."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.jet.kerosene_type.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "kerosene_type_jet_fuel_imports",
+      "name": "Kerosene-type jet fuel imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPJK"
+            ],
+            "process": [
+              "IM0"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPJK",
+            "process": "IM0"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "padd",
+          "national"
+        ],
+        "source_geography_ids": [
+          "us.padd.1",
+          "us.padd.2",
+          "us.padd.3",
+          "us.padd.4",
+          "us.padd.5",
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel imports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel imports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly kerosene-type jet fuel imports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly kerosene-type jet fuel imports series is published at PADD and U.S. levels, not by PADD subdistrict."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "jet-fuel",
+        "product_family_label": "Jet fuel",
+        "product_id": "kerosene-type-jet-fuel",
+        "product_label": "Kerosene-type jet fuel",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "kerosene-type-jet-fuel",
+          "petroleum-imports"
+        ],
+        "display_order": 1504
+      },
+      "caveats": [
+        "Imports are weekly average flows into the EIA reporting boundary. PADD rows and the U.S. row are alternate source-published views; never add the U.S. total to PADD values.",
+        "Kerosene-type jet fuel is a separate finished-product family. Do not combine it with distillate or gasoline totals merely because all are petroleum products."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.gasoline.fuel_ethanol.exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "fuel_ethanol_exports",
+      "name": "Fuel ethanol exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPOOXE"
+            ],
+            "process": [
+              "EEX"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPOOXE",
+            "process": "EEX"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "national"
+        ],
+        "source_geography_ids": [
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly fuel ethanol exports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly fuel ethanol exports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly fuel ethanol exports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly fuel ethanol exports series is published at the U.S. level only, not by PADD subdistrict."
+          },
+          {
+            "level_id": "padd",
+            "reason": "This exact weekly fuel ethanol exports series is published at the U.S. level only, not by PADD."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "fuel-ethanol",
+        "product_label": "Fuel ethanol",
+        "measure_id": "exports",
+        "measure_label": "Exports",
+        "component_role": "biofuel",
+        "reference_term_ids": [
+          "fuel-ethanol",
+          "petroleum-exports"
+        ],
+        "display_order": 805
+      },
+      "caveats": [
+        "Exports are weekly average outbound flows and can be volatile because individual cargoes are large. This exact series is U.S.-only; do not allocate it to lower geographies.",
+        "Fuel ethanol is a contextual oxygenate and is not an EIA motor-gasoline blending component. Do not add it mechanically to total or finished gasoline; use a documented supply balance that respects when blending occurs."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.distillate.total.exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_distillate_fuel_oil_exports",
+      "name": "Total distillate fuel oil exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPD0"
+            ],
+            "process": [
+              "EEX"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPD0",
+            "process": "EEX"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "national"
+        ],
+        "source_geography_ids": [
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly total distillate fuel oil exports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly total distillate fuel oil exports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly total distillate fuel oil exports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly total distillate fuel oil exports series is published at the U.S. level only, not by PADD subdistrict."
+          },
+          {
+            "level_id": "padd",
+            "reason": "This exact weekly total distillate fuel oil exports series is published at the U.S. level only, not by PADD."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "total-distillate-fuel-oil",
+        "product_label": "Total distillate fuel oil",
+        "measure_id": "exports",
+        "measure_label": "Exports",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "distillate-fuel-oil",
+          "petroleum-exports"
+        ],
+        "display_order": 1005
+      },
+      "caveats": [
+        "Exports are weekly average outbound flows and can be volatile because individual cargoes are large. This exact series is U.S.-only; do not allocate it to lower geographies.",
+        "Total distillate fuel oil is the inclusive headline for the displayed sulfur buckets. Never stack this total with its sulfur children; reconcile mutually exclusive buckets to the published total before using a component sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.refined.jet.kerosene_type.exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "kerosene_type_jet_fuel_exports",
+      "name": "Kerosene-type jet fuel exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {
+        "kind": "not_aggregatable"
+      },
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Imports and Exports",
+        "route_template": "/v2/petroleum/move/wkly/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/wkly",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-19",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": [
+            "value"
+          ],
+          "facet_filters": {
+            "product": [
+              "EPJK"
+            ],
+            "process": [
+              "EEX"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPJK",
+            "process": "EEX"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [
+        "product",
+        "process"
+      ],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": [
+          "national"
+        ],
+        "source_geography_ids": [
+          "us"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {
+            "level_id": "city",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel exports at city level."
+          },
+          {
+            "level_id": "county",
+            "reason": "EIA does not publish weekly kerosene-type jet fuel exports at county level."
+          },
+          {
+            "level_id": "state_or_area",
+            "reason": "EIA does not publish this exact weekly kerosene-type jet fuel exports series by state or producing area."
+          },
+          {
+            "level_id": "padd_subdistrict",
+            "reason": "This exact weekly kerosene-type jet fuel exports series is published at the U.S. level only, not by PADD subdistrict."
+          },
+          {
+            "level_id": "padd",
+            "reason": "This exact weekly kerosene-type jet fuel exports series is published at the U.S. level only, not by PADD."
+          }
+        ]
+      },
+      "release": {
+        "rule": "wpsr_release_window",
+        "freshness_grace_hours": 8
+      },
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "jet-fuel",
+        "product_family_label": "Jet fuel",
+        "product_id": "kerosene-type-jet-fuel",
+        "product_label": "Kerosene-type jet fuel",
+        "measure_id": "exports",
+        "measure_label": "Exports",
+        "component_role": "headline-total",
+        "reference_term_ids": [
+          "kerosene-type-jet-fuel",
+          "petroleum-exports"
+        ],
+        "display_order": 1505
+      },
+      "caveats": [
+        "Exports are weekly average outbound flows and can be volatile because individual cargoes are large. This exact series is U.S.-only; do not allocate it to lower geographies.",
+        "Kerosene-type jet fuel is a separate finished-product family. Do not combine it with distillate or gasoline totals merely because all are petroleum products."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 3
+    }
+  ]
+}

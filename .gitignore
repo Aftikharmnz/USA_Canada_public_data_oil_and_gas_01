@@ -1,0 +1,46 @@
+# Local credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+
+# Local reference books and papers stay out of the public repository.
+# They are copyrighted material and ~250 MB; GitHub Pages requires a public
+# repo on free plans, so committing them would republish them.
+/*.pdf
+
+# Frontend
+node_modules/
+.pnpm-store/
+dist/
+.vite/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Pipeline contract tests create disposable runtime stores beside the tests.
+tests/pipeline/_runtime_*/
+
+# Generated data is promoted deliberately by the refresh pipeline.
+data/raw/
+data/staged/
+data/curated/
+data/public/
+
+# Interrupted atomic writes can leave hidden scratch files beside retained
+# canonical generations. They are not valid generations and must not publish.
+data/cache/**/.canonical.json.*
+data/cache/**/CURRENT-*
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

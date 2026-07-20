@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opening Energy Market Monitor…</title>
+  </head>
+  <body>
+    <p>Opening Energy Market Monitor…</p>
+    <script>
+      (function () {
+        var match = window.location.pathname.match(/\/(usa|products|canada|reference)\/?$/i);
+        if (!match) return;
+
+        var basePath = window.location.pathname.slice(0, match.index + 1);
+        try {
+          window.sessionStorage.setItem("energy-market-monitor:route", match[1].toLowerCase());
+        } catch (_) {
+          // Continue to the application root even when storage is unavailable.
+        }
+        window.location.replace(basePath + window.location.search + window.location.hash);
+      })();
+    </script>
+  </body>
+</html>
