@@ -644,23 +644,7 @@ export function CanadaPage() {
 
   return (
     <main id="main-content" className="page-shell usa-dashboard-shell canada-dashboard-shell">
-      <section className="usa-dashboard-hero canada-dashboard-hero" aria-labelledby="canada-dashboard-title">
-        <div>
-          <p className="eyebrow">Canadian petroleum intelligence</p>
-          <h1 id="canada-dashboard-title">National context, without losing the source boundary.</h1>
-          <p className="hero-summary">
-            Enter through Crude or Refined, start at the smallest official geography, and then
-            broaden the product or region only when the source supports it. Monthly Statistics
-            Canada balances and weekly CER refinery regions remain visibly distinct.
-          </p>
-        </div>
-        <div className="hero-principles" aria-label="Canada dashboard coverage">
-          <span>Crude / Refined first</span>
-          <span>Finest geography first</span>
-          <span>National when valid</span>
-          <span>No synthetic city data</span>
-        </div>
-      </section>
+      <h1 className="visually-hidden">Canada petroleum dashboard</h1>
 
       {state.status === "loading" && !state.data ? <DashboardLoading /> : null}
       {state.status === "error" ? (

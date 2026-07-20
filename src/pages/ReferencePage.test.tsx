@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { ReferencePage } from "./ReferencePage";
 
 describe("ReferencePage", () => {
-  it("renders searchable filters, educational notice, and source-rich definition cards", () => {
+  it("renders compact searchable filters and source-rich definition cards", () => {
     const html = renderToStaticMarkup(<ReferencePage />);
 
-    expect(html).toContain("Know what the number actually means.");
-    expect(html).toContain("Educational reference—not trading advice.");
+    expect(html).not.toContain("Know what the number actually means.");
+    expect(html).not.toContain("Educational reference—not trading advice.");
+    expect(html).toContain("Petroleum market terminology reference");
     expect(html).toContain('type="search"');
     expect(html).toContain("All product families");
     expect(html).toContain("All concepts");

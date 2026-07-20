@@ -120,32 +120,7 @@ export function ReferencePage() {
 
   return (
     <main id="main-content" className="page-shell reference-shell">
-      <section className="reference-hero" aria-labelledby="reference-title">
-        <div>
-          <p className="eyebrow">Petroleum market reference</p>
-          <h1 id="reference-title">Know what the number actually means.</h1>
-          <p className="hero-summary">
-            Plain-language guidance for U.S. and Canadian petroleum products, balances,
-            statistics, forecasts, and uncertainty.
-          </p>
-        </div>
-        <aside className="reference-purpose" aria-label="Reference scope">
-          <strong>Read the definition before the signal.</strong>
-          <p>
-            These entries explain source terminology. They do not mean every concept is already
-            an active chart series.
-          </p>
-        </aside>
-      </section>
-
-      <aside className="reference-disclaimer" role="note" aria-label="Educational use notice">
-        <strong>Educational reference—not trading advice.</strong>
-        <span>
-          Definitions are faithful plain-language interpretations of linked official and
-          forecasting-methodology sources, not verbatim quotations. Forecasts are statistical
-          decision support, not guarantees or personalized trading advice.
-        </span>
-      </aside>
+      <h1 className="visually-hidden">Petroleum market terminology reference</h1>
 
       <section className="reference-controls" aria-labelledby="reference-search-title">
         <div className="reference-controls-heading">

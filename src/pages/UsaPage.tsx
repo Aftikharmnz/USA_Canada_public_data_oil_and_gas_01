@@ -534,22 +534,7 @@ export function UsaPage({ initialSegment = "crude" }: UsaPageProps) {
 
   return (
     <main id="main-content" className="page-shell usa-dashboard-shell products-dashboard-shell">
-      <section className="usa-dashboard-hero" aria-labelledby="usa-dashboard-title">
-        <div>
-          <p className="eyebrow">United States petroleum intelligence</p>
-          <h1 id="usa-dashboard-title">Crude or refined, from local detail to the national view.</h1>
-          <p className="hero-summary">
-            Choose the market segment first. Every next choice is limited to products, measures,
-            and geographies the EIA actually publishes for that selection.
-          </p>
-        </div>
-        <div className="hero-principles" aria-label="Dashboard principles">
-          <span>Crude + refined</span>
-          <span>Finest geography first</span>
-          <span>Components before totals</span>
-          <span>Source-defined availability</span>
-        </div>
-      </section>
+      <h1 className="visually-hidden">United States petroleum dashboard</h1>
 
       {state.status === "loading" && !state.data ? <DashboardLoading /> : null}
       {state.status === "error" ? (
