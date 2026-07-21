@@ -17,6 +17,12 @@ describe("GitHub Pages country routes", () => {
     expect(countryFromPath("/energy-dashboard/reference/")).toBeNull();
   });
 
+  it("recognizes the dedicated USA weekly route", () => {
+    expect(appRouteFromPath("/energy-dashboard/usa-weekly/")).toBe("usa-weekly");
+    expect(appRouteFromPath("/energy-dashboard/usa-weekly/index.html")).toBe("usa-weekly");
+    expect(countryFromPath("/energy-dashboard/usa-weekly/")).toBeNull();
+  });
+
   it("keeps the legacy products route available as a USA Refined alias", () => {
     expect(appRouteFromPath("/energy-dashboard/products/")).toBe("products");
     expect(appRouteFromPath("/energy-dashboard/products/index.html")).toBe("products");

@@ -136,7 +136,7 @@ Phase 3 data activation requires:
 
 - the registry contains the 39 active, metadata-verified definitions described above;
 - the generated manifest and every referenced asset pass schema, checksum, byte-count, geography, unit, facet, identity, and credential scans;
-- `/usa/`, `/canada/`, `/reference/`, and the legacy `/products/` compatibility entry build as direct routes;
+- `/usa/`, `/usa-weekly/`, `/canada/`, `/reference/`, and the legacy `/products/` compatibility entry build as direct routes;
 - country pages select Crude/Refined, geography level/node, product family, product/activity, and measure in that order;
 - segment and Geography changes load only compatible manifest entries and never preserve an invalid downstream selection silently;
 - hierarchy/non-additivity, implied-demand, distillate, net-production, imports, and export-break caveats are visible from the product or reference experience;

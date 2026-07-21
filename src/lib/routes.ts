@@ -3,9 +3,9 @@ import type { CountryCode } from "../types/catalog";
 export const ROUTE_STORAGE_KEY = "energy-market-monitor:route";
 
 const COUNTRY_ROUTES = new Set<CountryCode>(["usa", "canada"]);
-export type AppRoute = CountryCode | "products" | "reference";
+export type AppRoute = CountryCode | "usa-weekly" | "products" | "reference";
 
-const APP_ROUTES = new Set<AppRoute>(["usa", "products", "canada", "reference"]);
+const APP_ROUTES = new Set<AppRoute>(["usa", "usa-weekly", "products", "canada", "reference"]);
 
 export function appRouteFromPath(pathname = window.location.pathname): AppRoute | null {
   const normalizedPath = pathname.replace(/\/index\.html$/i, "/");

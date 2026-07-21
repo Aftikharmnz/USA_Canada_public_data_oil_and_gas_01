@@ -2200,6 +2200,20 @@ h3 {
   line-height: 1.4;
 }
 
+.weekly-desk-coverage {
+  color: #315f58 !important;
+  font-weight: 750;
+}
+
+.weekly-desk-route-link {
+  display: block;
+  width: fit-content;
+  margin-top: 0.45rem;
+  color: var(--teal);
+  font-size: 0.69rem;
+  font-weight: 850;
+}
+
 .products-filter-grid {
   display: grid;
   grid-template-columns: minmax(9rem, 0.72fr) minmax(14rem, 1fr) minmax(11rem, 0.82fr) minmax(22rem, 1.35fr);

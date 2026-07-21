@@ -3,6 +3,7 @@ import { CanadaPage } from "./pages/CanadaPage";
 import { RefinedProductsPage } from "./pages/RefinedProductsPage";
 import { ReferencePage } from "./pages/ReferencePage";
 import { UsaPage } from "./pages/UsaPage";
+import { UsaWeeklyPage } from "./pages/UsaWeeklyPage";
 import { appPath, appRouteFromPath, type AppRoute } from "./lib/routes";
 
 const primaryRoutes: Array<{ route: AppRoute; label: string }> = [
@@ -34,6 +35,8 @@ export default function App() {
 
   const footerLead = route === "reference"
     ? "Petroleum terminology reference."
+    : route === "usa-weekly"
+      ? "USA weekly EIA trading desk."
     : route === "products"
       ? "U.S. refined-products dashboard."
       : route === "usa"
@@ -79,6 +82,8 @@ export default function App() {
           <span className="phase-badge">
             {route === "reference"
               ? "Definitions"
+              : route === "usa-weekly"
+                ? "USA · Weekly"
               : route === "products"
                 ? "USA · Refined"
                 : route === "usa"
@@ -90,6 +95,8 @@ export default function App() {
 
       {route === "reference"
         ? <ReferencePage />
+        : route === "usa-weekly"
+          ? <UsaWeeklyPage />
         : route === "products"
           ? <RefinedProductsPage />
           : route === "canada"

@@ -34,6 +34,7 @@ flowchart TB
 
     subgraph Static["GitHub Pages artifact"]
       USA["/usa · 2 Crude / 37 Refined"]
+      USAWeekly["/usa-weekly · verified weekly subset"]
       CAN["/canada · 22 Crude / 29 Refined"]
       Reference["/reference"]
       Legacy["/products · legacy USA Refined entry"]
@@ -50,6 +51,7 @@ flowchart TB
     Derive --> Manifest --> Data
     Forecast --> Manifest
     Data --> USA
+    Data --> USAWeekly
     Data --> CAN
     Manifest --> Reference
     Data --> Legacy
@@ -115,7 +117,7 @@ Each observed manifest geography can additionally reference one standalone forec
 
 Forecast records are intentionally separate because a future projection is neither an observation nor a seasonal-band constituent. The seasonal chart renders observed paths as solid lines, forecasts as a dashed line, and a single user-selected prediction band. "Prediction interval" is the contract term; these are not confidence intervals, and nominal empirical coverage is not guaranteed. The current implementation is univariate statistical forecasting, not machine learning. Its latest-revised pseudo-out-of-sample diagnostics do not reconstruct first-release vintages, and its output is decision support rather than trading advice.
 
-The country manifest optionally classifies a series for navigation with product family, product/component, measure, component role, parent-product ID, glossary term IDs, and display order. The primary surfaces are the unified `/usa/` and `/canada/` pages plus `/reference/`; `/products/` is a backwards-compatible wrapper that renders `/usa/` initially on Refined. The USA registry resolves 2 Crude and 37 Refined definitions, and Canada resolves 22 Crude and 29 Refined definitions. Refinery activity is placed under Crude for navigation only. Classification never changes observation identity, provider semantics, or aggregation authority.
+The country manifest optionally classifies a series for navigation with product family, product/component, measure, component role, parent-product ID, glossary term IDs, and display order. The primary surfaces are the unified `/usa/` and `/canada/` pages plus `/reference/`; `/products/` is a backwards-compatible wrapper that renders `/usa/` initially on Refined. `/usa-weekly/` is a secondary trader workspace over the same USA manifest and retains only verified weekly views; it never duplicates an observation, forecast, checksum, or refresh path. The USA registry resolves 2 Crude and 37 Refined definitions, and Canada resolves 22 Crude and 29 Refined definitions. Refinery activity is placed under Crude for navigation only. Classification never changes observation identity, provider semantics, or aggregation authority.
 
 Both country dashboards follow the same cascade: segment -> finest available geography level -> official geography node -> product family -> product/activity -> measure. Product/activity leaves are ordered before broader registered parents. Only registered parents can appear, and the ordering is semantic navigation rather than a summation tree. A geography change recalculates all downstream choices and falls back only to a compatible manifest entry.
 

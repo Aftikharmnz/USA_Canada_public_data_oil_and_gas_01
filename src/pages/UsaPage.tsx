@@ -28,6 +28,7 @@ import {
   type UsaDashboardSelectionRequest,
   type UsaEnergySegment,
 } from "../data/usaDashboard";
+import { usaWeeklyFamilyCount, verifiedUsaWeeklySeries } from "../data/usaWeekly";
 import { customAggregationPolicy } from "../data/customAggregation";
 import { overlappingSelection } from "../data/geographyContainment";
 import {
@@ -44,6 +45,7 @@ import type { UsaAssetManifest, UsaManifestSeries } from "../types/energyAssets"
 
 interface UsaPageProps {
   initialSegment?: UsaEnergySegment;
+  weeklyOnly?: boolean;
 }
 
 function ReferenceLinks({ series }: { series: UsaManifestSeries }) {
@@ -68,9 +70,11 @@ function ReferenceLinks({ series }: { series: UsaManifestSeries }) {
 function UsaDashboard({
   manifest,
   initialSegment,
+  weeklyOnly = false,
 }: {
   manifest: UsaAssetManifest;
   initialSegment: UsaEnergySegment;
+  weeklyOnly?: boolean;
 }) {
   const [requested, setRequested] = useState<UsaDashboardSelectionRequest>({
     segment: initialSegment,
@@ -299,22 +303,34 @@ function UsaDashboard({
   return (
     <>
       <CollapsibleToolbar
-        ariaLabel="USA market filters"
+        ariaLabel={weeklyOnly ? "USA weekly market filters" : "USA market filters"}
         className="products-toolbar usa-hierarchy-toolbar"
         collapsed={filtersCollapsed}
-        contentId="usa-market-filter-content"
+        contentId={weeklyOnly ? "usa-weekly-filter-content" : "usa-market-filter-content"}
         onCollapsedChange={setFiltersCollapsed}
         summary={`${selectedSegment?.label ?? selection.segment} / ${selectedGeographies.map((item) => item.label).join(" + ")} / ${selectedProduct?.label ?? series.title} / ${selectedMeasure?.label ?? series.title}`}
       >
         <div className="products-toolbar-heading">
           <div>
-            <p className="section-kicker">USA market view</p>
-            <h2 id="usa-market-view-title">Start broad, then move from the finest official detail upward</h2>
+            <p className="section-kicker">{weeklyOnly ? "USA EIA weekly desk" : "USA market view"}</p>
+            <h2 id="usa-market-view-title">
+              {weeklyOnly
+                ? "Weekly fuel distribution and midstream monitor"
+                : "Start broad, then move from the finest official detail upward"}
+            </h2>
+            {weeklyOnly ? (
+              <p className="weekly-desk-coverage">
+                {manifest.series.length} verified weekly definitions across {usaWeeklyFamilyCount(manifest.series)} market families.
+              </p>
+            ) : null}
             <p>{series.description ?? "Official EIA petroleum-market observations."}</p>
           </div>
           <div className="toolbar-freshness">
             <FreshnessBadge status={series.freshness.status} />
             <small>Manifest built {formatDateTime(manifest.generated_at)}</small>
+            <a className="weekly-desk-route-link" href={appPath(weeklyOnly ? "usa" : "usa-weekly")}>
+              {weeklyOnly ? "Open full USA dashboard" : "Open USA weekly desk"}
+            </a>
           </div>
         </div>
 
@@ -528,13 +544,22 @@ function UsaDashboard({
   );
 }
 
-export function UsaPage({ initialSegment = "crude" }: UsaPageProps) {
+export function UsaPage({ initialSegment = "crude", weeklyOnly = false }: UsaPageProps) {
   const { state, retry } = useUsaManifest();
   const manifest = "data" in state ? state.data : undefined;
+  const visibleManifest = useMemo(() => {
+    if (!manifest || !weeklyOnly) return manifest;
+    return {
+      ...manifest,
+      series: verifiedUsaWeeklySeries(manifest.series),
+    };
+  }, [manifest, weeklyOnly]);
 
   return (
     <main id="main-content" className="page-shell usa-dashboard-shell products-dashboard-shell">
-      <h1 className="visually-hidden">United States petroleum dashboard</h1>
+      <h1 className="visually-hidden">
+        {weeklyOnly ? "United States EIA weekly petroleum dashboard" : "United States petroleum dashboard"}
+      </h1>
 
       {state.status === "loading" && !state.data ? <DashboardLoading /> : null}
       {state.status === "error" ? (
@@ -545,7 +570,13 @@ export function UsaPage({ initialSegment = "crude" }: UsaPageProps) {
         />
       ) : null}
       {state.status === "stale" ? <LastKnownGoodNotice error={state.error} /> : null}
-      {manifest ? <UsaDashboard manifest={manifest} initialSegment={initialSegment} /> : null}
+      {visibleManifest ? (
+        <UsaDashboard
+          manifest={visibleManifest}
+          initialSegment={initialSegment}
+          weeklyOnly={weeklyOnly}
+        />
+      ) : null}
     </main>
   );
 }

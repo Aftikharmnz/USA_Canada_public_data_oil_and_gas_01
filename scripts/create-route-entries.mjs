@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 const outputDirectory = resolve("dist");
 const rootEntry = resolve(outputDirectory, "index.html");
 
-for (const route of ["usa", "products", "canada", "reference"]) {
+for (const route of ["usa", "usa-weekly", "products", "canada", "reference"]) {
   const routeDirectory = resolve(outputDirectory, route);
   await mkdir(routeDirectory, { recursive: true });
   await copyFile(rootEntry, resolve(routeDirectory, "index.html"));

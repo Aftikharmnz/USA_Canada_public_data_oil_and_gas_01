@@ -14,7 +14,7 @@ The crude hierarchy is semantic and non-additive: total crude production contain
 
 The project is published at [Aftikharmnz/USA_Canada_public_data_oil_and_gas_01](https://github.com/Aftikharmnz/USA_Canada_public_data_oil_and_gas_01), with the live site at [https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/](https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/). The initial Pages build, deployment, and public manifest checks passed. The previously exposed EIA key must still be rotated and its replacement added only as the GitHub secret `EIA_API_KEY` before automated EIA refreshes are enabled. Canada needs no provider secret.
 
-The current observed-data boundaries are [Phase 3 refined products](docs/phase-3-refined-products.md) for the USA and [Canada data](docs/canada-data.md) for Canada. [Phase 2 USA MVP](docs/phase-2-usa-mvp.md) and [Phase 1](docs/phase-1-scope.md) remain historical boundaries.
+The current observed-data boundaries are [Phase 3 refined products](docs/phase-3-refined-products.md) for the USA and [Canada data](docs/canada-data.md) for Canada. [Phase 2 USA MVP](docs/phase-2-usa-mvp.md) and [Phase 1](docs/phase-1-scope.md) remain historical boundaries. A secondary `/usa-weekly/` workspace filters the verified USA manifest to all 38 active weekly definitions for a compact fuel-distribution and midstream monitoring view; it does not create duplicate series or a separate data lineage.
 
 An implemented, separate forecast layer now adds transparent statistical projections to the same seasonal charts — univariate baselines for every asset, plus a registered fundamental net-balance candidate (weekly barrel-accounting identity) for national distillate and jet stocks that must beat the baselines in rolling-origin selection to be published. Every weekly or monthly asset projects only the next 3 source periods, with selectable 80%, 90%, and 95% empirical **prediction intervals**. These are ranges for future observations, not confidence intervals for an estimated mean. Unavailable forecasts remain explicit, most importantly when the latest source period is nonnumeric or suppressed. Forecasts are decision support, not trading advice, and this phase does not claim machine learning or release-vintage backtesting. See [forecasting methodology and roadmap](docs/forecasting-roadmap.md).
 
@@ -22,7 +22,7 @@ The browser supports explicit same-level custom regional sums for registry-appro
 
 ## Active USA data
 
-The unified `/usa/` page divides the 39 active definitions into 2 **Crude** and 37 **Refined** choices. Crude contains crude-oil production and refinery utilization; refinery activity is placed there as a navigation aid only. Refined contains total petroleum products supplied plus the 36 gasoline, distillate, and jet-fuel definitions.
+The unified `/usa/` page divides the 39 active definitions into 2 **Crude** and 37 **Refined** choices. Crude contains crude-oil production and refinery utilization; refinery activity is placed there as a navigation aid only. Refined contains total petroleum products supplied plus the 36 gasoline, distillate, and jet-fuel definitions. The `/usa-weekly/` desk excludes only the monthly crude-production definition and defaults to Refined, leaving 38 verified weekly definitions across gasoline, distillate/diesel, jet fuel, refinery utilization, and total-product implied demand.
 
 | Series | Frequency | Finest verified published geography | Larger published views |
 |---|---|---|---|

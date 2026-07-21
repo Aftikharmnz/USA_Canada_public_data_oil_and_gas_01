@@ -592,7 +592,10 @@ function EChartsCanvas({ option, ariaLabel }: { option: EChartsOption; ariaLabel
   }, []);
 
   useEffect(() => {
-    chartRef.current?.setOption(option, { notMerge: false, replaceMerge: ["series"] });
+    // Seasonal overlays and period-change bars use fundamentally different
+    // axes. A full option replacement prevents the prior level scale from
+    // clipping every build/draw bar after the user switches chart views.
+    chartRef.current?.setOption(option, { notMerge: true });
   }, [option]);
 
   return <div ref={containerRef} className="echarts-seasonal" role="img" aria-label={ariaLabel} />;
