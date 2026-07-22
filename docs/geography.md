@@ -171,7 +171,7 @@ A computed rollup is useful when no official total exists or for reconciliation.
 
 ## Availability examples
 
-The staged Phase 4 registry availability is shown below. It contains 67 active definitions and 77 exact source-series keys across the 28 additions. Provider-free promoted run `analytics-20260720T152511Z` still contains the earlier 39-definition profile until a live Phase 4 refresh succeeds; this table describes registered availability, not an already promoted asset claim.
+The activated Phase 4 availability is shown below. Promoted run `eia-20260722T202149Z` contains all 67 active definitions and the 77 exact source-series keys across the 28 additions. Its 326 observed assets and matching forecast records passed manifest and public deployment verification; this table describes the exact registered and promoted geography boundary.
 
 | Active series | Finest verified source-published view | Larger source-published views | Unavailable levels |
 |---|---|---|---|

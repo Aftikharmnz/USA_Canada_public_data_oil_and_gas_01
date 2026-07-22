@@ -225,7 +225,7 @@ market segment -> geography level -> geography node
 -> product family -> product/activity -> measure -> series asset
 ```
 
-Market segment is `crude` or `refined`. The staged USA registry resolves 11 Crude/56 Refined definitions (66 weekly and one monthly); until Phase 4 promotion, the current public manifest retains its earlier 2 Crude/37 Refined profile. Canada resolves 22 Crude/29 Refined definitions (51 definitions: 49 Statistics Canada and 2 CER). Promoted Canada run `canada-20260720T192043Z` validates all 51 definitions across 404 observed assets and matching forecast records. Refinery activity belongs under Crude for navigation only and retains its original metric, unit, source, and observation identity.
+Market segment is `crude` or `refined`. The promoted USA manifest resolves 11 Crude/56 Refined definitions (66 weekly and one monthly) and validates all 67 definitions across 326 observed assets and matching forecast records. Canada resolves 22 Crude/29 Refined definitions (51 definitions: 49 Statistics Canada and 2 CER). Promoted Canada run `canada-20260720T192043Z` validates all 51 definitions across 404 observed assets and matching forecast records. Refinery activity belongs under Crude for navigation only and retains its original metric, unit, source, and observation identity.
 
 Geography levels are ordered by registered granularity rank from finest to broadest. The selected exact geography node filters every later option; family, product/activity, and measure choices must be backed by an available asset for that node. Product/activity ordering traverses only registered `parent_product_id` relationships and places leaves before broader parents. Missing parents are not synthesized. A selection change may preserve later IDs only while they remain compatible; otherwise the UI falls back deterministically to the first valid option.
 
@@ -332,7 +332,7 @@ On retrieval:
 
 Do not call a normal new period a “revision.”
 
-The registry supplies missing-series bootstrap starts of 2014-01-01 for weekly and 2014-01 for monthly data. Once a current history exists, the runner defaults to a 13-week overlap for weekly series and a 10-year overlap for monthly series. The dedicated Phase 3 helper remains available only for scoped recovery of its 36 historical additions; Phase 4 activation uses the 67-definition all-active registry path. An overlap with no inserted or changed value/status leaves `CURRENT` and the public asset directory untouched by default; retrieval evidence is reported by the run but does not fabricate a new data vintage.
+The registry supplies missing-series bootstrap starts of 2014-01-01 for weekly and 2014-01 for monthly data. Once a current history exists, the runner defaults to a 13-week overlap for weekly series and a 10-year overlap for monthly series. The dedicated Phase 3 helper remains available only for scoped recovery of its 36 historical additions; Phase 4 was activated, and routine updates use the 67-definition all-active registry path. An overlap with no inserted or changed value/status leaves `CURRENT` and the public asset directory untouched by default; retrieval evidence is reported by the run but does not fabricate a new data vintage.
 
 ## Time and freshness semantics
 

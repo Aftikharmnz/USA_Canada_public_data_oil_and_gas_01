@@ -2,11 +2,11 @@
 
 ## Status
 
-Phase 4 expands the USA EIA registry from 39 to 67 active definitions. The 28 additions are contract-complete in `config/series/usa.json`; they become public only after a successful registry-validated EIA refresh builds and promotes matching observed and forecast assets. No generated data is part of this registry change.
+Phase 4 expands the USA EIA registry from 39 to 67 active definitions. The 28 additions are contract-complete in `config/series/usa.json` and publicly activated in promoted run `eia-20260722T202149Z` after a registry-validated EIA refresh built and promoted matching observed and forecast assets.
 
 The resulting registry contains 67 active definitions: three legacy overview definitions, 36 Phase 3 refined-product definitions, and 28 Phase 4 additions. Sixty-six are weekly and monthly crude production is the sole monthly definition. Phase 4 contributes 77 exact source-series keys after exposing every registered smallest official geography. Every addition uses EIA API v2 route `/v2/petroleum/sum/sndw/data`, weekly frequency, an exact `series` facet allowlist, explicit `period`/`duoarea`/`series`/`units` identity, an exact provider unit, and exact registered source geography IDs. New history retains the registry-wide `2014-01-01` weekly bootstrap boundary.
 
-The current promoted USA run remains `analytics-20260720T152511Z` with its earlier 39 definitions and 249 assets until this activation gate succeeds. The replacement `EIA_API_KEY` GitHub secret is configured and the automated refresh workflow is operational; registry completion alone still does not prove Phase 4 public assets.
+The promoted run contains 212,512 canonical observations, 326 observed chart assets, and 326 matching forecast records. Canonical JSON is 87,599,291 bytes (83.54 MiB), below the 90 MiB publication guard. The merge inserted 50,435 rows, revised 0, and matched 7,873 unchanged rows. Forecast status is 325 ready, 1 `limited_history`, and 0 unavailable. All 66 weekly definitions reach `2026-07-17`; monthly crude production reaches `2026-04`. GitHub Actions run `29954739606` succeeded and deployed the matching public site.
 
 ## Added definitions
 
@@ -44,6 +44,6 @@ The current promoted USA run remains `analytics-20260720T152511Z` with its earli
 - Propane export series `W_EPLLPZ_EEX_NUS-Z00_MBBLD` is labelled propane only. It is a separate product selection and must not be treated as having the same boundary as the nearby propane/propylene measures.
 - Product supplied remains implied demand rather than directly measured end-user consumption.
 
-## Activation gate
+## Activation evidence and continuing publication gate
 
-Before public promotion, the refresh must reject unknown source series, geography codes, units, duplicate identities, missing required PADD coverage, or incompatible schemas. A failed candidate leaves the existing last-known-good generation deployable. Documentation and generated manifest counts must be updated from the promoted run rather than predicted from this registry-only change.
+Activation passed the registry, geography, unit, identity, coverage, forecast-link, asset-integrity, 90 MiB, and public deployment checks in run `eia-20260722T202149Z`; workflow run `29954739606` deployed it successfully. Every future public promotion must continue to reject unknown source series, geography codes, units, duplicate identities, missing required PADD coverage, or incompatible schemas. A failed candidate leaves the existing last-known-good generation deployable, and documentation counts must always come from the promoted manifest rather than registry projections.
