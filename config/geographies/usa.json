@@ -19,7 +19,7 @@
     {"id": "us.padd.3", "name": "Gulf Coast (PADD 3)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R30"}, "provider_code_aliases": {"eia_duoarea": ["R30-Z00"]}},
     {"id": "us.padd.4", "name": "Rocky Mountain (PADD 4)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R40"}, "provider_code_aliases": {"eia_duoarea": ["R40-Z00"]}},
     {"id": "us.padd.5", "name": "West Coast (PADD 5)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R50"}, "provider_code_aliases": {"eia_duoarea": ["R50-Z00"]}},
-    {"id": "us.padd.4-and-5", "name": "Rocky Mountain and West Coast (PADDs 4 and 5)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R4N5"}, "provider_code_aliases": {"eia_duoarea": ["R45-Z00"]}},
+    {"id": "us.padd.4-and-5", "name": "Rocky Mountain and West Coast (PADDs 4 and 5)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R4N5"}, "provider_code_aliases": {"eia_duoarea": ["R4N5-Z00", "R45-Z00"]}},
     {"id": "us.lower48", "name": "Lower 48 States", "level_id": "state_or_area", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R48"}},
     {"id": "us.padd.1a", "name": "New England (PADD 1A)", "level_id": "padd_subdistrict", "country_code": "USA", "parent_ids": ["us.padd.1"], "provider_codes": {"eia_duoarea": "R1X"}},
     {"id": "us.padd.1b", "name": "Central Atlantic (PADD 1B)", "level_id": "padd_subdistrict", "country_code": "USA", "parent_ids": ["us.padd.1"], "provider_codes": {"eia_duoarea": "R1Y"}},

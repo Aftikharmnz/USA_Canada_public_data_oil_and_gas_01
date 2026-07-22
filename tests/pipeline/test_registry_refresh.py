@@ -143,6 +143,9 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(
             self.geographies.resolve("R45-Z00"), ("us.padd.4-and-5", "padd")
         )
+        self.assertEqual(
+            self.geographies.resolve("R4N5-Z00"), ("us.padd.4-and-5", "padd")
+        )
 
         days = next(item for item in self.series if item.id.endswith("crude.days_supply.weekly"))
         self.assertEqual(days.canonical_unit, "days")
