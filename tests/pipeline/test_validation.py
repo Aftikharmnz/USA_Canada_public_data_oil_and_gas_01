@@ -80,7 +80,16 @@ class ValidationTests(unittest.TestCase):
                 self.assertIn(node["level_id"], levels)
                 self.assertTrue(set(node["parent_ids"]).issubset(nodes))
                 self.assertEqual(node["country_code"], geography["country_code"])
-            self.assertFalse(any(node["level_id"] == "city" for node in nodes.values()))
+            city_nodes = [node for node in nodes.values() if node["level_id"] == "city"]
+            self.assertEqual(
+                bool(city_nodes),
+                bool(geography.get("policies", {}).get("city_nodes_present", False)),
+            )
+            for node in city_nodes:
+                self.assertTrue(
+                    node.get("provider_codes"),
+                    "Every city/local node must be an exact provider-published geography.",
+                )
             geography_by_country[geography["country_code"]] = levels
 
         for registry_path in sorted((PROJECT_ROOT / "config" / "series").glob("*.json")):
@@ -103,8 +112,9 @@ class ValidationTests(unittest.TestCase):
                         item["level_id"]: item["reason"]
                         for item in availability["unsupported_levels"]
                     }
-                    self.assertIn("city", unsupported)
-                    self.assertTrue(unsupported["city"].strip())
+                    if "city" not in availability["source_geography_level_ids"]:
+                        self.assertIn("city", unsupported)
+                        self.assertTrue(unsupported["city"].strip())
                     self.assertEqual(
                         set(availability["source_geography_level_ids"]) | set(unsupported),
                         set(known_levels),
@@ -123,8 +133,9 @@ class ValidationTests(unittest.TestCase):
                     set(availability["allowed_rollup_geography_level_ids"]).issubset(known_levels)
                 )
                 unsupported = {item["level_id"]: item["reason"] for item in availability["unsupported_levels"]}
-                self.assertIn("city", unsupported)
-                self.assertTrue(unsupported["city"].strip())
+                if "city" not in availability["source_geography_level_ids"]:
+                    self.assertIn("city", unsupported)
+                    self.assertTrue(unsupported["city"].strip())
                 accounted_levels = (
                     set(availability["source_geography_level_ids"])
                     | set(availability["allowed_rollup_geography_level_ids"])

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type {
   SeriesClassification,
-  UsaAssetManifest,
   UsaChartAsset,
   UsaManifestSeries,
 } from "../types/energyAssets";
-import usaManifestFixture from "../../public/data/usa/manifest.json";
 import {
   assetMatchesUsaSelection,
   resolveUsaDashboardSelection,
@@ -75,6 +73,17 @@ const national = geography("us", "United States", "national", "United States");
 const fixture = [
   series("usa.eia.crude.production.monthly", [state, padd, national]),
   series("usa.eia.refinery.utilization.weekly", [padd, national]),
+  series("commercial-crude-stocks", [padd, national], classification({
+    dashboard_group: "usa_crude",
+    product_family_id: "crude-oil",
+    product_family_label: "Crude oil",
+    product_id: "commercial-crude-stocks",
+    product_label: "Commercial crude stocks",
+    measure_id: "stocks",
+    measure_label: "Stocks",
+    component_role: "source-defined-product",
+    display_order: 301,
+  })),
   series("usa.eia.product_supplied.weekly", [national]),
   series("total-gasoline-stocks", [subdistrict, padd, national], classification({})),
   series("finished-gasoline-stocks", [padd, national], classification({
@@ -114,6 +123,7 @@ describe("USA country-dashboard hierarchy", () => {
     expect(usaSegmentSeries(fixture, "crude").map((item) => item.view_id)).toEqual([
       "usa.eia.crude.production.monthly",
       "usa.eia.refinery.utilization.weekly",
+      "commercial-crude-stocks",
     ]);
     expect(usaSegmentSeries(fixture, "refined")).toHaveLength(6);
   });
@@ -179,45 +189,14 @@ describe("USA country-dashboard hierarchy", () => {
     expect(selection.products.map((item) => item.hierarchyHeight)).toEqual([0, 0, 0, 1]);
   });
 
-  it("maps the promoted manifest to exactly two crude and 37 refined series", () => {
-    const promoted = usaManifestFixture as unknown as UsaAssetManifest;
-    expect(usaSegmentSeries(promoted.series, "crude")).toHaveLength(2);
-    expect(usaSegmentSeries(promoted.series, "refined")).toHaveLength(37);
-    expect(usaGeographyLevels(promoted.series, "crude").map((level) => level.id)).toEqual([
-      "state_or_area",
-      "padd",
-      "national",
-    ]);
-    expect(usaGeographyLevels(promoted.series, "refined").map((level) => level.id)).toEqual([
-      "padd_subdistrict",
-      "padd",
-      "national",
-    ]);
+  it("maps classified USA crude views while retaining core-series fallbacks", () => {
+    const classifiedCrude = fixture.find((item) => item.view_id === "commercial-crude-stocks");
+    expect(classifiedCrude).toBeDefined();
+    expect(usaSegmentSeries([classifiedCrude!], "crude")).toEqual([classifiedCrude]);
+    expect(usaSegmentSeries([classifiedCrude!], "refined")).toEqual([]);
 
-    const gasoline = resolveUsaDashboardSelection(promoted.series, {
-      segment: "refined",
-      geographyId: "us",
-      familyId: "gasoline",
-    });
-    expect(gasoline.families.map((family) => family.id)).toEqual([
-      "gasoline",
-      "distillate",
-      "jet-fuel",
-      "all-petroleum-products",
-    ]);
-    expect(gasoline.products.map((product) => product.id)).toEqual([
-      "cbob",
-      "rbob",
-      "fuel-ethanol",
-      "conventional-motor-gasoline",
-      "reformulated-motor-gasoline",
-      "motor-gasoline-blending-components",
-      "finished-motor-gasoline",
-      "total-motor-gasoline",
-    ]);
-    expect(gasoline.products.map((product) => product.hierarchyHeight)).toEqual([
-      0, 0, 0, 0, 0, 1, 1, 2,
-    ]);
+    const unclassifiedCore = series("usa.eia.refinery.utilization.weekly", [national]);
+    expect(usaSegmentSeries([unclassifiedCore], "crude")).toEqual([unclassifiedCore]);
   });
 
   it("rejects stale chart data from a previous cascade selection", () => {

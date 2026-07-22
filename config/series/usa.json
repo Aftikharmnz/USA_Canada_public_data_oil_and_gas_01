@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-07-19.phase3-refined-products",
+  "registry_version": "2026-07-22.phase4-weekly-breadth",
   "country_code": "USA",
-  "activation_status": "mixed_phase_3",
+  "activation_status": "mixed_phase_4",
   "bootstrap_period_start_by_frequency": {
     "weekly": "2014-01-01",
     "monthly": "2014-01"
@@ -4379,6 +4379,1700 @@
       ],
       "activation_status": "active",
       "introduced_in_phase": 3
+    },
+    {
+      "id": "usa.eia.crude.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "weekly_crude_oil_field_production",
+      "name": "Weekly U.S. crude oil field production",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "state_or_area",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPC0_FPF_SAK_MBBLD", "W_EPC0_FPF_R48_MBBLD", "WCRFPUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["state_or_area", "national"],
+        "source_geography_ids": ["us.ak", "us.lower48", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this weekly crude-oil production estimate by city."},
+          {"level_id": "county", "reason": "Weekly crude-oil production is not published by county in this summary series."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly production estimate is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly production estimate is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "crude-oil",
+        "product_label": "Crude oil",
+        "measure_id": "production",
+        "measure_label": "Weekly production",
+        "component_role": "headline-total",
+        "reference_term_ids": [],
+        "display_order": 10
+      },
+      "caveats": [
+        "EIA publishes exact weekly rows for Alaska, the Lower 48 States, and the United States; the separate monthly series remains the source for broader state and producing-area detail.",
+        "Alaska and Lower 48 are source-published companion regions. Do not allocate them to fields or cities, and do not mix them with the published U.S. total as additive peers."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.refinery_inputs.weekly",
+      "provider_id": "eia",
+      "metric_id": "refinery_crude_oil_inputs",
+      "name": "Crude oil inputs to refineries (crude runs)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WCRRIP12", "WCRRIP22", "WCRRIP32", "WCRRIP42", "WCRRIP52", "WCRRIUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this weekly refinery-input series by city or refinery."},
+          {"level_id": "county", "reason": "EIA does not publish this weekly refinery-input series by county."},
+          {"level_id": "state_or_area", "reason": "Do not allocate PADD refinery inputs to states or producing areas."},
+          {"level_id": "padd_subdistrict", "reason": "This exact weekly refinery-input series is published by PADD and for the United States, not by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "refinery-activity",
+        "product_family_label": "Refinery activity",
+        "product_id": "refinery-crude-inputs",
+        "product_label": "Refinery crude inputs (crude runs)",
+        "measure_id": "inputs",
+        "measure_label": "Crude inputs",
+        "component_role": "source-defined-product",
+        "reference_term_ids": ["refinery-crude-inputs"],
+        "display_order": 20
+      },
+      "caveats": [
+        "Crude inputs are refinery throughput, not crude production, operable capacity, or utilization.",
+        "Only mutually exclusive PADD observations may be combined; complete same-week coverage is required and the source-published U.S. value remains preferred."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.commercial_stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "commercial_crude_oil_stocks_excluding_spr",
+      "name": "Commercial crude oil stocks excluding SPR",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "city",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPC0_SAX_YCUOK_MBBL", "WCESTP11", "WCESTP21", "WCESTP31", "WCESTP41", "WCESTP51", "WCESTUS1"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["city", "padd", "national"],
+        "source_geography_ids": ["us.ok.cushing", "us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "county", "reason": "Cushing is the only activated official local crude-stock node; county detail is not published by this series."},
+          {"level_id": "state_or_area", "reason": "The Cushing observation is a source-defined local storage hub, not permission to infer Oklahoma or other state stocks."},
+          {"level_id": "padd_subdistrict", "reason": "This exact commercial crude-stock series is published for Cushing, PADDs, and the United States, not PADD subdistricts."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "commercial-crude-oil",
+        "product_label": "Commercial crude oil excluding SPR",
+        "measure_id": "stocks",
+        "measure_label": "Ending stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": ["commercial-crude-stocks", "cushing-crude-stocks", "petroleum-stocks"],
+        "display_order": 30
+      },
+      "caveats": [
+        "Commercial crude stocks exclude the Strategic Petroleum Reserve. Cushing is a source-published local storage-hub observation nested under PADD 2, not a state total.",
+        "Only mutually exclusive PADD rows may be combined; never add Cushing to PADD 2 because it is already contained within that district."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.spr_stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "strategic_petroleum_reserve_crude_stocks",
+      "name": "Strategic Petroleum Reserve crude oil stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WCSSTUS1"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WCSSTUS1"},
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "The activated SPR stock series is a U.S. total, not a site-level series."},
+          {"level_id": "county", "reason": "The activated SPR stock series is not published by county."},
+          {"level_id": "state_or_area", "reason": "The activated SPR stock series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "The activated SPR stock series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "The activated SPR stock series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "strategic-petroleum-reserve-crude-oil",
+        "product_label": "Strategic Petroleum Reserve crude oil",
+        "measure_id": "stocks",
+        "measure_label": "SPR stocks",
+        "component_role": "component",
+        "parent_product_id": "total-crude-oil-including-spr",
+        "reference_term_ids": ["strategic-petroleum-reserve", "petroleum-stocks"],
+        "display_order": 40
+      },
+      "caveats": [
+        "SPR barrels are government emergency reserves and are distinct from commercial crude inventories.",
+        "Do not add this component to a total-crude-stocks-including-SPR series; it is already included there."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.total_stocks_including_spr.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_crude_oil_stocks_including_spr",
+      "name": "Total crude oil stocks including SPR",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WCRSTUS1"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WCRSTUS1"},
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "Total U.S. crude stocks including SPR are not published as city observations."},
+          {"level_id": "county", "reason": "Total U.S. crude stocks including SPR are not published by county."},
+          {"level_id": "state_or_area", "reason": "Total U.S. crude stocks including SPR are not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "Total U.S. crude stocks including SPR are not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This inclusive crude-stock total is activated only at the U.S. level."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "total-crude-oil-including-spr",
+        "product_label": "Total crude oil including SPR",
+        "measure_id": "stocks",
+        "measure_label": "Total stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": ["commercial-crude-stocks", "strategic-petroleum-reserve", "petroleum-stocks"],
+        "display_order": 50
+      },
+      "caveats": [
+        "This inclusive U.S. total contains both commercial crude inventories and the Strategic Petroleum Reserve.",
+        "Never stack it with commercial crude or SPR child series."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.commercial_imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "commercial_crude_oil_imports",
+      "name": "Commercial crude oil imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WCEIMP12", "WCEIMP22", "WCEIMP32", "WCEIMP42", "WCEIMP52", "WCEIMUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this weekly commercial crude-import series by city."},
+          {"level_id": "county", "reason": "EIA does not publish this weekly commercial crude-import series by county."},
+          {"level_id": "state_or_area", "reason": "PADD crude imports represent district of entry and must not be allocated to states or destinations."},
+          {"level_id": "padd_subdistrict", "reason": "This exact commercial crude-import series is published by PADD and for the United States, not by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "commercial-crude-oil",
+        "product_label": "Commercial crude oil excluding SPR",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["petroleum-imports"],
+        "display_order": 60
+      },
+      "caveats": [
+        "PADD imports are recorded by district of entry, not final destination or consumption region.",
+        "Only mutually exclusive PADD rows may be combined with complete same-week coverage; use the source-published U.S. total for the national view."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_exports",
+      "name": "Crude oil exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WCREXUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WCREXUS2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly crude-export series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly crude-export series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly crude-export series is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly crude-export series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly crude-export series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "crude-oil",
+        "product_label": "Crude oil",
+        "measure_id": "exports",
+        "measure_label": "Exports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["petroleum-exports"],
+        "display_order": 70
+      },
+      "caveats": [
+        "Exports are weekly average outbound flows and can be volatile because individual cargoes are large.",
+        "This source series is U.S.-only and must not be allocated to PADDs, ports, states, or cities."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.net_imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_net_imports",
+      "name": "Crude oil net imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WCRNTUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WCRNTUS2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly crude net-import series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly crude net-import series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly crude net-import series is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly crude net-import series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly crude net-import series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "crude-oil",
+        "product_label": "Crude oil",
+        "measure_id": "net-imports",
+        "measure_label": "Net imports",
+        "component_role": "derived-balance",
+        "reference_term_ids": ["petroleum-imports", "petroleum-exports"],
+        "display_order": 80
+      },
+      "caveats": [
+        "Net imports equal imports less exports and can be negative when exports exceed imports.",
+        "Do not add net imports to gross imports or exports; the net series already combines both directions."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.days_supply.weekly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_days_of_supply_excluding_spr",
+      "name": "Crude oil days of supply excluding SPR",
+      "unit": "days",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPC0_VSD_NUS_DAYS"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "W_EPC0_VSD_NUS_DAYS"},
+          "expected_unit": "DAYS"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_days_of_supply",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This days-of-supply ratio is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This days-of-supply ratio is not published by county."},
+          {"level_id": "state_or_area", "reason": "This days-of-supply ratio is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This days-of-supply ratio is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This days-of-supply ratio is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-oil",
+        "product_family_label": "Crude oil",
+        "product_id": "commercial-crude-oil",
+        "product_label": "Commercial crude oil excluding SPR",
+        "measure_id": "days-of-supply",
+        "measure_label": "Days of supply",
+        "component_role": "ratio",
+        "reference_term_ids": ["days-of-supply", "commercial-crude-stocks"],
+        "display_order": 90
+      },
+      "caveats": [
+        "Days of supply is a source-published coverage ratio, not an additive inventory quantity and not a forecast of the date inventories will be exhausted.",
+        "The crude measure excludes SPR stocks and must not be summed or averaged across regions."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.petroleum.total_stocks_including_spr.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_crude_oil_and_petroleum_products_stocks_including_spr",
+      "name": "Total crude oil and petroleum products stocks including SPR",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WTTSTUS1"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WTTSTUS1"},
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This inclusive petroleum-stock total is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This inclusive petroleum-stock total is not published by county."},
+          {"level_id": "state_or_area", "reason": "This inclusive petroleum-stock total is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This inclusive petroleum-stock total is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This inclusive petroleum-stock total is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "all-petroleum-products",
+        "product_family_label": "All petroleum",
+        "product_id": "total-crude-oil-and-petroleum-products-including-spr",
+        "product_label": "Crude oil and petroleum products including SPR",
+        "measure_id": "stocks",
+        "measure_label": "Total stocks including SPR",
+        "component_role": "headline-total",
+        "reference_term_ids": ["petroleum-stocks", "strategic-petroleum-reserve"],
+        "display_order": 20001
+      },
+      "caveats": [
+        "This broad U.S. stock total includes crude oil, petroleum products, and the Strategic Petroleum Reserve.",
+        "It overlaps the excluding-SPR total and its crude and product components; never stack these alternate views."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.petroleum.total_stocks_excluding_spr.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_crude_oil_and_petroleum_products_stocks_excluding_spr",
+      "name": "Total crude oil and petroleum products stocks excluding SPR",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WTESTUS1"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WTESTUS1"},
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This excluding-SPR petroleum-stock total is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This excluding-SPR petroleum-stock total is not published by county."},
+          {"level_id": "state_or_area", "reason": "This excluding-SPR petroleum-stock total is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This excluding-SPR petroleum-stock total is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This excluding-SPR petroleum-stock total is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "all-petroleum-products",
+        "product_family_label": "All petroleum",
+        "product_id": "total-crude-oil-and-petroleum-products-excluding-spr",
+        "product_label": "Crude oil and petroleum products excluding SPR",
+        "measure_id": "stocks",
+        "measure_label": "Total stocks excluding SPR",
+        "component_role": "headline-total",
+        "reference_term_ids": ["petroleum-stocks", "commercial-crude-stocks"],
+        "display_order": 20002
+      },
+      "caveats": [
+        "This broad U.S. stock total includes commercial crude oil and petroleum products but excludes SPR crude.",
+        "It overlaps the including-SPR total and its crude and product components; never stack these alternate views."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.petroleum.total_imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_crude_oil_and_petroleum_products_imports",
+      "name": "Total crude oil and petroleum products imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WTTIM_R10-Z00_2", "WTTIM_R20-Z00_2", "WTTIM_R30-Z00_2", "WTTIM_R40-Z00_2", "WTTIM_R50-Z00_2", "WTTIMUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this weekly total-import series by city."},
+          {"level_id": "county", "reason": "EIA does not publish this weekly total-import series by county."},
+          {"level_id": "state_or_area", "reason": "PADD imports represent district of entry and must not be allocated to states or destinations."},
+          {"level_id": "padd_subdistrict", "reason": "This exact total-import series is published by PADD and for the United States, not by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "all-petroleum-products",
+        "product_family_label": "All petroleum",
+        "product_id": "total-crude-oil-and-petroleum-products",
+        "product_label": "Crude oil and petroleum products",
+        "measure_id": "imports",
+        "measure_label": "Total imports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["petroleum-imports"],
+        "display_order": 20003
+      },
+      "caveats": [
+        "This is the inclusive crude-oil-and-products import rate; do not add crude or individual product imports back to it.",
+        "PADD values represent district of entry. Only mutually exclusive PADDs may be combined with complete same-week coverage; prefer the published U.S. total nationally."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.petroleum.total_exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_crude_oil_and_petroleum_products_exports",
+      "name": "Total crude oil and petroleum products exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WTTEXUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WTTEXUS2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly total-export series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly total-export series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly total-export series is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly total-export series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly total-export series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "all-petroleum-products",
+        "product_family_label": "All petroleum",
+        "product_id": "total-crude-oil-and-petroleum-products",
+        "product_label": "Crude oil and petroleum products",
+        "measure_id": "exports",
+        "measure_label": "Total exports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["petroleum-exports"],
+        "display_order": 20004
+      },
+      "caveats": [
+        "This is the inclusive crude-oil-and-products export rate; do not add crude or individual product exports back to it.",
+        "The source series is U.S.-only and must not be allocated to PADDs, ports, states, or cities."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.petroleum.total_net_imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_crude_oil_and_petroleum_products_net_imports",
+      "name": "Total crude oil and petroleum products net imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WTTNTUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WTTNTUS2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly total net-import series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly total net-import series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly total net-import series is not published by state or producing area."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly total net-import series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly total net-import series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "all-petroleum-products",
+        "product_family_label": "All petroleum",
+        "product_id": "total-crude-oil-and-petroleum-products",
+        "product_label": "Crude oil and petroleum products",
+        "measure_id": "net-imports",
+        "measure_label": "Total net imports",
+        "component_role": "derived-balance",
+        "reference_term_ids": ["petroleum-imports", "petroleum-exports"],
+        "display_order": 20005
+      },
+      "caveats": [
+        "Net imports equal imports less exports and can be negative when exports exceed imports.",
+        "Do not add this net series to the gross import or export series; it already combines both directions."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.gasoline.total.days_supply.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_motor_gasoline_days_of_supply",
+      "name": "Total motor gasoline days of supply",
+      "unit": "days",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPM0_VSD_NUS_DAYS"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "W_EPM0_VSD_NUS_DAYS"},
+          "expected_unit": "DAYS"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_days_of_supply",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This gasoline days-of-supply ratio is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This gasoline days-of-supply ratio is not published by county."},
+          {"level_id": "state_or_area", "reason": "This gasoline days-of-supply ratio is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This gasoline days-of-supply ratio is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This gasoline days-of-supply ratio is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "gasoline",
+        "product_family_label": "Gasoline",
+        "product_id": "total-motor-gasoline",
+        "product_label": "Total motor gasoline",
+        "measure_id": "days-of-supply",
+        "measure_label": "Days of supply",
+        "component_role": "ratio",
+        "reference_term_ids": ["total-motor-gasoline", "days-of-supply"],
+        "display_order": 106
+      },
+      "caveats": [
+        "Days of supply is a source-published coverage ratio, not an additive inventory quantity or a forecast of exhaustion.",
+        "Do not sum or average this ratio across products or geographies."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.distillate.total.days_supply.weekly",
+      "provider_id": "eia",
+      "metric_id": "total_distillate_fuel_oil_days_of_supply",
+      "name": "Total distillate fuel oil days of supply",
+      "unit": "days",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPD0_VSD_NUS_DAYS"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "W_EPD0_VSD_NUS_DAYS"},
+          "expected_unit": "DAYS"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_days_of_supply",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This distillate days-of-supply ratio is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This distillate days-of-supply ratio is not published by county."},
+          {"level_id": "state_or_area", "reason": "This distillate days-of-supply ratio is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This distillate days-of-supply ratio is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This distillate days-of-supply ratio is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "distillate",
+        "product_family_label": "Distillate / diesel",
+        "product_id": "total-distillate-fuel-oil",
+        "product_label": "Total distillate fuel oil",
+        "measure_id": "days-of-supply",
+        "measure_label": "Days of supply",
+        "component_role": "ratio",
+        "reference_term_ids": ["distillate-fuel-oil", "days-of-supply"],
+        "display_order": 1006
+      },
+      "caveats": [
+        "Days of supply is a source-published coverage ratio, not an additive inventory quantity or a forecast of exhaustion.",
+        "Total distillate is broader than road diesel; do not interpret this ratio as diesel-only coverage."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.jet.kerosene_type.days_supply.weekly",
+      "provider_id": "eia",
+      "metric_id": "kerosene_type_jet_fuel_days_of_supply",
+      "name": "Kerosene-type jet fuel days of supply",
+      "unit": "days",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPJK_VSD_NUS_DAYS"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "W_EPJK_VSD_NUS_DAYS"},
+          "expected_unit": "DAYS"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_days_of_supply",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This jet-fuel days-of-supply ratio is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This jet-fuel days-of-supply ratio is not published by county."},
+          {"level_id": "state_or_area", "reason": "This jet-fuel days-of-supply ratio is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This jet-fuel days-of-supply ratio is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This jet-fuel days-of-supply ratio is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "jet-fuel",
+        "product_family_label": "Jet fuel",
+        "product_id": "kerosene-type-jet-fuel",
+        "product_label": "Kerosene-type jet fuel",
+        "measure_id": "days-of-supply",
+        "measure_label": "Days of supply",
+        "component_role": "ratio",
+        "reference_term_ids": ["kerosene-type-jet-fuel", "days-of-supply"],
+        "display_order": 1506
+      },
+      "caveats": [
+        "Days of supply is a source-published coverage ratio, not an additive inventory quantity or a forecast of exhaustion.",
+        "Kerosene-type jet fuel remains a separate finished-product family and must not be combined with distillate or gasoline ratios."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.propane.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "propane_propylene_stocks_excluding_propylene_at_terminals",
+      "name": "Propane/propylene stocks excluding propylene at terminals",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd_subdistrict",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {
+            "series": ["WPRST1A1", "WPRST1B1", "WPRST1C1", "WPRSTP11", "WPRSTP21", "WPRSTP31", "WPRST_R4N5_1", "WPRSTUS1"]
+          },
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd_subdistrict", "padd", "national"],
+        "source_geography_ids": ["us.padd.1a", "us.padd.1b", "us.padd.1c", "us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4-and-5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this propane/propylene stock definition by city."},
+          {"level_id": "county", "reason": "This activated propane/propylene stock definition is not published by county."},
+          {"level_id": "state_or_area", "reason": "This activated propane/propylene stock definition is not published by state."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "propane",
+        "product_family_label": "Propane",
+        "product_id": "propane-propylene",
+        "product_label": "Propane/propylene",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": ["propane-propylene", "petroleum-stocks"],
+        "display_order": 3001
+      },
+      "caveats": [
+        "This is the current EPLLPZ/SAXP definition that excludes propylene at terminals. The older SAE series including terminal propylene ended in 2020 and is not spliced into this history.",
+        "EIA publishes PADD 1 subdistricts, PADDs 1 through 3, a combined PADD 4-and-5 region, and the U.S. total; the combined region must never be split synthetically.",
+        "Treat definition regimes as distinct; a historical break must not be hidden by joining incompatible stock concepts."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.propane.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "propane_propylene_production",
+      "name": "Propane/propylene production",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WPRTP_NUS_2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WPRTP_NUS_2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly propane/propylene production series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly propane/propylene production series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly propane/propylene production series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly propane/propylene production series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly propane/propylene production series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "propane",
+        "product_family_label": "Propane",
+        "product_id": "propane-propylene",
+        "product_label": "Propane/propylene",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "headline-total",
+        "reference_term_ids": ["propane-propylene"],
+        "display_order": 3002
+      },
+      "caveats": [
+        "This is a weekly average production rate for the source-defined propane/propylene category.",
+        "It is not refinery capacity and must not be added to stocks without converting rates to compatible period volumes."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.propane.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "propane_propylene_imports",
+      "name": "Propane/propylene imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {
+            "series": ["WPRIMP12", "WPRIMP22", "WPRIMP32", "W_EPLLPZ_IM0_R45-Z00_MBBLD", "WPRIM_NUS-Z00_2"]
+          },
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4-and-5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly propane/propylene import series is not published by city."},
+          {"level_id": "county", "reason": "This weekly propane/propylene import series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly propane/propylene import series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly propane/propylene import series is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "propane",
+        "product_family_label": "Propane",
+        "product_id": "propane-propylene",
+        "product_label": "Propane/propylene",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["propane-propylene", "petroleum-imports"],
+        "display_order": 3003
+      },
+      "caveats": [
+        "Imports are weekly average inbound flows for the source-defined propane/propylene category.",
+        "Imports are published by district of entry for PADDs 1 through 3, a combined PADD 4-and-5 region, and the United States; they are not destination demand and the combined region must not be split."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.propane.exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "propane_exports",
+      "name": "Propane exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPLLPZ_EEX_NUS-Z00_MBBLD"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "W_EPLLPZ_EEX_NUS-Z00_MBBLD"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly propane/propylene export series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly propane/propylene export series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly propane/propylene export series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly propane/propylene export series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly propane/propylene export series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "propane",
+        "product_family_label": "Propane",
+        "product_id": "propane",
+        "product_label": "Propane",
+        "measure_id": "exports",
+        "measure_label": "Exports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["propane", "petroleum-exports"],
+        "display_order": 3004
+      },
+      "caveats": [
+        "This exact EIA source series is propane only, unlike the nearby propane/propylene stocks, production, imports, product-supplied, and days-of-supply definitions. Do not treat those product boundaries as identical.",
+        "Exports are weekly average outbound flows and can be volatile because individual cargoes are large.",
+        "The source series is U.S.-only and must not be allocated to PADDs, terminals, states, or cities."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.propane.product_supplied.weekly",
+      "provider_id": "eia",
+      "metric_id": "propane_propylene_product_supplied",
+      "name": "Propane/propylene product supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WPRUP_NUS_2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WPRUP_NUS_2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly propane/propylene implied-demand series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly propane/propylene implied-demand series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly propane/propylene implied-demand series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly propane/propylene implied-demand series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly propane/propylene implied-demand series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "propane",
+        "product_family_label": "Propane",
+        "product_id": "propane-propylene",
+        "product_label": "Propane/propylene",
+        "measure_id": "product-supplied",
+        "measure_label": "Product supplied (implied demand)",
+        "component_role": "headline-total",
+        "reference_term_ids": ["propane-propylene", "product-supplied-implied-demand"],
+        "display_order": 3005
+      },
+      "caveats": [
+        "Product supplied is an implied-demand balance measure, not a direct meter reading of end-user consumption.",
+        "Weekly values can reflect trade timing, stock movements, and balancing adjustments as well as end-use demand."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.propane.days_supply.weekly",
+      "provider_id": "eia",
+      "metric_id": "propane_propylene_days_of_supply",
+      "name": "Propane/propylene days of supply",
+      "unit": "days",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["W_EPLLPZ_VSD_NUS_DAYS"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "W_EPLLPZ_VSD_NUS_DAYS"},
+          "expected_unit": "DAYS"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_days_of_supply",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This propane/propylene days-of-supply ratio is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This propane/propylene days-of-supply ratio is not published by county."},
+          {"level_id": "state_or_area", "reason": "This propane/propylene days-of-supply ratio is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This propane/propylene days-of-supply ratio is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This propane/propylene days-of-supply ratio is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "propane",
+        "product_family_label": "Propane",
+        "product_id": "propane-propylene",
+        "product_label": "Propane/propylene",
+        "measure_id": "days-of-supply",
+        "measure_label": "Days of supply",
+        "component_role": "ratio",
+        "reference_term_ids": ["propane-propylene", "days-of-supply"],
+        "display_order": 3006
+      },
+      "caveats": [
+        "Days of supply is a source-published coverage ratio, not an additive inventory quantity or a forecast of exhaustion.",
+        "Do not sum or average this ratio across products or geographies."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.residual_fuel_oil.stocks.weekly",
+      "provider_id": "eia",
+      "metric_id": "residual_fuel_oil_stocks",
+      "name": "Residual fuel oil stocks",
+      "unit": "thousand_barrels",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WRESTP11", "WRESTP21", "WRESTP31", "WRESTP41", "WRESTP51", "WRESTUS1"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "end_of_week_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly residual-fuel-oil stock series is not published by city."},
+          {"level_id": "county", "reason": "This weekly residual-fuel-oil stock series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly residual-fuel-oil stock series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly residual-fuel-oil stock series is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "residual-fuel-oil",
+        "product_family_label": "Residual fuel oil",
+        "product_id": "residual-fuel-oil",
+        "product_label": "Residual fuel oil",
+        "measure_id": "stocks",
+        "measure_label": "Stocks",
+        "component_role": "headline-total",
+        "reference_term_ids": ["residual-fuel-oil", "petroleum-stocks"],
+        "display_order": 4001
+      },
+      "caveats": [
+        "This is an end-of-week inventory level for EIA's residual-fuel-oil category, not a flow or storage-capacity measure.",
+        "EIA publishes source rows for each PADD and the United States; only complete, mutually exclusive PADD rows may be combined."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.residual_fuel_oil.production.weekly",
+      "provider_id": "eia",
+      "metric_id": "residual_fuel_oil_production",
+      "name": "Residual fuel oil production",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WRERPP12", "WRERPP22", "WRERPP32", "WRERPP42", "WRERPP52", "WRERPUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly residual-fuel-oil production series is not published by city."},
+          {"level_id": "county", "reason": "This weekly residual-fuel-oil production series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly residual-fuel-oil production series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly residual-fuel-oil production series is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "residual-fuel-oil",
+        "product_family_label": "Residual fuel oil",
+        "product_id": "residual-fuel-oil",
+        "product_label": "Residual fuel oil",
+        "measure_id": "production",
+        "measure_label": "Production",
+        "component_role": "headline-total",
+        "reference_term_ids": ["residual-fuel-oil"],
+        "display_order": 4002
+      },
+      "caveats": [
+        "This is a weekly average production rate for EIA's residual-fuel-oil category.",
+        "EIA publishes source rows for each PADD and the United States; only complete, mutually exclusive PADD rows may be combined.",
+        "It is not refinery capacity and must not be added to stocks without converting rates to compatible period volumes."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.residual_fuel_oil.imports.weekly",
+      "provider_id": "eia",
+      "metric_id": "residual_fuel_oil_imports",
+      "name": "Residual fuel oil imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WREIM_R10-Z00_2", "WREIM_R20-Z00_2", "WREIM_R30-Z00_2", "WREIM_R40-Z00_2", "WREIM_R50-Z00_2", "WREIMUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly residual-fuel-oil import series is not published by city."},
+          {"level_id": "county", "reason": "This weekly residual-fuel-oil import series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly residual-fuel-oil import series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly residual-fuel-oil import series is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "residual-fuel-oil",
+        "product_family_label": "Residual fuel oil",
+        "product_id": "residual-fuel-oil",
+        "product_label": "Residual fuel oil",
+        "measure_id": "imports",
+        "measure_label": "Imports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["residual-fuel-oil", "petroleum-imports"],
+        "display_order": 4003
+      },
+      "caveats": [
+        "Imports are weekly average inbound flows for EIA's residual-fuel-oil category.",
+        "Imports are published by PADD district of entry and for the United States; only complete, mutually exclusive PADD rows may be combined."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.residual_fuel_oil.exports.weekly",
+      "provider_id": "eia",
+      "metric_id": "residual_fuel_oil_exports",
+      "name": "Residual fuel oil exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WREEXUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WREEXUS2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly residual-fuel-oil export series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly residual-fuel-oil export series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly residual-fuel-oil export series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly residual-fuel-oil export series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly residual-fuel-oil export series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "residual-fuel-oil",
+        "product_family_label": "Residual fuel oil",
+        "product_id": "residual-fuel-oil",
+        "product_label": "Residual fuel oil",
+        "measure_id": "exports",
+        "measure_label": "Exports",
+        "component_role": "headline-total",
+        "reference_term_ids": ["residual-fuel-oil", "petroleum-exports"],
+        "display_order": 4004
+      },
+      "caveats": [
+        "Exports are weekly average outbound flows and can be volatile because individual cargoes are large.",
+        "The U.S.-only series must not be allocated to PADDs, ports, states, or cities."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.refined.residual_fuel_oil.product_supplied.weekly",
+      "provider_id": "eia",
+      "metric_id": "residual_fuel_oil_product_supplied",
+      "name": "Residual fuel oil product supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "weekly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "national",
+      "source": {
+        "dataset": "Weekly Petroleum Status Report Summary",
+        "route_template": "/v2/petroleum/sum/sndw/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/sndw",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-22",
+        "api_query": {
+          "frequency": "weekly",
+          "data_fields": ["value"],
+          "facet_filters": {"series": ["WREUPUS2"]},
+          "identity_fields": ["period", "duoarea", "series", "units"],
+          "expected_facets": {"series": "WREUPUS2"},
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": [],
+      "period_semantics": "weekly_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["national"],
+        "source_geography_ids": ["us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This weekly residual-fuel-oil implied-demand series is published at the U.S. level only."},
+          {"level_id": "county", "reason": "This weekly residual-fuel-oil implied-demand series is not published by county."},
+          {"level_id": "state_or_area", "reason": "This weekly residual-fuel-oil implied-demand series is not published by state."},
+          {"level_id": "padd_subdistrict", "reason": "This weekly residual-fuel-oil implied-demand series is not published by PADD subdistrict."},
+          {"level_id": "padd", "reason": "This weekly residual-fuel-oil implied-demand series is not published by PADD."}
+        ]
+      },
+      "release": {"rule": "wpsr_release_window", "freshness_grace_hours": 8},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "residual-fuel-oil",
+        "product_family_label": "Residual fuel oil",
+        "product_id": "residual-fuel-oil",
+        "product_label": "Residual fuel oil",
+        "measure_id": "product-supplied",
+        "measure_label": "Product supplied (implied demand)",
+        "component_role": "headline-total",
+        "reference_term_ids": ["residual-fuel-oil", "product-supplied-implied-demand"],
+        "display_order": 4005
+      },
+      "caveats": [
+        "Product supplied is an implied-demand balance measure, not a direct meter reading of end-user consumption.",
+        "Weekly values can reflect trade timing, stock movements, and balancing adjustments as well as end-use demand."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 4
     }
   ]
 }

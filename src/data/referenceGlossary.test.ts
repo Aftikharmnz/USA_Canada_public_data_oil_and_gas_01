@@ -8,9 +8,19 @@ import {
 } from "./referenceGlossary";
 
 describe("petroleum reference glossary", () => {
-  it("contains the required Phase 3 concepts with stable unique ids", () => {
+  it("contains the required market concepts with stable unique ids", () => {
     const ids = referenceGlossary.map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual(expect.arrayContaining([
+      "commercial-crude-stocks",
+      "strategic-petroleum-reserve",
+      "cushing-crude-stocks",
+      "refinery-crude-inputs",
+      "days-of-supply",
+      "propane-propylene",
+      "propane",
+      "residual-fuel-oil",
+    ]));
 
     const searchableTerms = referenceGlossary
       .flatMap((entry) => [entry.term, ...entry.aliases])
@@ -32,6 +42,13 @@ describe("petroleum reference glossary", () => {
       "high sulfur diesel",
       "kerosene-type jet fuel",
       "stocks",
+      "commercial crude inventories",
+      "strategic petroleum reserve",
+      "cushing crude stocks",
+      "crude runs",
+      "days of inventory",
+      "propane and propylene",
+      "residual fuel oil",
       "refinery production",
       "imports",
       "exports",

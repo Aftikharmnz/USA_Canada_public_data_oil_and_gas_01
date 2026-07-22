@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "membership_version": "2026-07-20.3",
+  "membership_version": "2026-07-22.5",
   "policies": [
     {
       "country": "usa",
@@ -24,6 +24,10 @@
       "required_coverage": 1.0,
       "series_ids": [
         "usa.eia.crude.production.monthly",
+        "usa.eia.crude.commercial_imports.weekly",
+        "usa.eia.crude.commercial_stocks.weekly",
+        "usa.eia.crude.refinery_inputs.weekly",
+        "usa.eia.petroleum.total_imports.weekly",
         "usa.eia.refined.distillate.sulfur_0_15ppm.imports.weekly",
         "usa.eia.refined.distillate.sulfur_0_15ppm.production.weekly",
         "usa.eia.refined.distillate.sulfur_0_15ppm.stocks.weekly",
@@ -53,7 +57,12 @@
         "usa.eia.refined.gasoline.total.stocks.weekly",
         "usa.eia.refined.jet.kerosene_type.imports.weekly",
         "usa.eia.refined.jet.kerosene_type.production.weekly",
-        "usa.eia.refined.jet.kerosene_type.stocks.weekly"
+        "usa.eia.refined.jet.kerosene_type.stocks.weekly",
+        "usa.eia.refined.propane.imports.weekly",
+        "usa.eia.refined.propane.stocks.weekly",
+        "usa.eia.refined.residual_fuel_oil.imports.weekly",
+        "usa.eia.refined.residual_fuel_oil.production.weekly",
+        "usa.eia.refined.residual_fuel_oil.stocks.weekly"
       ]
     },
     {

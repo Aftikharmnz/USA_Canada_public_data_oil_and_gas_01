@@ -6,15 +6,15 @@ Automatically detect official releases, merge new and revised history, validate 
 
 ## Implementation state
 
-The credential-safe EIA client, credential-free Statistics Canada/CER clients, strict registry/geography normalization, revision-aware `SnapshotStore`, seasonal/distribution and univariate forecast asset builders, staged refresh orchestrators, `refresh-eia`, `refresh-canada`, and `rebuild-analytics` CLIs, integrity-checked atomic public promotion, and scheduled same-run Pages workflows are implemented. The active plans contain 39 USA definitions and 51 Canada definitions (49 Statistics Canada and 2 CER).
+The credential-safe EIA client, credential-free Statistics Canada/CER clients, strict registry/geography normalization, revision-aware `SnapshotStore`, seasonal/distribution and univariate forecast asset builders, staged refresh orchestrators, `refresh-eia`, `refresh-canada`, and `rebuild-analytics` CLIs, integrity-checked atomic public promotion, and scheduled same-run Pages workflows are implemented. The active plans contain 67 USA definitions (66 weekly and one monthly) and 51 Canada definitions (49 Statistics Canada and 2 CER).
 
-Local Phase 3 activation completed as run `eia-20260719T230756Z`. It inserted 130,964 observations, producing 161,869 canonical observations and 249 verified public chart assets. Canonical JSON is 65.09 MiB, the activation recorded zero revisions, all refined-product definitions have latest period `2026-07-10`, and public verification passed. A normal all-active overlap poll then attempted run `eia-20260719T231244Z`, reported `changed: false` with 7,873 unchanged rows, kept `eia-20260719T230756Z` current, produced no promotion path, and retained the same 249 assets. This verifies no-op suppression after activation.
+Phase 4 is registry-complete with 28 additions and 77 exact source-series keys, but it is not public until the live refresh succeeds. The current promoted USA run remains `analytics-20260720T152511Z`, based on Phase 3 activation run `eia-20260719T230756Z`: 161,869 canonical observations, 249 verified chart assets, and 65.09 MiB canonical JSON. Those counts describe the last-known-good pre-Phase-4 vintage, not the 67-definition target.
 
 The current local Canada refresh is `canada-20260720T192043Z` (initial activation `canada-20260720T000329Z`). It contains 49,726 canonical observations, 404 verified public chart assets, 21.09 MiB of canonical JSON, and zero revisions in the crude-detail onboarding run. Statistics Canada reaches source month `2026-04`; CER reaches week `2026-06-16`. The Canada publisher preserves source statuses and latest source period separately from latest numeric period, skips a generation when data/status/freshness evidence is unchanged, and leaves the prior generation current on any retrieval or validation failure.
 
 The standalone forecast layer is activated locally with build ID `observed-2026-07-20.1_forecast-2026-07-20.4` and forecast methodology `2026-07-20.4`. Provider-free rebuild `analytics-20260720T152511Z` remains the current USA run, while Canada refresh `canada-20260720T192043Z` rebuilt 404 matching observed/forecast asset pairs. The generated country `forecast_summary` is authoritative for the current vintage: USA has 248 ready and 1 limited-history record; Canada has 360 ready, 18 limited-history, and 26 unavailable records with explicit reasons. Forecasts cover exactly 3 source periods and use latest-revised pseudo-out-of-sample diagnostics rather than first-release vintage backtests or machine learning. Ready records export aligned residual samples for strict browser-computed regional intervals. Most records are univariate statistical projections; national weekly distillate and jet stocks additionally compare a registered fundamental net-balance candidate built from the same release's flow series.
 
-The repository is published at `Aftikharmnz/USA_Canada_public_data_oil_and_gas_01`, and the verified Pages site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. The initial CI and Pages deployment passed. Automated EIA refresh still requires rotation of the exposed key and a replacement `EIA_API_KEY` GitHub secret. Canada itself needs no secret. The existing `python -m pipeline.energy_dashboard.cli plan` command remains an informational Phase 1 planner, not a live refresh.
+The repository is published at `Aftikharmnz/USA_Canada_public_data_oil_and_gas_01`, and the verified Pages site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. CI and Pages deployment pass. The replacement `EIA_API_KEY` GitHub secret is configured, and automated EIA refresh has already captured provider updates. Canada itself needs no secret. The existing `python -m pipeline.energy_dashboard.cli plan` command remains an informational Phase 1 planner, not a live refresh.
 
 The current generation store writes:
 
@@ -42,7 +42,7 @@ GitHub Actions schedules are best-effort polling triggers, not exact timers. Git
 ## Secrets
 
 - Required for EIA jobs: repository or environment secret `EIA_API_KEY`.
-- The key previously shared in conversation is considered exposed; rotate it before live use.
+- Use only the configured replacement key; never recover or reuse an earlier exposed value.
 - Never echo the secret, a credentialed URL, request headers containing it, or an exception object that includes the full request.
 - Logs and provenance store only a redacted route template.
 - Statistics Canada and CER public downloads currently require no project credential; do not add secrets unnecessarily.
@@ -61,7 +61,7 @@ The output names the exact active series, route, frequency, fields, facets, opti
 
 ### Refresh all active series and publish browser assets
 
-First rotate the exposed EIA key and place only the replacement in the current process environment as `EIA_API_KEY`. Do not put the key in the command line or a committed `.env` file.
+Place only the configured replacement EIA key in the current process environment as `EIA_API_KEY`. Do not put the key in the command line or a committed `.env` file.
 
 ```text
 python -m pipeline.energy_dashboard.cli refresh-eia --store data/cache/eia --promote-to public/data/usa
@@ -148,12 +148,12 @@ The current UI calls the 80%/90%/95% ranges **prediction intervals**, not confid
 
 The repository is connected and Pages is configured for GitHub Actions. Complete and verify the remaining one-time data-automation steps in this order:
 
-Current publication state: the initial `main` push, CI validation, and Pages deployment have passed. The remaining activation step is to rotate the exposed EIA key, add the replacement as `EIA_API_KEY`, and run the first dry-run/live refresh checks. The numbered bootstrap items below are retained as historical setup guidance.
+Current publication state: `main`, CI validation, Pages deployment, and the secret-backed EIA update workflow are operational. Phase 4's remaining activation step is a successful all-active refresh and promotion. The numbered bootstrap items below are retained as historical setup guidance.
 
-1. **Rotate the EIA key first.** The previously shared key is exposed. Request a new key at <https://www.eia.gov/opendata/register.php>, keep it only in the `EIA_API_KEY` environment variable locally, and deactivate the old key. Never commit or paste it anywhere.
+1. **Use only the replacement EIA key.** It is already configured for GitHub Actions. For local work, keep it only in the `EIA_API_KEY` process environment. Never commit or paste it anywhere.
 2. **Verify the ignore rules before the first commit.** `.gitignore` must exclude `/*.pdf` (local reference books are copyrighted and ~250 MB), `.env*`, `node_modules/`, `.pnpm-store/`, and `dist/`. `data/cache/` and `public/data/` are deliberately tracked — the refresh workflows commit them.
 3. **Initialize and push:** from the project folder run `git init -b main`, `git add -A`, review `git status` for anything unexpected (especially PDFs or `.env`), then `git commit -m "initial import"`. Create the GitHub repository (public, because free-plan Pages requires it), add the remote, and `git push -u origin main`.
-4. **Add the secret:** repository Settings → Secrets and variables → Actions → new repository secret `EIA_API_KEY` with the rotated key.
+4. **Verify the secret if needed:** repository Settings → Secrets and variables → Actions must contain `EIA_API_KEY`; never reveal its value.
 5. **Enable Pages via Actions:** Settings → Pages → Build and deployment → Source: **GitHub Actions**. The push to `main` triggers `deploy-pages.yml` for the first site build.
 6. **Confirm workflow permissions:** Settings → Actions → General → Workflow permissions → **Read and write permissions**, so the refresh workflows can push data commits with `GITHUB_TOKEN`. Do not enable required branch protection that blocks the `github-actions[bot]` pusher on `main`, or the data commits will fail.
 7. **First live run:** manually dispatch `Refresh EIA data and deploy` with `dry_run: true` to validate the plan, then again with defaults for a live refresh. Do the same for the Canada workflow (no secret required).
@@ -175,7 +175,7 @@ The implemented workflow is [`.github/workflows/refresh-data.yml`](../.github/wo
 
 The workflow shares the `pages` concurrency group with the ordinary Pages deploy workflow and never cancels an in-progress deployment. Scheduled runs are best-effort; the timezone setting handles Eastern daylight-saving transitions, but GitHub can still delay/drop schedules or disable them after repository inactivity.
 
-For every live poll, the workflow runs Python tests, refreshes/promotes all 39 active definitions with retention 2, and reads the CLI's `changed` result. `changed: false` exits successfully with no commit, frontend build, or deploy. On `changed: true`, the refresh has already rebuilt observed analytics and all matching forecasts with the current combined build ID. The workflow verifies both sets of public paths/assets/checksums and the 90 MiB canonical guard, scans both cache and public output for forbidden markers and the exact runtime secret, runs the locked pnpm install/check/build, commits only `data/cache/eia` and `public/data/usa`, pushes, uploads `dist`, and deploys the primary `/usa/`, `/canada/`, and `/reference/` pages, the secondary `/usa-weekly/` verified-weekly workspace, and the backwards-compatible `/products/` USA-Refined entry in the same workflow.
+For every live poll, the workflow runs Python tests, refreshes/promotes all 67 active definitions with retention 2, and reads the CLI's `changed` result. `changed: false` exits successfully with no commit, frontend build, or deploy. On `changed: true`, the refresh has already rebuilt observed analytics and all matching forecasts with the current combined build ID. The workflow verifies both sets of public paths/assets/checksums and the 90 MiB canonical guard, scans both cache and public output for forbidden markers and the exact runtime secret, runs the locked pnpm install/check/build, commits only `data/cache/eia` and `public/data/usa`, pushes, uploads `dist`, and deploys the primary `/usa/`, `/canada/`, and `/reference/` pages, the secondary `/usa-weekly/` verified-weekly workspace, and the backwards-compatible `/products/` USA-Refined entry in the same workflow.
 
 Same-run deployment is required because a workflow's `GITHUB_TOKEN` push intentionally does not trigger another workflow. A failure before commit leaves repository and Pages unchanged. If push succeeds but Pages deployment fails, the prior Pages artifact stays live; rerun manual dispatch with `publish_unchanged: true` to force a rebuild/deployment even when EIA has not changed again.
 
@@ -210,7 +210,7 @@ As with the EIA workflow, a failure before commit leaves the repository and prio
 
 - Official WPSR summary release is normally after 10:30 a.m. Eastern on Wednesday, with published holiday exceptions.
 - The implemented workflow polls Wednesday at 11:17, 12:47, and 15:23 Eastern, with Thursday 11:19 and weekday 13:37 safety opportunities.
-- The weekly poll covers the overview weekly series plus all 36 active refined-product definitions. A failure in any selected active definition blocks the candidate generation rather than publishing a partially updated product dashboard.
+- The weekly poll covers all 66 active weekly definitions, including the 28 Phase 4 additions. A failure in any selected active definition blocks the candidate generation rather than publishing a partially updated dashboard.
 - API data can trail the report. Unchanged canonical values produce `changed: false` and no deployment.
 - Scheduled freshness currently remains `unknown` because no expected period/release calendar is passed. Add reviewed holiday-calendar derivation before using automated `due`/`late` claims.
 
@@ -319,7 +319,7 @@ The public status shows latest observation period, provider release/update time 
 ### Canonical size guard
 
 - Keep the last-known-good generation and public assets.
-- Confirm that the 2014-01-01 Phase 3 history boundary was applied and that duplicate dimensions/geographies were not introduced.
+- Confirm that the 2014-01-01 USA weekly history boundary was applied and that duplicate dimensions/geographies were not introduced.
 - Inspect manifest byte/row/asset counts and compare them with the preceding generation.
 - Do not raise the 90 MiB guard as an incident workaround. Propose a reviewed partitioning/object-storage migration if valid history no longer fits.
 
@@ -342,9 +342,9 @@ Use the provider workflow inputs documented under **Automated GitHub refresh and
 - Latest expected periods match source pages.
 - No series remains `due`, `late`, `error`, or `unknown` unexpectedly. The current initial/scheduled `unknown` state is expected until release-calendar/expected-period derivation is implemented.
 - Registry metadata fingerprints still match.
-- The manifest contains all 39 active definitions, all referenced assets resolve, and classified counts remain 36 refined products unless an approved catalog change says otherwise.
+- After Phase 4 activation, the USA manifest contains all 67 active definitions (66 weekly, one monthly), all referenced assets resolve, and the 28 additions reconcile to their 77 exact source-series keys. Before activation, the prior 39-definition manifest remains the valid last-known-good vintage.
 - The Canada manifest contains all 51 active definitions (49 Statistics Canada and 2 CER) and all 404 current-run asset references resolve; future count changes require an approved registry or source-coordinate change.
-- The USA forecast summary accounts for all 249 observed assets, and every `forecast_path` checksum/byte count resolves.
+- The USA forecast summary accounts for every observed asset in the promoted manifest, and every `forecast_path` checksum/byte count resolves; do not hard-code the earlier 249-asset count after Phase 4.
 - The Canada forecast summary accounts for all 404 observed assets, and unavailable records retain a reason instead of points.
 - Forecast origin/checksum/identity matches its observed asset; exactly 3 weekly or monthly horizons are consecutive; each ready point contains ordered 80%/90%/95% prediction intervals backed by at least 40 calibration errors per horizon.
 - The displayed wording remains prediction interval, latest-revised pseudo-out-of-sample, univariate statistical forecast, and decision support. Do not claim confidence intervals, first-release vintage performance, ML, trading signals, or trading advice.
@@ -357,4 +357,4 @@ Use the provider workflow inputs documented under **Automated GitHub refresh and
 
 ## Escalation path
 
-Phase 3 has no contractual SLA. If users later require guaranteed near-release availability, add an independent external monitor/scheduler that can dispatch the workflow, and consider moving ingestion/storage to managed infrastructure. Keep the public asset contract stable.
+The USA refresh has no contractual SLA. If users later require guaranteed near-release availability, add an independent external monitor/scheduler that can dispatch the workflow, and consider moving ingestion/storage to managed infrastructure. Keep the public asset contract stable.

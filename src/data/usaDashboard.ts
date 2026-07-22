@@ -164,9 +164,15 @@ function seriesHasAsset(series: UsaManifestSeries): boolean {
 
 function descriptorForSeries(series: UsaManifestSeries): SeriesDescriptor | undefined {
   const classification = series.classification;
-  if (classification?.dashboard_group === "refined_products") {
+  const classifiedSegment: UsaEnergySegment | undefined =
+    classification?.dashboard_group === "usa_crude"
+      ? "crude"
+      : classification?.dashboard_group === "refined_products"
+        ? "refined"
+        : undefined;
+  if (classification && classifiedSegment) {
     return {
-      segment: "refined",
+      segment: classifiedSegment,
       familyId: classification.product_family_id,
       familyLabel: classification.product_family_label,
       productId: classification.product_id,

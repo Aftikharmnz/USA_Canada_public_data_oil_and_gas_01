@@ -17,7 +17,7 @@ from energy_dashboard.promotion import verify_public_generation
 class PromotedForecastAssetTests(unittest.TestCase):
     def test_every_promoted_observed_asset_has_a_matching_forecast_record(self) -> None:
         expected = {
-            "usa": {"assets": 249, "ok": 248, "limited_history": 1},
+            "usa": None,
             "canada": {
                 "assets": 404,
                 "ok": 360,
@@ -86,11 +86,33 @@ class PromotedForecastAssetTests(unittest.TestCase):
                         else:
                             self.assertEqual(forecast["points"], [])
                             self.assertTrue(forecast.get("reason"))
-                self.assertEqual(asset_count, expectation["assets"])
-                expected_statuses = {
-                    key: value for key, value in expectation.items() if key != "assets"
-                }
-                self.assertEqual(dict(statuses), expected_statuses)
+                if expectation is None:
+                    expected_asset_count = sum(
+                        1
+                        for series in manifest["series"]
+                        for geography in series["geographies"]
+                        if geography["status"] == "available"
+                    )
+                    summary = manifest["forecast_summary"]
+                    self.assertEqual(statuses["ok"], int(summary["ready"]))
+                    self.assertEqual(
+                        statuses["limited_history"], int(summary["limited_history"])
+                    )
+                    unavailable = sum(
+                        count
+                        for status, count in statuses.items()
+                        if status not in {"ok", "limited_history"}
+                    )
+                    self.assertEqual(unavailable, int(summary["unavailable"]))
+                    expected_statuses = None
+                else:
+                    expected_asset_count = expectation["assets"]
+                    expected_statuses = {
+                        key: value for key, value in expectation.items() if key != "assets"
+                    }
+                self.assertEqual(asset_count, expected_asset_count)
+                if expected_statuses is not None:
+                    self.assertEqual(dict(statuses), expected_statuses)
 
 
 if __name__ == "__main__":

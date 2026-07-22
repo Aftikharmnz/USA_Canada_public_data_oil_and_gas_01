@@ -80,18 +80,40 @@ class RegistryTests(unittest.TestCase):
             "usa.eia.product_supplied.weekly",
             "usa.eia.refinery.utilization.weekly",
         }
-        self.assertEqual(len(active_ids), 39)
+        self.assertEqual(len(active_ids), 67)
         self.assertTrue(core_ids.issubset(active_ids))
 
-        refined = [item for item in self.series if item.display is not None]
-        self.assertEqual(len(refined), 36)
+        classified = [item for item in self.series if item.display is not None]
+        self.assertEqual(len(classified), 64)
         self.assertTrue(
-            all(item.display.dashboard_group == "refined_products" for item in refined)
+            all(
+                item.display.dashboard_group in {"refined_products", "usa_crude"}
+                for item in classified
+            )
         )
+        refined = [
+            item
+            for item in classified
+            if item.display.dashboard_group == "refined_products"
+        ]
+        crude_weekly = [
+            item for item in classified if item.display.dashboard_group == "usa_crude"
+        ]
+        self.assertEqual(len(refined), 55)
+        self.assertEqual(len(crude_weekly), 9)
         self.assertEqual(
             {family: sum(item.display.product_family_id == family for item in refined)
-             for family in ("gasoline", "distillate", "jet-fuel")},
-            {"gasoline": 18, "distillate": 13, "jet-fuel": 5},
+             for family in (
+                 "gasoline", "distillate", "jet-fuel", "propane",
+                 "residual-fuel-oil",
+             )},
+            {
+                "gasoline": 19,
+                "distillate": 14,
+                "jet-fuel": 6,
+                "propane": 6,
+                "residual-fuel-oil": 5,
+            },
         )
         self.assertNotIn(
             "usa.eia.refined.gasoline.finished.exports.weekly",
@@ -116,6 +138,42 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(self.geographies.resolve("R30-Z00"), ("us.padd.3", "padd"))
         self.assertEqual(self.geographies.resolve("NUS-Z00"), ("us", "national"))
         self.assertEqual(self.geographies.resolve("STX"), ("us.tx", "state_or_area"))
+        self.assertEqual(self.geographies.resolve("R48"), ("us.lower48", "state_or_area"))
+        self.assertEqual(self.geographies.resolve("YCUOK"), ("us.ok.cushing", "city"))
+        self.assertEqual(
+            self.geographies.resolve("R45-Z00"), ("us.padd.4-and-5", "padd")
+        )
+
+        days = next(item for item in self.series if item.id.endswith("crude.days_supply.weekly"))
+        self.assertEqual(days.canonical_unit, "days")
+        self.assertEqual(days.expected_unit, "DAYS")
+        self.assertEqual(days.source_geography_ids, ("us",))
+
+        weekly_production = next(
+            item for item in self.series if item.id.endswith("crude.production.weekly")
+        )
+        self.assertEqual(
+            weekly_production.source_geography_ids,
+            ("us.ak", "us.lower48", "us"),
+        )
+
+        propane_stocks = next(
+            item for item in self.series if item.id.endswith("refined.propane.stocks.weekly")
+        )
+        self.assertEqual(propane_stocks.source_geography_level_ids[0], "padd_subdistrict")
+        self.assertIn("us.padd.1a", propane_stocks.source_geography_ids)
+        self.assertIn("us.padd.4-and-5", propane_stocks.source_geography_ids)
+
+        residual_imports = next(
+            item
+            for item in self.series
+            if item.id.endswith("refined.residual_fuel_oil.imports.weekly")
+        )
+        self.assertEqual(residual_imports.source_geography_level_ids[0], "padd")
+        self.assertEqual(
+            residual_imports.source_geography_ids,
+            ("us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"),
+        )
 
     def test_normalizer_maps_provider_code_and_rejects_geo_unit_and_facet_drift(self) -> None:
         crude = next(item for item in self.series if item.id.endswith("crude.production.monthly"))

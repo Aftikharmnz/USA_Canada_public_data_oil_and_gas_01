@@ -81,7 +81,7 @@ The logical observation key is:
 | `source_geography_ids` | Nodes published directly by the provider |
 | `allowed_rollup_geography_ids` | Computable parent nodes after coverage/aggregation validation |
 
-Illustrative registries may use level IDs during discovery when exact node codes are not yet verified. Activation requires resolved node-level availability. All 39 active Phase 3 USA definitions use explicit accepted geography IDs/codes; raw trade aliases such as `NUS-Z00` and `R10-Z00` are mapped to stable project nodes rather than exposed as new geographies.
+Illustrative registries may use level IDs during discovery when exact node codes are not yet verified. Activation requires resolved node-level availability. All 67 active USA definitions use explicit accepted geography IDs/codes; raw trade aliases such as `NUS-Z00` and `R10-Z00`, weekly production region `R48`, and local stock area `YCUOK` map to stable project nodes rather than becoming ad hoc geographies.
 
 ### `RevisionEvent`
 
@@ -158,9 +158,9 @@ limitations
 
 Allowed current statuses are `ok`, `limited_history`, `latest_source_non_numeric`, `insufficient_history`, and `unsupported_frequency`. `limited_history` can contain points and intervals but no independent final holdout. An unavailable status contains no fabricated points and includes a user-facing reason. In particular, `latest_source_non_numeric` prevents an older numeric value from masking a new suppressed, withheld, missing, or unavailable source period.
 
-### Phase 3 public asset profile
+### USA public asset profile
 
-The USA app uses public schema `1.0.0`. The country manifest lists active series, source attribution, freshness, exact available/unsupported geographies, and local chart-asset paths. Each series entry carries explicit `series_id` and `view_id`; Phase 3 uses the stable series ID as the view ID so selectors never depend on a display label. Each chart asset is scoped to one series/geography/canonical-dimension combination and contains:
+The USA app uses public schema `1.0.0`. The country manifest lists active series, source attribution, freshness, exact available/unsupported geographies, and local chart-asset paths. Each series entry carries explicit `series_id` and `view_id`; the stable series ID is also the view ID so selectors never depend on a display label. Each chart asset is scoped to one series/geography/canonical-dimension combination and contains:
 
 ```text
 schema_version
@@ -214,7 +214,7 @@ reference_term_ids
 display_order
 ```
 
-For Phase 3, `dashboard_group: refined_products` identifies the refined-product definitions consumed by the unified `/usa/` page. `/products/` is only a backwards-compatible wrapper that opens that page with Refined selected. `reference_term_ids` must resolve to committed glossary entries. `parent_product_id` and `component_role` describe navigation and double-counting cautions; they do not authorize addition, stacking, or a computed rollup. Classification is optional for older overview entries and does not change the logical observation key.
+`dashboard_group: refined_products` identifies the Refined definitions consumed by the unified `/usa/` page; Phase 4 uses `dashboard_group: usa_crude` for new crude definitions. `/products/` is only a backwards-compatible wrapper that opens the USA page with Refined selected. `reference_term_ids` must resolve to committed glossary entries. `parent_product_id` and `component_role` describe navigation and double-counting cautions; they do not authorize addition, stacking, or a computed rollup. Classification is optional for older overview entries and does not change the logical observation key.
 
 ### Country dashboard selection contract
 
@@ -225,13 +225,13 @@ market segment -> geography level -> geography node
 -> product family -> product/activity -> measure -> series asset
 ```
 
-Market segment is `crude` or `refined`. The registries resolve 2 Crude/37 Refined USA definitions and 22 Crude/29 Refined Canada definitions (51 Canada definitions: 49 Statistics Canada and 2 CER). Promoted Canada run `canada-20260720T192043Z` validates all 51 definitions across 404 observed assets and matching forecast records. Refinery activity belongs under Crude for navigation only and retains its original metric, unit, source, and observation identity.
+Market segment is `crude` or `refined`. The staged USA registry resolves 11 Crude/56 Refined definitions (66 weekly and one monthly); until Phase 4 promotion, the current public manifest retains its earlier 2 Crude/37 Refined profile. Canada resolves 22 Crude/29 Refined definitions (51 definitions: 49 Statistics Canada and 2 CER). Promoted Canada run `canada-20260720T192043Z` validates all 51 definitions across 404 observed assets and matching forecast records. Refinery activity belongs under Crude for navigation only and retains its original metric, unit, source, and observation identity.
 
 Geography levels are ordered by registered granularity rank from finest to broadest. The selected exact geography node filters every later option; family, product/activity, and measure choices must be backed by an available asset for that node. Product/activity ordering traverses only registered `parent_product_id` relationships and places leaves before broader parents. Missing parents are not synthesized. A selection change may preserve later IDs only while they remain compatible; otherwise the UI falls back deterministically to the first valid option.
 
 ### Custom geography runtime contract
 
-`config/aggregation/custom-geography.json` authorizes a finite set of same-level additive combinations and records country, level, rule, membership namespace/version, member bounds, complete-coverage requirement, and exact series IDs. A selection of two or more regions is valid only when every selected geography has the same active series asset and the rule explicitly covers that series/level.
+`config/aggregation/custom-geography.json` authorizes a finite set of same-level additive combinations and records country, level, rule, membership namespace/version, member bounds, complete-coverage requirement, and exact series IDs. A selection of two or more regions is valid only when every selected geography has the same active series asset and the rule explicitly covers that series/level. Phase 4 adds exactly nine PADD-authorized definitions: crude refinery inputs, commercial crude stocks/imports, total petroleum imports, propane stocks/imports, and residual stocks/production/imports. No Phase 4 ratio, net flow, export, product-supplied, or source-region view is implicitly aggregatable.
 
 Generated chart assets publish compact `history` rows with `period`, seasonal `year`/`slot`, numeric-or-null `value`, and source status. The browser aggregates these period rows first, retaining a per-period coverage/lineage record, then recomputes the full chart asset. A computed combination receives a deterministic `computed:<policy>:<members>` geography ID and `origin: computed-rollup`; it is not added to the source manifest. The source checksum is the SHA-256 digest of sorted component checksums. Latest source and latest numeric periods remain distinct.
 
@@ -293,9 +293,9 @@ Normalize only with deterministic, documented conversions. Store original value/
 - percentage-point change is not percent change;
 - refinery utilization is a ratio and cannot be summed or simply averaged across regions.
 
-Phase 3 market semantics are contract fields, not optional copy: ending stocks are point-in-time levels in thousand barrels; production, product supplied, imports, and exports are weekly average rates in thousand barrels per day. Product supplied is an accounting proxy/implied demand, not measured consumption. Unadjusted net production can be negative. Import PADD identifies district of entry. Total distillate is broader than road diesel.
+USA market semantics are contract fields, not optional copy: ending stocks are point-in-time levels in thousand barrels; production, product supplied, imports, and exports are weekly average rates in thousand barrels per day. Product supplied is an accounting proxy/implied demand, not measured consumption. Unadjusted net production and net imports can be negative. Import PADD identifies district of entry. Total distillate is broader than road diesel. Commercial crude stocks, SPR stocks, and inclusive crude stocks are overlapping alternate views. Phase 4 days supply uses canonical unit `days` and exact provider unit `DAYS`; it is a source-published ratio and cannot be summed.
 
-The display-unit selector never mutates canonical data. `src/lib/units.ts` uses the exact factor `1 barrel = 0.158987294928 cubic metres` and separately defines volume, ordinary daily-rate, calendar-day-rate, and percent dimensions. A selected display scale applies consistently to cards, axes, tooltips, tables, seasonal statistics, histograms, forecasts, and intervals. The `thousand_barrels_per_day` choice is written out as “Thousand barrels per day” in the selector and abbreviated `kb/d` in compact chart displays. Aggregation and checksum validation always use source units first. Unknown units fail closed; percent has no alternative display dimension.
+The display-unit selector never mutates canonical data. `src/lib/units.ts` uses the exact factor `1 barrel = 0.158987294928 cubic metres` and separately defines volume, ordinary daily-rate, calendar-day-rate, percent, and duration dimensions. A selected display scale applies consistently to cards, axes, tooltips, tables, seasonal statistics, histograms, forecasts, and intervals. The `thousand_barrels_per_day` choice is written out as “Thousand barrels per day” in the selector and abbreviated `kb/d` in compact chart displays. Aggregation and checksum validation always use source units first. Unknown units fail closed; percent and days are source-only and have no cross-dimension display conversion.
 
 `config/display/monthly-average-rate.json` is the sole authorization list for the Canada monthly-average `kb/d` derivation. Registered Statistics Canada monthly flow volumes use their strict `YYYY-MM` Gregorian day count and the exact barrel conversion; history is transformed period by period before every displayed statistic is recomputed. Source checksums, status, freshness, dimensions, and aggregation lineage are retained. Ending/closing stocks, percentages, unregistered series, malformed periods, missing history, and incompatible units fail closed. Forecast point values and bounds use their target period's day count after all canonical forecast and combination calculations; scale-dependent model-selection and backtest metrics remain labelled in source monthly cubic metres.
 
@@ -332,7 +332,7 @@ On retrieval:
 
 Do not call a normal new period a “revision.”
 
-The registry supplies missing-series bootstrap starts of 2014-01-01 for weekly and 2014-01 for monthly data. Once a current history exists, the runner defaults to a 13-week overlap for weekly series and a 10-year overlap for monthly series. The completed activation used the dedicated Phase 3 helper to select exactly the 36 new weekly definitions with the weekly boundary; the earlier Phase 2 histories remain intact. The helper remains available for scoped recovery or from-scratch onboarding. An overlap with no inserted or changed value/status leaves `CURRENT` and the public asset directory untouched by default; retrieval evidence is reported by the run but does not fabricate a new data vintage.
+The registry supplies missing-series bootstrap starts of 2014-01-01 for weekly and 2014-01 for monthly data. Once a current history exists, the runner defaults to a 13-week overlap for weekly series and a 10-year overlap for monthly series. The dedicated Phase 3 helper remains available only for scoped recovery of its 36 historical additions; Phase 4 activation uses the 67-definition all-active registry path. An overlap with no inserted or changed value/status leaves `CURRENT` and the public asset directory untouched by default; retrieval evidence is reported by the run but does not fabricate a new data vintage.
 
 ## Time and freshness semantics
 

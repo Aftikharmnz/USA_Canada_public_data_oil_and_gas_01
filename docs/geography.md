@@ -41,14 +41,14 @@ Example disabled explanation: “City data is not published for EIA weekly refin
 
 ## User-selected regional combinations
 
-The Combined control is an explicit analytical view, not a new source-published geography. Its current authorization registry is `config/aggregation/custom-geography.json`, with membership version `2026-07-20.2`. Registered views are limited to:
+The Combined control is an explicit analytical view, not a new source-published geography. Its current authorization registry is `config/aggregation/custom-geography.json`, with membership version `2026-07-22.5`. Registered views are limited to:
 
 - compatible additive USA quantities across PADD 1-5;
 - USA monthly crude oil field production across state/producing-area nodes;
 - compatible additive Statistics Canada quantities across source-published province/territory nodes;
 - CER crude runs across two or all three mutually exclusive confidentiality regions.
 
-The registry still excludes PADD 1 subdistrict plus PADD combinations because those levels overlap, and it excludes utilization and every other percentage because no registered numerator/capacity pair authorizes a ratio of sums. Source-published national/PADD/Canada totals remain separate choices and are never silently substituted for a custom sum.
+Phase 4 contributes exactly nine USA PADD-sum definitions: crude refinery inputs, commercial crude stocks/imports, total petroleum imports, propane stocks/imports, and residual stocks/production/imports. The registry still excludes PADD 1 subdistrict plus PADD combinations because those levels overlap, and it excludes utilization, days supply, and every other ratio/percentage. Source-published combined PADD 4&5, national, PADD, and Canada totals remain separate choices and are never silently substituted for a custom sum.
 
 ### Containment is decided by the geography DAG, not the level label
 
@@ -171,7 +171,7 @@ A computed rollup is useful when no official total exists or for reconciliation.
 
 ## Availability examples
 
-The active Phase 3 registry availability is shown below. Provider-free promoted run `analytics-20260720T152511Z` contains and verifies all 36 refined-product definitions alongside the three overview definitions.
+The staged Phase 4 registry availability is shown below. It contains 67 active definitions and 77 exact source-series keys across the 28 additions. Provider-free promoted run `analytics-20260720T152511Z` still contains the earlier 39-definition profile until a live Phase 4 refresh succeeds; this table describes registered availability, not an already promoted asset claim.
 
 | Active series | Finest verified source-published view | Larger source-published views | Unavailable levels |
 |---|---|---|---|
@@ -183,8 +183,18 @@ The active Phase 3 registry availability is shown below. Provider-free promoted 
 | Refined: unadjusted net production | PADD 1-5 | United States | PADD subdistrict, state/area, county, city |
 | Refined: imports | PADD 1-5 (district of entry) | United States | PADD subdistrict, state/area, county, city |
 | Refined: product supplied and exports | United States | None | PADD, PADD subdistrict, state/area, county, city |
+| Phase 4 weekly crude production | Alaska, Lower 48 States | United States | PADD, PADD subdistrict, county, city |
+| Phase 4 refinery crude inputs | PADD 1-5 | United States | PADD subdistrict, state/area, county, city |
+| Phase 4 commercial crude stocks | Cushing | PADD 1-5, United States | Other cities/counties/states |
+| Phase 4 commercial crude imports | PADD 1-5 (district of entry) | United States | PADD subdistrict, state/area, county, city |
+| Phase 4 SPR/inclusive crude stocks, crude exports/net imports, and days supply | United States | None | Every subnational level |
+| Phase 4 propane stocks | PADD 1A/1B/1C | PADD 1-3, source-combined PADD 4&5, United States | State/area, county, city |
+| Phase 4 propane imports | PADD 1-3 | Source-combined PADD 4&5, United States | PADD subdistrict, state/area, county, city |
+| Phase 4 other propane measures | United States | None | Every subnational level |
+| Phase 4 residual stocks/production/imports | PADD 1-5 | United States | PADD subdistrict, state/area, county, city |
+| Phase 4 residual exports/product supplied | United States | None | Every subnational level |
 
-All active Phase 3 views are provider-published. The app does not calculate PADD/U.S. crude production by summing displayed state/special rows, because special-area overlap and provider adjustments can make that sum unsafe. It does not allocate U.S. product supplied or exports downward. It does not sum PADD 1 subdistrict stocks into a district or add product parent/child series. It uses EIA-published utilization percentages; any future calculated utilization rollup must use compatible input/capacity ratio-of-sums.
+Every official Phase 4 node is provider-published. The app does not calculate PADD/U.S. crude production by summing displayed state/special rows, because special-area overlap and provider adjustments can make that sum unsafe. It does not allocate U.S. product supplied, exports, net imports, inclusive inventories, or days-supply ratios downward. It does not sum PADD 1 subdistrict stocks into a district or add product parent/child series. Cushing is contained within PADD 2 and can never be added to it. It uses EIA-published utilization percentages; any future calculated utilization rollup must use compatible input/capacity ratio-of-sums.
 
 EIA's weekly trade route can encode stable areas with raw aliases such as `NUS-Z00` and `R10-Z00`. The geography registry maps these aliases to the same U.S./PADD nodes and rejects unknown codes. A trade PADD is a reporting concept specific to the measure: for imports it is district of entry, not destination or consumption region.
 
@@ -195,7 +205,7 @@ The broader table below remains onboarding guidance for illustrative and future 
 | EIA monthly crude production | State/area where published | PADD, U.S. | Disabled unless an official city/facility source is onboarded |
 | EIA weekly refinery utilization | Route-specific `duoarea`, commonly PADD/subdistrict | PADD, U.S. | Disabled; do not allocate to refinery cities |
 | EIA weekly product supplied | Often U.S. for a selected series | U.S. only | Disabled with national-only explanation |
-| EIA weekly refined products | PADD 1 subdistrict for select stocks; otherwise PADD or U.S. | Source-published parent only | Disabled; no city/state allocation |
+| EIA weekly refined products | PADD 1 subdistrict for select stocks; otherwise PADD, source-combined region, or U.S. | Source-published parent only | Disabled except the official Cushing commercial-crude stock node; no allocation |
 | Statistics Canada crude supply/disposition | Province/territory or source region for supported combinations | Published region, Canada | Disabled unless a compatible official local table exists |
 | CER weekly refinery runs | Three confidentiality regions | Canada if published or complete sum | Refinery/city disabled because source intentionally aggregates |
 

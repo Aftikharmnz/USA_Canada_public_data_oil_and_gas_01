@@ -5,10 +5,11 @@ Use this file as the concise operating contract for Codex and other coding agent
 ## Source of truth
 
 - Product and status: [`README.md`](README.md)
-- Current boundary: [`docs/phase-3-refined-products.md`](docs/phase-3-refined-products.md)
+- Current USA boundary: [`docs/phase-4-usa-weekly-breadth.md`](docs/phase-4-usa-weekly-breadth.md)
 - Current Canada boundary: [`docs/canada-data.md`](docs/canada-data.md)
 - Historical Phase 2 boundary: [`docs/phase-2-usa-mvp.md`](docs/phase-2-usa-mvp.md)
 - Historical Phase 1 boundary: [`docs/phase-1-scope.md`](docs/phase-1-scope.md)
+- Historical Phase 3 refined-products boundary: [`docs/phase-3-refined-products.md`](docs/phase-3-refined-products.md)
 - System design: [`docs/architecture.md`](docs/architecture.md) and [`docs/adr/`](docs/adr/README.md)
 - Entity/field semantics: [`docs/data-contract.md`](docs/data-contract.md)
 - Geography and aggregation: [`docs/geography.md`](docs/geography.md)
@@ -33,7 +34,7 @@ Use this file as the concise operating contract for Codex and other coding agent
 11. Never place credentials in code, config, fixtures, logs, docs, generated assets, command arguments, or commits.
 12. Treat refined-product parents and children as overlapping views: never stack or add hierarchy levels without a documented reconciliation.
 13. Preserve market semantics: product supplied is implied demand, total distillate is broader than road diesel, import PADD is district of entry, and unadjusted net production can be negative.
-14. Preserve the 2014-01-01 lower bound for newly onboarded Phase 3 weekly history and the 90 MiB canonical publication guard unless a reviewed storage migration changes them.
+14. Preserve the 2014-01-01 lower bound for newly onboarded USA weekly history and the 90 MiB canonical publication guard unless a reviewed storage migration changes them.
 15. For Canada, preserve the latest source period separately from the latest numeric period so suppression does not make an old value appear current.
 16. Never infer CER capacity or national utilization; a national CER crude-runs sum requires complete same-week coverage of all three registered regions and component lineage.
 17. Keep USA and Canada as the primary data pages and Reference as the educational page; `/products/` is only a backwards-compatible USA-Refined entry.
@@ -48,13 +49,17 @@ Use this file as the concise operating contract for Codex and other coding agent
 26. For a combined forecast, add only compatible component point forecasts and recalibrate 80%/90%/95% prediction intervals from at least 40 residual samples aligned by both horizon and target period. Fail the combined forecast closed without hiding the observed combination.
 27. Preserve the Statistics Canada table 25-10-0063-01 hierarchy: total crude -> net field plus synthetic; net field -> light-and-medium, heavy, and non-upgraded bitumen; non-upgraded bitumen = in-situ + mined - sent for further processing. Equivalent products is a separate condensate/pentanes-plus parent. Refinery-input grades overlap their parent, and a dimension-declared member with no fact rows is not a zero or an inferred series.
 
-## Current Phase 3 contract
+## Current Phase 4 USA contract
 
 An active USA series must have verified official route/facet metadata, dimensions, units, period semantics, exact provider geography codes, smallest published geography, larger valid views, aggregation rule, revision behavior, expected release rule, UI labels, fixtures, and contract tests. Unsupported geography levels require user-facing reason text. A refined-product entry also requires manifest display classification, product/component role, parent relationship where applicable, glossary links, and a non-additivity caveat.
 
-There are 39 active USA definitions, presented as 2 Crude and 37 Refined choices: three pre-Phase-3 overview series plus 36 refined-product series across gasoline, distillate, and jet fuel. Primary navigation is `/usa/`, `/canada/`, and `/reference/`; `/products/` remains a legacy alias that renders the USA page initially on Refined. Weekly USA refined-product detail is PADD 1A/1B/1C only for select stocks, otherwise PADD or U.S.; no city/state detail is synthesized. Weekly motor-gasoline exports remain excluded because of the June 2023 definition break. Forecasts are a separate analytical layer; trading signals remain out of scope.
+The registry contains 67 active USA definitions: three legacy overview definitions, 36 Phase 3 refined-product definitions, and 28 Phase 4 additions. They resolve to 11 Crude and 56 Refined choices; 66 definitions are weekly and monthly crude production is the sole monthly definition. Phase 4 adds 77 exact EIA source-series keys across weekly crude production, refinery crude inputs, commercial/SPR/inclusive inventories, crude and total-petroleum trade, five days-of-supply ratios, propane, and residual fuel oil. Primary navigation is `/usa/`, `/canada/`, and `/reference/`; `/products/` remains a legacy USA-Refined entry, and `/usa-weekly/` is a secondary view over the same manifest.
 
-Phase 3 is activated and verified; the current promoted run is provider-free rebuild `analytics-20260720T152511Z` (activation history: `eia-20260719T230756Z`): 39 active definitions, 161,869 canonical observations, 249 public chart assets, ~65 MiB canonical JSON, zero activation revisions, and all refined-product series through `2026-07-10`. Public manifest/asset verification passed. Missing series retain the registry's weekly/monthly bootstrap starts (2014-01-01/2014-01), and `scripts/bootstrap-phase3.ps1` remains a scoped recovery/from-scratch helper for exactly the 36 Phase 3 weekly series. The verified public site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. Automated EIA refresh still requires the replacement `EIA_API_KEY` secret.
+Phase 4 is registry-complete but is not public until a live registry-validated refresh succeeds and promotes matching observed and forecast assets. Until then, the current promoted USA run remains provider-free rebuild `analytics-20260720T152511Z` (activation history: `eia-20260719T230756Z`): 39 definitions, 161,869 canonical observations, 249 public chart assets, ~65 MiB canonical JSON, zero activation revisions, and all Phase 3 refined-product series through `2026-07-10`. Missing series retain the weekly/monthly bootstrap starts (2014-01-01/2014-01), and `scripts/bootstrap-phase3.ps1` remains a scoped historical recovery helper for exactly the 36 Phase 3 weekly series. The verified public site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. The replacement `EIA_API_KEY` GitHub secret is configured, and automated EIA refresh has already captured provider updates.
+
+Phase 4 exposes Alaska, Lower 48 States, and U.S. weekly crude production; PADD/U.S. crude inputs; Cushing/PADD/U.S. commercial crude stocks; PADD/U.S. crude imports; source-published national exports, net imports, inclusive stocks, and days-supply ratios; the exact propane and residual-fuel geography sets; and no fabricated finer detail. Cushing is contained by PADD 2 and cannot be combined with it. The only Phase 4 browser-combinable definitions are the nine additive PADD quantities registered in `config/aggregation/custom-geography.json`; all other new views remain source-published only.
+
+The activated propane export sourcekey is propane only, whereas the nearby stock, production, import, product-supplied, and days-supply definitions use propane/propylene boundaries. Preserve separate product identities and never imply that those scopes reconcile directly.
 
 ## Current Canada contract
 
@@ -64,7 +69,7 @@ Authoritative definitions are `config/series/canada.json`, `config/geographies/c
 
 The 20 active table 25-10-0063-01 definitions include the five headline balances and 15 crude-detail definitions. Light and medium crude remains one combined source member. The non-upgraded-bitumen processing row is subtractive, not a positive component. Synthetic crude is outside net field production but inside total crude production; equivalent products (condensate plus pentanes plus) is outside total crude production. Total refinery inputs has registered light/medium, heavy, crude-bitumen, and synthetic children. The source declares a condensate-and-pentanes-plus refinery-input member but publishes no fact rows for it, so it remains absent rather than reconstructed. Parent/child links never authorize stacking, and suppressed cells are never inferred from parents or Canada totals.
 
-Use `python -m pipeline.energy_dashboard.cli refresh-canada --dry-run` to inspect the credential-free plan and `python -m pipeline.energy_dashboard.cli refresh-canada --store data/cache/canada --promote-to public/data/canada` for a registry-validated refresh. `.github/workflows/refresh-canada.yml` polls twice on weekdays with bounded retries, no-op suppression, and last-known-good retention. Scheduled freshness stays `unknown` until an expected-period calendar is reviewed; source release timestamps can be unavailable. The exposed EIA key must still be rotated before automated EIA refresh is enabled.
+Use `python -m pipeline.energy_dashboard.cli refresh-canada --dry-run` to inspect the credential-free plan and `python -m pipeline.energy_dashboard.cli refresh-canada --store data/cache/canada --promote-to public/data/canada` for a registry-validated refresh. `.github/workflows/refresh-canada.yml` polls twice on weekdays with bounded retries, no-op suppression, and last-known-good retention. Scheduled freshness stays `unknown` until an expected-period calendar is reviewed; source release timestamps can be unavailable.
 
 ## Current custom geography and units contract
 

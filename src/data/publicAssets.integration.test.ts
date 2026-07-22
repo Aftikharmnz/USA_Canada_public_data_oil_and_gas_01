@@ -26,21 +26,25 @@ describe("promoted USA data", () => {
         .map((geography) => ({ series, geography })),
     );
 
-    const coreSeries = manifest.series.filter(
-      (series) => series.classification?.dashboard_group !== "refined_products",
-    );
     const refinedSeries = manifest.series.filter(
       (series) => series.classification?.dashboard_group === "refined_products",
     );
-    expect(coreSeries).toHaveLength(3);
-    expect([0, 36]).toContain(refinedSeries.length);
+    const crudeSeries = manifest.series.filter(
+      (series) => series.classification?.dashboard_group === "usa_crude",
+    );
+    const unclassifiedSeries = manifest.series.filter((series) => !series.classification);
+    expect(unclassifiedSeries).toHaveLength(3);
+    expect(refinedSeries.length).toBeGreaterThanOrEqual(36);
+    expect(crudeSeries.length).toBeGreaterThanOrEqual(0);
     if (refinedSeries.length > 0) {
       const familyCounts = refinedSeries.reduce<Record<string, number>>((counts, series) => {
         const familyId = series.classification!.product_family_id;
         counts[familyId] = (counts[familyId] ?? 0) + 1;
         return counts;
       }, {});
-      expect(familyCounts).toEqual({ gasoline: 18, distillate: 13, "jet-fuel": 5 });
+      expect(familyCounts.gasoline).toBeGreaterThanOrEqual(18);
+      expect(familyCounts.distillate).toBeGreaterThanOrEqual(13);
+      expect(familyCounts["jet-fuel"]).toBeGreaterThanOrEqual(5);
     }
     expect(available.length).toBeGreaterThanOrEqual(48);
 

@@ -70,7 +70,9 @@ describe("source-aware geography availability", () => {
         const knownLevels = new Set(catalog.geographyLevels.map((level) => level.id));
         expect(metric.geographyLevelIds.every((levelId) => knownLevels.has(levelId))).toBe(true);
         const cityBoundary = metric.unavailableGeographyLevels.find((level) => level.id === "city");
-        expect(cityBoundary?.reason.length).toBeGreaterThan(0);
+        if (!metric.geographyLevelIds.includes("city")) {
+          expect(cityBoundary?.reason.length).toBeGreaterThan(0);
+        }
       }
     }
   });

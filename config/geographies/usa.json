@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-07-19.phase3-refined-products",
+  "registry_version": "2026-07-22.phase4-weekly-breadth",
   "country_code": "USA",
-  "activation_status": "mixed_phase_3",
+  "activation_status": "mixed_phase_4",
   "rank_semantics": "Lower granularity_rank is finer; rank orders the UI only and never authorizes aggregation.",
   "levels": [
     {"id": "city", "label": "City / official local area", "granularity_rank": 10},
@@ -19,9 +19,12 @@
     {"id": "us.padd.3", "name": "Gulf Coast (PADD 3)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R30"}, "provider_code_aliases": {"eia_duoarea": ["R30-Z00"]}},
     {"id": "us.padd.4", "name": "Rocky Mountain (PADD 4)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R40"}, "provider_code_aliases": {"eia_duoarea": ["R40-Z00"]}},
     {"id": "us.padd.5", "name": "West Coast (PADD 5)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R50"}, "provider_code_aliases": {"eia_duoarea": ["R50-Z00"]}},
+    {"id": "us.padd.4-and-5", "name": "Rocky Mountain and West Coast (PADDs 4 and 5)", "level_id": "padd", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R4N5"}, "provider_code_aliases": {"eia_duoarea": ["R45-Z00"]}},
+    {"id": "us.lower48", "name": "Lower 48 States", "level_id": "state_or_area", "country_code": "USA", "parent_ids": ["us"], "provider_codes": {"eia_duoarea": "R48"}},
     {"id": "us.padd.1a", "name": "New England (PADD 1A)", "level_id": "padd_subdistrict", "country_code": "USA", "parent_ids": ["us.padd.1"], "provider_codes": {"eia_duoarea": "R1X"}},
     {"id": "us.padd.1b", "name": "Central Atlantic (PADD 1B)", "level_id": "padd_subdistrict", "country_code": "USA", "parent_ids": ["us.padd.1"], "provider_codes": {"eia_duoarea": "R1Y"}},
     {"id": "us.padd.1c", "name": "Lower Atlantic (PADD 1C)", "level_id": "padd_subdistrict", "country_code": "USA", "parent_ids": ["us.padd.1"], "provider_codes": {"eia_duoarea": "R1Z"}},
+    {"id": "us.ok.cushing", "name": "Cushing, Oklahoma", "level_id": "city", "country_code": "USA", "parent_ids": ["us.padd.2"], "provider_codes": {"eia_duoarea": "YCUOK"}},
     {"id": "us.al", "name": "Alabama", "level_id": "state_or_area", "country_code": "USA", "parent_ids": ["us.padd.3"], "provider_codes": {"eia_duoarea": "SAL", "iso_3166_2": "US-AL"}},
     {"id": "us.ak", "name": "Alaska", "level_id": "state_or_area", "country_code": "USA", "parent_ids": ["us.padd.5"], "provider_codes": {"eia_duoarea": "SAK", "iso_3166_2": "US-AK"}},
     {"id": "us.ak.south", "name": "Alaska South", "level_id": "state_or_area", "country_code": "USA", "parent_ids": ["us.ak"], "provider_codes": {"eia_duoarea": "RAKS"}},
@@ -79,8 +82,8 @@
   ],
   "policies": {
     "universal_control": true,
-    "city_nodes_present": false,
-    "unsupported_city_reason": "No city nodes are activated until an official city/local source and provider codes are verified.",
+    "city_nodes_present": true,
+    "unsupported_city_reason": "City / official local options appear only for exact source-published nodes such as Cushing; no other city detail is inferred.",
     "parent_edge_authorizes_aggregation": false,
     "default_computed_rollup_coverage_ratio": 1.0
   }

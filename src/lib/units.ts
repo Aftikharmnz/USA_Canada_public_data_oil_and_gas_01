@@ -9,11 +9,17 @@ export const SUPPORTED_CANONICAL_UNITS = [
   "cubic_metres",
   "thousand_cubic_metres_per_day",
   "percent",
+  "days",
 ] as const;
 
 export type CanonicalUnit = (typeof SUPPORTED_CANONICAL_UNITS)[number];
 
-export type UnitDimension = "volume" | "flow_rate" | "calendar_day_rate" | "percent";
+export type UnitDimension =
+  | "volume"
+  | "flow_rate"
+  | "calendar_day_rate"
+  | "percent"
+  | "duration";
 
 export type DisplayUnitId =
   | "barrels"
@@ -32,7 +38,8 @@ export type DisplayUnitId =
   | "million_barrels_per_calendar_day"
   | "cubic_metres_per_calendar_day"
   | "thousand_cubic_metres_per_calendar_day"
-  | "percent";
+  | "percent"
+  | "days";
 
 export interface UnitFormattingMetadata {
   /** Compact, unambiguous label for axes, cards, and table columns. */
@@ -56,7 +63,7 @@ export interface DisplayUnitOption extends UnitFormattingMetadata {
 
 interface UnitDefinition extends UnitFormattingMetadata {
   dimension: UnitDimension;
-  /** Quantity in the dimension's SI base unit represented by one displayed unit. */
+  /** Quantity in the dimension's internal conversion base represented by one displayed unit. */
   baseAmountPerUnit: number;
 }
 
@@ -189,6 +196,13 @@ const UNIT_DEFINITIONS: Record<DisplayUnitId, UnitDefinition> = {
     longLabel: "Percent",
     numberFormat: numberFormat(1),
   },
+  days: {
+    dimension: "duration",
+    baseAmountPerUnit: 1,
+    compactLabel: "days",
+    longLabel: "Days",
+    numberFormat: numberFormat(1),
+  },
 };
 
 const VOLUME_OPTIONS: readonly DisplayUnitId[] = [
@@ -221,6 +235,7 @@ const OPTIONS_BY_DIMENSION: Record<UnitDimension, readonly DisplayUnitId[]> = {
   flow_rate: FLOW_RATE_OPTIONS,
   calendar_day_rate: CALENDAR_DAY_RATE_OPTIONS,
   percent: ["percent"],
+  duration: ["days"],
 };
 
 export class UnitConversionError extends Error {
@@ -311,7 +326,7 @@ export function getUnitFormattingMetadata(unit: string): UnitFormattingMetadata 
 
 /**
  * Converts a canonical/display value within one physical and semantic dimension.
- * Volume, ordinary daily rates, calendar-day rates, and percentages never cross dimensions.
+ * Volume, ordinary daily rates, calendar-day rates, percentages, and durations never cross dimensions.
  */
 export function convertUnitValue(
   value: number | null,

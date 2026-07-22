@@ -5,7 +5,7 @@ This is a navigation and guardrail layer for Claude Code and other coding agents
 ## Read first
 
 1. [`README.md`](README.md)
-2. [`docs/phase-3-refined-products.md`](docs/phase-3-refined-products.md)
+2. [`docs/phase-4-usa-weekly-breadth.md`](docs/phase-4-usa-weekly-breadth.md)
 3. [`docs/architecture.md`](docs/architecture.md)
 4. [`docs/data-contract.md`](docs/data-contract.md)
 5. [`docs/geography.md`](docs/geography.md)
@@ -15,19 +15,23 @@ This is a navigation and guardrail layer for Claude Code and other coding agents
 
 Read [`docs/methodology.md`](docs/methodology.md) and [`docs/forecasting-roadmap.md`](docs/forecasting-roadmap.md) before changing calculations, forecast semantics, horizons, model selection, calibration, or evaluation. Read [`docs/update-runbook.md`](docs/update-runbook.md) before changing credentials, schedules, retries, storage, promotion, or deployment. Record durable architectural decisions under [`docs/adr/`](docs/adr/README.md).
 
-Read [`docs/phase-2-usa-mvp.md`](docs/phase-2-usa-mvp.md) only when historical Phase 2 behavior or migration context matters.
+Read [`docs/phase-3-refined-products.md`](docs/phase-3-refined-products.md) or [`docs/phase-2-usa-mvp.md`](docs/phase-2-usa-mvp.md) only when historical behavior or migration context matters.
 
-## Current Phase 3 boundary
+## Current Phase 4 USA boundary
 
-The USA registry has 39 entries with `activation_status: active`:
+The USA registry has 67 entries with `activation_status: active`:
 
 - the three Phase 2 overview series: weekly refinery utilization, monthly crude oil production, and weekly total petroleum products supplied;
 - 36 weekly refined-product series: 13 stocks, 8 unadjusted refinery/blender net production, 3 product supplied, 9 imports, and 3 exports;
-- product-family totals of 18 gasoline, 13 distillate, and 5 jet-fuel series.
+- 28 Phase 4 weekly additions represented by 77 exact source-series keys: weekly crude production, crude inputs and balances, commercial/SPR/inclusive stocks, total-petroleum stocks/trade, five days-of-supply ratios, propane, and residual fuel oil.
 
-Phase 3 is activated and verified. The current promoted run is provider-free rebuild `analytics-20260720T152511Z` (from activation run `eia-20260719T230756Z`, which inserted 130,964 observations) with all 39 active definitions, 249 public chart assets, 161,869 canonical observations, ~65 MiB canonical JSON, zero revisions, all 36 refined-product series current through `2026-07-10`, and passing public manifest/asset verification. The verified public site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. Automated EIA refresh still requires the replacement `EIA_API_KEY` secret.
+Phase 4 is registry-complete but is not a public-data claim until the live workflow succeeds and promotes its observed and forecast assets. The current promoted run remains provider-free rebuild `analytics-20260720T152511Z` (from activation run `eia-20260719T230756Z`) with the prior 39 definitions, 249 public chart assets, 161,869 canonical observations, ~65 MiB canonical JSON, zero revisions, and all 36 Phase 3 refined-product definitions through `2026-07-10`. The verified public site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. The replacement `EIA_API_KEY` GitHub secret is configured, and automated refresh has already captured provider updates.
 
-`/usa/` and `/canada/` are the primary country dashboards and `/reference/` explains products and accounting concepts. The legacy `/products/` path renders the unified USA dashboard initially set to Refined and is not primary navigation. USA resolves 2 Crude and 37 Refined definitions; the Canada registry resolves 22 Crude and 29 Refined definitions. Refinery activity belongs under Crude as a navigation classification only. Gross inputs and operable capacity remain supporting USA refinery series. Forecasting is implemented as a separate, checksum-linked layer and never changes an observation. Trading signals remain out of scope.
+`/usa/` and `/canada/` are the primary country dashboards and `/reference/` explains products and accounting concepts. The legacy `/products/` path renders the unified USA dashboard initially set to Refined and is not primary navigation. The staged USA registry resolves 11 Crude and 56 Refined definitions, with 66 weekly and one monthly; the current promoted USA manifest remains 2 Crude/37 Refined until Phase 4 activation. Canada resolves 22 Crude and 29 Refined definitions. Refinery activity belongs under Crude as a navigation classification only. Gross inputs and operable capacity remain supporting USA refinery series. Forecasting is implemented as a separate, checksum-linked layer and never changes an observation. Trading signals remain out of scope.
+
+Phase 4 geography is exact and per series: weekly crude production exposes Alaska, Lower 48 States, and U.S.; commercial crude stocks expose Cushing, PADD 1-5, and U.S.; imports use district-of-entry PADDs; and national-only flows and ratios are never allocated downward. Cushing is a source-published local node inside PADD 2, so the two overlap. Nine Phase 4 additive PADD quantities are browser-combinable only through `config/aggregation/custom-geography.json`: crude inputs, commercial crude stocks/imports, total imports, propane stocks/imports, and residual stocks/production/imports. Days supply, net imports, exports, product supplied, percentages, and unregistered views are never custom-summed.
+
+The activated propane export key is propane only. Stocks, production, imports, product supplied, and days supply use propane/propylene definitions, so the export selection retains a separate product identity and is not presented as a like-for-like balance component.
 
 The current forecast profile is transparent statistical forecasting, not machine learning: exactly 3 future source periods for both weekly and monthly series, rolling-origin MAE selection among six registered univariate baselines plus — only for national weekly total-distillate and jet stocks — a registered fundamental net-balance candidate built from the same release's production, imports, exports, and product-supplied series through the barrel-accounting identity (`pipeline/energy_dashboard/fundamentals.py`; gasoline excluded because of the June 2023 exports break; fails closed on any missing driver period), a later empirical calibration window, and 80%/90%/95% prediction intervals. "Prediction interval" is required terminology; it is not a confidence interval. Evaluation uses latest-revised pseudo-out-of-sample history rather than reconstructed first-release vintages, and forecasts are decision support rather than trading advice.
 
@@ -69,7 +73,7 @@ Refined-product hierarchy is non-additive in the UI: total gasoline contains fin
 - `src/components/dashboard/SeasonalChart.tsx`: observed seasonal chart plus dashed forecasts, one selected prediction band, diagnostics, tooltip, and accessible table.
 - `src/components/dashboard/`: geography, freshness, latest-value, seasonal, distribution, and audit components.
 
-The live runner commands are `refresh-eia`, `refresh-canada`, `rebuild-analytics`, and `promote`; follow the runbook rather than bypassing registry, generation, integrity, publication guards, atomic promotion, or safe retention. Missing USA weekly/monthly series use registry bootstrap starts of 2014-01-01/2014-01; existing USA series use 13-week/10-year overlaps. Canada retrieves and reconciles the registered current source files. Changed provider runs automatically rebuild observed and forecast assets with the current combined build ID. Unchanged runs are skipped; use `rebuild-analytics` for a reviewed provider-free methodology rebuild. Two validated generations are retained after promotion. `.\scripts\bootstrap-phase3.ps1` remains a scoped USA recovery/from-scratch onboarding helper, not a pending task. Public deployment is not complete because the directory lacks a usable connected Git repository and still needs EIA key rotation, GitHub secret/push, and Pages Actions setup. The Phase 1 `plan` command is not a live refresh.
+The live runner commands are `refresh-eia`, `refresh-canada`, `rebuild-analytics`, and `promote`; follow the runbook rather than bypassing registry, generation, integrity, publication guards, atomic promotion, or safe retention. Missing USA weekly/monthly series use registry bootstrap starts of 2014-01-01/2014-01; existing USA series use 13-week/10-year overlaps. Canada retrieves and reconciles the registered current source files. Changed provider runs automatically rebuild observed and forecast assets with the current combined build ID. Unchanged runs are skipped; use `rebuild-analytics` for a reviewed provider-free methodology rebuild. Two validated generations are retained after promotion. `.\scripts\bootstrap-phase3.ps1` remains a scoped historical Phase 3 recovery helper, not a Phase 4 bootstrap path. GitHub Pages and the secret-backed EIA workflow are operational. The Phase 1 `plan` command is not a live refresh.
 
 ## Non-negotiable invariants
 
@@ -80,7 +84,7 @@ The live runner commands are `refresh-eia`, `refresh-canada`, `rebuild-analytics
 - When a segment or geography changes, keep a downstream selection only if it remains valid; otherwise choose the first valid compatible option and make the change visible.
 - Prefer the smallest official published grain and seek a finer official public source where one exists.
 - Never fabricate city, metro, county, province, state, PADD, regional, or national values from a broader figure.
-- No Phase 3 weekly refined-product series is city/state data. PADD 1A/1B/1C exists only for select stock series; otherwise the source is PADD or U.S.-only.
+- Do not generalize geography across definitions. Phase 3 PADD 1A/1B/1C detail and Phase 4 Cushing detail exist only for their exact registered stock series; every other view remains at its own source-published grain.
 - Never add or stack a product parent with a child. Do not treat CBOB plus RBOB as complete MGBC or relabel RBOB as finished reformulated gasoline.
 - Label product supplied as an accounting proxy/implied demand, not measured consumption; label import PADD as district of entry; do not call total distillate pure road diesel.
 - Net production can legitimately be negative. Stocks are levels and cannot be combined directly with average-rate flows.
@@ -116,7 +120,7 @@ If an official source exposes finer geography, add exact provider codes and line
 
 ## Credentials and commands
 
-The EIA credential previously shared in conversation is exposed and must be rotated. Read the replacement only from `EIA_API_KEY`; never commit, print, log, screenshot, or embed it in a URL stored as provenance.
+Read the configured replacement credential only from `EIA_API_KEY`; never commit, print, log, screenshot, or embed it in a URL stored as provenance.
 
 Safe validation commands:
 

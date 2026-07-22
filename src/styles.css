@@ -2201,8 +2201,38 @@ h3 {
 }
 
 .weekly-desk-coverage {
+  margin: 0;
   color: #315f58 !important;
   font-weight: 750;
+}
+
+.weekly-desk-discovery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+
+.weekly-desk-national-button {
+  padding: 0.3rem 0.55rem;
+  color: #075f50;
+  border: 1px solid #8abdb2;
+  border-radius: 999px;
+  background: #f2faf7;
+  font: inherit;
+  font-size: 0.69rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.weekly-desk-national-button:hover {
+  background: var(--teal-soft);
+}
+
+.weekly-desk-national-button:focus-visible {
+  outline: 3px solid rgba(11, 124, 104, 0.24);
+  outline-offset: 2px;
 }
 
 .weekly-desk-route-link {

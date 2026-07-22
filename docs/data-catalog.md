@@ -2,7 +2,9 @@
 
 ## Status and activation rule
 
-The USA registry has mixed Phase 3 status. Thirty-nine EIA definitions have `activation_status: active`: three Phase 2 overview definitions and 36 classified refined-product definitions. Two refinery inputs remain `verified_supporting_phase_2`, and generic route candidates remain illustrative. Promoted local run `eia-20260719T230756Z` contains all 39 active definitions and 249 verified public chart assets.
+The USA registry has 67 definitions with `activation_status: active`: three legacy overview definitions, 36 Phase 3 refined-product definitions, and 28 Phase 4 weekly breadth definitions. The active set is 66 weekly plus one monthly definition and resolves to 11 Crude/56 Refined navigation choices. The Phase 4 additions use 77 exact source-series keys because one logical definition can expose several official geographies. Gross refinery input and operable capacity remain `verified_supporting_phase_2`, and two generic route candidates remain illustrative.
+
+Phase 4 is registry-complete but is not yet the promoted public-data vintage. Until a successful live refresh validates and promotes matching observed/forecast assets, promoted USA run `analytics-20260720T152511Z` retains the earlier 39 definitions and 249 verified chart assets. Registry activation is ingestion eligibility; the generated manifest and asset verification prove publication.
 
 The Canada registry has 51 active definitions: 49 Statistics Canada definitions across tables 25-10-0081-01 and 25-10-0063-01, plus 2 CER weekly definitions. They are classified as 22 Crude and 29 Refined choices. Promoted local run `canada-20260720T192043Z` contains 49,726 canonical observations, 404 verified observed chart assets with matching forecast records, and 21.09 MiB of canonical JSON. Its merge inserted 10,184 rows, revised 0, and matched 34,946 unchanged rows; Statistics Canada reaches source month `2026-04` and CER reaches week `2026-06-16`. Forecast status is 360 ready, 18 `limited_history`, and 26 unavailable. The previous last-known-good generation was `analytics-20260720T152511Z`, and the initial Canada activation was `canada-20260720T000329Z`. Registry activation alone means a definition is eligible for ingestion; the promoted manifests and asset verification prove local publication, not public GitHub Pages deployment.
 
@@ -23,7 +25,7 @@ API discovery is part of ingestion. A stale catalog entry must fail closed rathe
 
 ## USA — U.S. Energy Information Administration
 
-Primary documentation: [EIA API v2](https://www.eia.gov/opendata/documentation.php). The API is hierarchical and self-describing; route metadata exposes available frequencies, data fields, and facets. The replacement API key is supplied only at runtime through `EIA_API_KEY`.
+Primary documentation: [EIA API v2](https://www.eia.gov/opendata/documentation.php). The API is hierarchical and self-describing; route metadata exposes available frequencies, data fields, and facets. The configured replacement API key is supplied only at runtime through `EIA_API_KEY`.
 
 | Candidate | Official route/page | Frequency | Geography expectation | Aggregation | Current status |
 |---|---|---|---|---|---|
@@ -32,10 +34,11 @@ Primary documentation: [EIA API v2](https://www.eia.gov/opendata/documentation.p
 | Refinery/blender net production | [`petroleum/pnp/wprodrb`](https://www.eia.gov/opendata/browser/petroleum/pnp/wprodrb) | Weekly | Active products publish PADD 1-5 and U.S. | Source-published only in Phase 3 | Phase 3 active |
 | Imports/exports | [`petroleum/move/wkly`](https://www.eia.gov/opendata/browser/petroleum/move/wkly) | Weekly | Active imports publish PADD/U.S.; active exports are U.S.-only | Source-published only in Phase 3 | Phase 3 selected products active; generic candidate illustrative |
 | Product supplied (implied demand) | [`petroleum/cons/wpsup`](https://www.eia.gov/opendata/browser/petroleum/cons/wpsup) | Weekly | Active total-products and refined-product slices are U.S.-only | `not_aggregatable` | Phase 2 overview and Phase 3 products active |
+| Weekly petroleum summary | [`petroleum/sum/sndw`](https://www.eia.gov/opendata/browser/petroleum/sum/sndw) | Weekly | Exact Phase 4 series keys expose Alaska/Lower 48/U.S., Cushing/PADD/U.S., PADD/U.S., combined source districts, or U.S.-only according to the measure | Source-published views plus nine explicitly registered additive PADD definitions | Phase 4 registry-complete; public activation pending |
 | Crude oil production | [`petroleum/crd/crpdn`](https://www.eia.gov/opendata/browser/petroleum/crd/crpdn) | Monthly | 32 states, 3 special areas, five PADDs, U.S. | Use source-published PADD/U.S. totals; do not sum overlapping special areas | Phase 2 active |
 | Spot/retail prices | EIA petroleum prices routes, selected after metadata review | Daily/weekly/monthly | Market location or route-specific area | Usually `not_aggregatable`; a price needs a justified weight | Later expansion |
 
-### Phase 2 overview coordinates retained in Phase 3
+### Legacy overview coordinates retained in Phase 4
 
 | Stable series ID | Filters/series identifiers | Expected unit | Verified published geography |
 |---|---|---|---|
@@ -87,6 +90,28 @@ Weekly motor-gasoline exports are intentionally absent. EIA's definition changed
 
 Missing weekly/monthly histories use registry bootstrap bounds of 2014-01-01/2014-01. The completed Phase 3 activation selected its 36 weekly definitions from 2014-01-01 and inserted 130,964 observations. The promoted store now contains 161,869 canonical observations; canonical JSON is 65.09 MiB, below the 90 MiB hard guard. Its manifest references 249 public chart assets, records zero activation revisions, and reports `2026-07-10` as the latest period for every refined-product definition. These counts are a verified activation record, not constants for future runs.
 
+### Phase 4 weekly breadth coordinates
+
+The 28 Phase 4 definitions add 77 exact source-series keys under `/v2/petroleum/sum/sndw/data`. Each definition validates `period`, `duoarea`, provider `series`, `units`, its exact source geographies, and the expected provider unit. The registry, not a label or nearby route member, is authoritative.
+
+| Coverage | Logical definitions | Smallest official geography and larger views |
+|---|---:|---|
+| Weekly crude production | 1 | Alaska and Lower 48 States; source-published U.S. total |
+| Refinery crude inputs | 1 | PADD 1-5; source-published U.S. total |
+| Commercial crude stocks excluding SPR | 1 | Cushing; PADD 1-5 and source-published U.S. total |
+| SPR and inclusive crude stocks | 2 | U.S. only |
+| Commercial crude imports | 1 | PADD 1-5 district of entry; source-published U.S. total |
+| Crude exports and net imports | 2 | U.S. only |
+| Total crude-plus-products stocks | 2 | U.S. only, with distinct including/excluding-SPR views |
+| Total crude-plus-products imports, exports, and net imports | 3 | Imports at PADD 1-5/U.S.; exports and net imports U.S.-only |
+| Days of supply | 5 | U.S.-only ratios for crude, gasoline, distillate, jet, and propane |
+| Propane | 6 | Stocks at PADD 1 subdistricts, PADD 1-3, source-combined PADD 4&5, and U.S.; imports at PADD 1-3, source-combined PADD 4&5, and U.S.; remaining measures U.S.-only |
+| Residual fuel oil | 5 | Stocks, production, and imports at PADD 1-5/U.S.; exports and product supplied U.S.-only |
+
+Only nine Phase 4 definitions authorize browser-defined PADD sums: crude refinery inputs, commercial crude stocks, commercial crude imports, total petroleum imports, propane stocks/imports, and residual stocks/production/imports. The policy registry remains authoritative. Cushing is a contained part of PADD 2, so those two nodes overlap and cannot be combined. Weekly production's Alaska and Lower 48 rows are exact source-published producing areas, not custom-sum authorization. National flows and every days-of-supply ratio remain source-published only.
+
+Commercial crude excluding SPR, SPR, and inclusive crude inventory are overlapping views, as are broad stocks including and excluding SPR. Net imports can be negative and cannot be added to gross imports or exports. Canonical `days` maps to exact provider unit `DAYS`; it is a source-published ratio and never an additive quantity. The current propane stock series excludes propylene at terminals and is not spliced to the older discontinued definition. The activated export key is propane only and remains a separate product from the nearby propane/propylene measures. See [Phase 4 weekly breadth](phase-4-usa-weekly-breadth.md) for exact keys and activation gates.
+
 ### EIA geography cautions
 
 - A route-level `duoarea` value is not automatically equivalent to a state or PADD node; map provider codes explicitly.
@@ -97,7 +122,7 @@ Missing weekly/monthly histories use registry bootstrap bounds of 2014-01-01/201
 - “Product supplied” is an implied-demand accounting measure, not observed end-user consumption. The UI must use that label and definition.
 - Unadjusted refinery/blender net production is a net balance and can legitimately be negative; it is not refinery gross output.
 - An import PADD is the district of entry, not the consuming region or final destination.
-- No active weekly refined-product slice is city, county, refinery, or state data.
+- Cushing commercial crude stocks are the only active USA weekly local/city node; every other weekly series remains at its exact source-published region, PADD, source-region, or U.S. grain.
 
 The [WPSR schedule](https://www.eia.gov/petroleum/supply/weekly/schedule.php) normally releases summary material after 10:30 a.m. Eastern on Wednesday, with holiday exceptions. API availability can lag publication, so a run succeeds only when the expected period appears—not merely when HTTP succeeds.
 

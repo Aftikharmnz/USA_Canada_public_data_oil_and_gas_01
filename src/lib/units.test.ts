@@ -85,6 +85,27 @@ describe("unit catalog", () => {
     expect(convertUnitValue(87.25, "percent", "percent")).toBe(87.25);
   });
 
+  it("keeps days as a source-only duration without cross-unit conversions", () => {
+    expect(getDisplayUnitOptions("days")).toEqual([
+      expect.objectContaining({
+        id: "days",
+        dimension: "duration",
+        compactLabel: "days",
+        longLabel: "Days",
+        isSourceUnit: true,
+      }),
+    ]);
+    expect(getSourceUnitLabel("days")).toBe("Days");
+    expect(getUnitFormattingMetadata("days")?.numberFormat).toEqual({
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+      useGrouping: true,
+    });
+    expect(convertUnitValue(27.4, "days", "days")).toBe(27.4);
+    expect(() => convertUnitValue(27.4, "days", "percent")).toThrow(/Cannot convert/);
+    expect(() => convertUnitValue(27.4, "days", "thousand_barrels")).toThrow(/Cannot convert/);
+  });
+
   it("exposes number-format metadata alongside unambiguous labels", () => {
     expect(getUnitFormattingMetadata("million_barrels_per_day")).toEqual({
       compactLabel: "MMbbl/d",

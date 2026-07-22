@@ -319,9 +319,19 @@ function UsaDashboard({
                 : "Start broad, then move from the finest official detail upward"}
             </h2>
             {weeklyOnly ? (
-              <p className="weekly-desk-coverage">
-                {manifest.series.length} verified weekly definitions across {usaWeeklyFamilyCount(manifest.series)} market families.
-              </p>
+              <div className="weekly-desk-discovery">
+                <p className="weekly-desk-coverage">
+                  {manifest.series.length} verified weekly definitions across {usaWeeklyFamilyCount(manifest.series)} market families.
+                  Finer regions show only the measures EIA publishes there.
+                </p>
+                <button
+                  type="button"
+                  className="weekly-desk-national-button"
+                  onClick={() => chooseGeography("us")}
+                >
+                  Show the full U.S. weekly catalog
+                </button>
+              </div>
             ) : null}
             <p>{series.description ?? "Official EIA petroleum-market observations."}</p>
           </div>
