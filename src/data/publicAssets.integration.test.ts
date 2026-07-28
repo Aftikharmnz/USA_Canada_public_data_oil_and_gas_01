@@ -11,6 +11,10 @@ import {
   canadaOriginDestinationAssetPlan,
 } from "../charts/canadaOriginDestinationModel";
 import {
+  buildUsaPaddOriginDestinationModel,
+  usaPaddOriginDestinationAssetPlan,
+} from "../charts/usaPaddOriginDestinationModel";
+import {
   canadaMovementContext,
   movementRouteFromAsset,
 } from "./canadaMovement";
@@ -30,6 +34,7 @@ async function readJson(url: URL): Promise<unknown> {
 describe("promoted USA data", () => {
   it("matches the frontend contract for every manifest asset", async () => {
     const manifest = parseUsaManifest(await readJson(new URL("manifest.json", publicRoot)));
+    expect(manifest.series).toHaveLength(69);
     const available = manifest.series.flatMap((series) =>
       series.geographies
         .filter((geography) => geography.status === "available" && geography.asset_path)
@@ -44,8 +49,8 @@ describe("promoted USA data", () => {
     );
     const unclassifiedSeries = manifest.series.filter((series) => !series.classification);
     expect(unclassifiedSeries).toHaveLength(3);
-    expect(refinedSeries.length).toBeGreaterThanOrEqual(36);
-    expect(crudeSeries.length).toBeGreaterThanOrEqual(0);
+    expect(refinedSeries).toHaveLength(56);
+    expect(crudeSeries).toHaveLength(10);
     if (refinedSeries.length > 0) {
       const familyCounts = refinedSeries.reduce<Record<string, number>>((counts, series) => {
         const familyId = series.classification!.product_family_id;
@@ -56,7 +61,7 @@ describe("promoted USA data", () => {
       expect(familyCounts.distillate).toBeGreaterThanOrEqual(13);
       expect(familyCounts["jet-fuel"]).toBeGreaterThanOrEqual(5);
     }
-    expect(available.length).toBeGreaterThanOrEqual(48);
+    expect(available).toHaveLength(361);
 
     for (const { series, geography } of available) {
       const asset = parseUsaChartAsset(
@@ -79,6 +84,60 @@ describe("promoted USA data", () => {
         )).toBeNull();
       }
     }
+  }, 30_000);
+
+  it.each([
+    {
+      seriesId: "usa.eia.crude.padd_movements.monthly",
+      expectedRoutes: 17,
+      absentOrigin: "us.padd.1",
+      absentDestination: "us.padd.5",
+    },
+    {
+      seriesId: "usa.eia.refined.total_petroleum_products.padd_movements.monthly",
+      expectedRoutes: 18,
+      absentOrigin: "us.padd.1",
+      absentDestination: "us.padd.4",
+    },
+  ])("joins the exact $seriesId corridors into a PADD origin-destination matrix", async ({
+    seriesId,
+    expectedRoutes,
+    absentOrigin,
+    absentDestination,
+  }) => {
+    const manifest = parseUsaManifest(
+      await readJson(new URL("manifest.json", publicRoot)),
+    );
+    const series = manifest.series.find((candidate) => (
+      candidate.series_id === seriesId
+    ));
+    expect(series).toBeDefined();
+    const plan = usaPaddOriginDestinationAssetPlan(series!);
+    expect(plan).toHaveLength(expectedRoutes);
+    const loaded = await Promise.all(plan.map(async (item) => ({
+      ...item,
+      asset: parseUsaChartAsset(
+        await readJson(new URL(item.assetPath, publicRoot)),
+      ),
+    })));
+    const model = buildUsaPaddOriginDestinationModel(series!, loaded);
+    const latest = model.snapshots.find(
+      (snapshot) => snapshot.period === model.latestPeriod,
+    )!;
+
+    expect(model.origins).toHaveLength(5);
+    expect(model.destinations).toHaveLength(5);
+    expect(model.routes).toHaveLength(expectedRoutes);
+    expect(model.latestPeriod).toBe("2026-04");
+    expect(latest.cells.find((cell) => (
+      cell.origin.id === absentOrigin
+      && cell.destination.id === absentDestination
+    ))).toMatchObject({
+      routeId: null,
+      value: null,
+      status: "no_published_fact",
+      declared: false,
+    });
   }, 30_000);
 });
 
@@ -142,20 +201,34 @@ describe("promoted Canada data", () => {
     }
   }, 30_000);
 
-  it("joins the exact movement siblings into a province origin-destination matrix", async () => {
+  it.each([
+    {
+      seriesId: "can.statcan.crude.pipeline_movements.to_ontario.monthly",
+      productLabel: "Crude & equivalents pipeline movements",
+      minimumAvailableRoutes: 19,
+    },
+    {
+      seriesId: "can.statcan.refined.hgl_rpp.pipeline_movements.to_ontario.monthly",
+      productLabel: "HGL + refined products pipeline movements",
+      minimumAvailableRoutes: 14,
+    },
+  ])("joins the exact $seriesId siblings into a province origin-destination matrix", async ({
+    seriesId,
+    productLabel,
+    minimumAvailableRoutes,
+  }) => {
     const manifest = parseCanadaManifest(
       await readJson(new URL("manifest.json", canadaPublicRoot)),
     );
     const active = manifest.series.find(
-      (series) => series.series_id
-        === "can.statcan.crude.pipeline_movements.to_ontario.monthly",
+      (series) => series.series_id === seriesId,
     );
     expect(active).toBeDefined();
     const plan = canadaOriginDestinationAssetPlan(manifest.series, active!);
     // Only source-published routes with an available public asset are loaded.
-    // The active crude movement product currently exposes 19 such histories;
-    // dimension-declared routes without facts remain unpublished, not zero.
-    expect(plan.length).toBeGreaterThan(10);
+    // Other dimension-declared routes have no numeric public history and
+    // remain unpublished rather than being treated as zero.
+    expect(plan).toHaveLength(minimumAvailableRoutes);
     const loaded = await Promise.all(plan.map(async (item) => ({
       ...item,
       asset: parseCanadaChartAsset(
@@ -169,7 +242,7 @@ describe("promoted Canada data", () => {
     );
 
     expect(model.latestPeriod).toBe("2026-05");
-    expect(model.productLabel).toBe("Crude & equivalents pipeline movements");
+    expect(model.productLabel).toBe(productLabel);
     expect(model.origins.some((node) => node.label === "Alberta")).toBe(true);
     expect(model.destinations.some((node) => node.label === "Ontario")).toBe(true);
     expect(model.destinations.some((node) => node.label === "United States")).toBe(true);

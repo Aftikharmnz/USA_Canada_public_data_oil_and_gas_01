@@ -9,10 +9,10 @@ The USA registry includes two active monthly EIA movement definitions:
 
 They use the official EIA API v2 route
 [`/v2/petroleum/move/ptb/data`](https://www.eia.gov/opendata/browser/petroleum/move/ptb)
-and the Petroleum Supply Monthly movement tables. They are registered for the
-next source refresh; the older promoted run remains the last-known-good public
-generation until a complete refresh, analytics build, size check, and promotion
-succeed.
+and the Petroleum Supply Monthly movement tables. Both are activated in
+promoted run `eia-20260728T164833Z`, which passed the complete refresh,
+analytics, integrity, size, and Pages-deployment gates in workflow run
+`30379912166`.
 
 These are domestic logistics observations. They are separate from:
 
@@ -147,18 +147,21 @@ transport sources. For these reasons:
 - preserve zero, missing, unavailable, and withheld as distinct states;
 - never stack total petroleum products with its component products.
 
-## Storage gate
+## Activation and storage evidence
 
-The two definitions add at most 35 route histories. From `2014-01` through
-`2026-04`, that is about 5,180 canonical period-route rows. At the current
-observed average of roughly 412 bytes per canonical row, the estimated increase
-is about 2.14 MB, taking the existing 83.54 MiB USA canonical generation to
-about 85.6 MiB before normal growth.
+Promoted run `eia-20260728T164833Z` contains 17 crude route assets and 18
+total-products route assets within 217,223 canonical observations. All crude
+routes reach `2026-04`. The total-products definition conservatively reports
+`2026-03` because 16 route assets reach `2026-04` while two end at `2026-03`;
+the older route values are not stale-filled into the newer month. The complete
+USA generation is 89,851,624 bytes (85.69 MiB), below the 90 MiB promotion
+guard, and the previous last-known-good generation is
+`eia-20260722T202149Z`.
 
-This estimate must not replace the 90 MiB promotion check. More movement
-products—such as 0–15 ppm distillate, finished gasoline, jet fuel, or
-propane/propylene—require a reviewed storage migration or an equivalent
-capacity plan before activation.
+This measured result does not replace the 90 MiB check on every future
+promotion. More movement products—such as 0–15 ppm distillate, finished
+gasoline, jet fuel, or propane/propylene—require a reviewed storage migration
+or an equivalent capacity plan before activation.
 
 ## Primary sources
 
