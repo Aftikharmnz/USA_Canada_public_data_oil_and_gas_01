@@ -85,4 +85,19 @@ describe("manifest-driven chart geography", () => {
     expect(html).toContain("Subdistrict A + Subdistrict B");
     expect((html.match(/checked=""/g) ?? [])).toHaveLength(2);
   });
+
+  it("accepts source-semantic endpoint labels for movement charts", () => {
+    const html = renderToStaticMarkup(createElement(ChartGeographyControl, {
+      series,
+      geographyId: "subdistrict-a",
+      onGeographyChange: () => undefined,
+      geographyLevelLabel: "Shipping-origin level",
+      regionLabel: "Shipping origin",
+      chartLabel: "Movement chart",
+    }));
+
+    expect(html).toContain("Shipping-origin level");
+    expect(html).toContain("Shipping origin");
+    expect(html).not.toContain(">Geography level<");
+  });
 });

@@ -49,6 +49,8 @@ interface SeasonalChartProps {
   regionMode?: RegionSelectionMode;
   onGeographiesChange?: (geographyIds: string[]) => void;
   onRegionModeChange?: (mode: RegionSelectionMode) => void;
+  geographyLevelLabel?: string;
+  regionLabel?: string;
   /** Display-only conversion; observations and forecasts retain their source unit. */
   displayUnit?: DisplayUnitId;
   onDisplayUnitChange?: (unit: DisplayUnitId) => void;
@@ -786,6 +788,8 @@ export function SeasonalChart({
   regionMode,
   onGeographiesChange,
   onRegionModeChange,
+  geographyLevelLabel,
+  regionLabel,
   displayUnit,
   onDisplayUnitChange,
   forecast,
@@ -867,6 +871,8 @@ export function SeasonalChart({
             regionMode={regionMode}
             onGeographiesChange={onGeographiesChange}
             onRegionModeChange={onRegionModeChange}
+            geographyLevelLabel={geographyLevelLabel}
+            regionLabel={regionLabel}
             compact
             chartLabel="Seasonal history and forecast"
           />

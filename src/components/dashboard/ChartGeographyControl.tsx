@@ -13,6 +13,9 @@ interface ChartGeographyControlProps {
   regionMode?: RegionSelectionMode;
   onGeographiesChange?: (geographyIds: string[]) => void;
   onRegionModeChange?: (mode: RegionSelectionMode) => void;
+  /** Optional source-semantic labels, such as Shipping origin for route data. */
+  geographyLevelLabel?: string;
+  regionLabel?: string;
   compact?: boolean;
   chartLabel: string;
 }
@@ -90,6 +93,8 @@ export function ChartGeographyControl({
   regionMode,
   onGeographiesChange,
   onRegionModeChange,
+  geographyLevelLabel,
+  regionLabel,
   compact = false,
   chartLabel,
 }: ChartGeographyControlProps) {
@@ -124,7 +129,7 @@ export function ChartGeographyControl({
     <div className={`chart-geography ${compact ? "chart-geography-compact" : ""}`}>
       <div className="chart-geography-fields" role="group" aria-label={`${chartLabel} geography`}>
         <label>
-          <span>Geography level</span>
+          <span>{geographyLevelLabel ?? "Geography level"}</span>
           <select value={activeLevel?.id ?? ""} onChange={(event) => handleLevelChange(event.target.value)}>
             {levels.map((level, index) => {
               const isAvailable = level.geographies.some(
@@ -140,7 +145,7 @@ export function ChartGeographyControl({
         </label>
         {showMultiRegionControl ? (
           <RegionSelectionControl
-            label={activeLevel?.label ?? "Region"}
+            label={regionLabel ?? activeLevel?.label ?? "Region"}
             mode={regionMode!}
             options={availableRegions.map((geography) => ({
               id: geography.geography_id,
@@ -154,7 +159,7 @@ export function ChartGeographyControl({
           />
         ) : (
           <label>
-            <span>{activeLevel?.label ?? "Region"}</span>
+            <span>{regionLabel ?? activeLevel?.label ?? "Region"}</span>
             <select
               value={activeGeography?.geography_id ?? ""}
               onChange={(event) => onGeographyChange(event.target.value)}

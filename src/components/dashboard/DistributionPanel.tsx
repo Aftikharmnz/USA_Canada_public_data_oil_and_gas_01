@@ -19,6 +19,8 @@ interface DistributionPanelProps {
   regionMode?: RegionSelectionMode;
   onGeographiesChange?: (geographyIds: string[]) => void;
   onRegionModeChange?: (mode: RegionSelectionMode) => void;
+  geographyLevelLabel?: string;
+  regionLabel?: string;
   /** Display-only conversion; distribution calculations remain in asset.unit. */
   displayUnit?: DisplayUnitId;
 }
@@ -185,6 +187,8 @@ export function DistributionPanel({
   regionMode,
   onGeographiesChange,
   onRegionModeChange,
+  geographyLevelLabel,
+  regionLabel,
   displayUnit,
 }: DistributionPanelProps) {
   const allCounts = [
@@ -214,6 +218,8 @@ export function DistributionPanel({
           regionMode={regionMode}
           onGeographiesChange={onGeographiesChange}
           onRegionModeChange={onRegionModeChange}
+          geographyLevelLabel={geographyLevelLabel}
+          regionLabel={regionLabel}
           compact
           chartLabel="Distribution comparison"
         />

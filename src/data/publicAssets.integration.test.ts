@@ -5,6 +5,12 @@ import { customAggregationPolicy } from "./customAggregation";
 import { forecastMismatchReason, parseForecastAsset } from "./forecastAssets";
 import { parseUsaChartAsset, parseUsaManifest } from "./usaAssets";
 import { buildCustomRegionView } from "../lib/customRegionView";
+import { buildRegionalContributionModel } from "../charts/regionalContributionModel";
+import {
+  canadaMovementContext,
+  movementRouteFromAsset,
+} from "./canadaMovement";
+import { regionalContributionSpec } from "./regionalContributions";
 import {
   buildMonthlyAverageRateAsset,
   monthlyAverageRateForecastPoints,
@@ -114,6 +120,10 @@ describe("promoted Canada data", () => {
       expect(asset.baseline.eligible_years).toHaveLength(
         asset.baseline.eligible_year_count,
       );
+      const movementContext = canadaMovementContext(series);
+      if (movementContext) {
+        expect(movementRouteFromAsset(series, asset, geography)).not.toBeNull();
+      }
       if (geography.forecast_path) {
         const forecast = parseForecastAsset(
           await readJson(new URL(geography.forecast_path, canadaPublicRoot)),
@@ -125,6 +135,49 @@ describe("promoted Canada data", () => {
           geography.geography_id,
         )).toBeNull();
       }
+    }
+  }, 30_000);
+});
+
+describe("promoted regional import contribution views", () => {
+  it.each([
+    { country: "usa" as const, root: publicRoot, expectedSeries: 13 },
+    { country: "canada" as const, root: canadaPublicRoot, expectedSeries: 6 },
+  ])("validates every eligible $country import decomposition", async ({
+    country,
+    root,
+    expectedSeries,
+  }) => {
+    const rawManifest = await readJson(new URL("manifest.json", root));
+    const manifest = country === "usa"
+      ? parseUsaManifest(rawManifest)
+      : parseCanadaManifest(rawManifest);
+    const eligible = manifest.series.flatMap((series) => {
+      const spec = regionalContributionSpec(country, series);
+      return spec ? [{ series, spec }] : [];
+    });
+    expect(eligible).toHaveLength(expectedSeries);
+
+    for (const { series, spec } of eligible) {
+      expect(spec.components.every(
+        (component) => component.geographyId !== spec.nationalGeographyId,
+      )).toBe(true);
+      expect(spec.components.some(
+        (component) => component.geographyId === "ca.statcan.atlantic",
+      )).toBe(false);
+      const national = parseUsaChartAsset(
+        await readJson(new URL(spec.nationalAssetPath, root)),
+      );
+      const components = await Promise.all(spec.components.map(async (geography) => ({
+        geography,
+        asset: parseUsaChartAsset(await readJson(new URL(geography.assetPath, root))),
+      })));
+      const model = buildRegionalContributionModel(series, spec, national, components);
+      expect(model.latest.expectedComponentCount).toBe(spec.components.length);
+      expect(model.latest.components.every(
+        (component) => component.previousPeriod === null
+          || component.previousPeriod < model.latest.period,
+      )).toBe(true);
     }
   }, 30_000);
 });

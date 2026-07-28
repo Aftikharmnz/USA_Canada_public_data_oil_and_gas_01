@@ -11,6 +11,7 @@ import { DistributionPanel } from "../components/dashboard/DistributionPanel";
 import { DisplayUnitControl } from "../components/dashboard/DisplayUnitControl";
 import { FreshnessBadge } from "../components/dashboard/FreshnessBadge";
 import { LatestValueGrid } from "../components/dashboard/LatestValueGrid";
+import { RegionalContributionPanel } from "../components/dashboard/RegionalContributionPanel";
 import {
   RegionSelectionControl,
   type RegionSelectionMode,
@@ -31,6 +32,7 @@ import {
 import { usaWeeklyFamilyCount, verifiedUsaWeeklySeries } from "../data/usaWeekly";
 import { customAggregationPolicy } from "../data/customAggregation";
 import { overlappingSelection } from "../data/geographyContainment";
+import { regionalContributionSpec } from "../data/regionalContributions";
 import {
   forecastIsRenderable,
   forecastMismatchReason,
@@ -189,6 +191,7 @@ function UsaDashboard({
               ? "Checking for the latest validated forecast…"
               : undefined;
   const displayUnit = resolveDisplayUnit(asset?.unit ?? series.unit, requestedDisplayUnit);
+  const contributionSpec = regionalContributionSpec("usa", series);
 
   const selectedProduct = selection.products.find((item) => item.id === selection.productId);
   const selectedSegment = selection.segments.find((item) => item.id === selection.segment);
@@ -516,6 +519,13 @@ function UsaDashboard({
             <p className="refreshing-label" role="status">Checking for a newer asset…</p>
           ) : null}
           <LatestValueGrid asset={asset} series={series} displayUnit={displayUnit ?? undefined} />
+          {contributionSpec && displayUnit ? (
+            <RegionalContributionPanel
+              series={series}
+              spec={contributionSpec}
+              displayUnit={displayUnit}
+            />
+          ) : null}
           <SeasonalChart
             asset={asset}
             series={series}

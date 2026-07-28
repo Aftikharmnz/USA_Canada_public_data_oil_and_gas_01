@@ -180,6 +180,25 @@ registry. Select one exact source-published shipping origin (or, for
 United-States-origin measures, one receiving destination); the browser does not
 sum origins into a synthetic route total.
 
+The dashboard renders these series as explicit route observations. For every
+`to-*` measure, the geography selector is labelled **Shipping origin** and the
+measure supplies the fixed **Receiving destination**. For
+`from-united-states`, the geography selector is **Receiving destination** and
+the fixed shipping origin is the United States. Loaded asset dimensions must
+validate the visible `shipping origin → receiving destination` label and
+`Pipeline` mode; a mismatch fails closed. A separate colored route-bar view
+compares exact published corridors for one source period. Missing corridors
+remain “No published fact,” and the source-published Canada aggregate is not
+summed with or reconstructed from province routes.
+
+Standard all-mode import balance series use a different national-composition
+view. It compares the source-published Canada total with same-period provincial
+components registered for additive comparison. The official total remains
+authoritative, incomplete components are not stale-filled, and a reconciliation
+difference is a diagnostic rather than an invented province. Crude imports use
+province of destination from January 2020 onward; refined balance imports retain
+their province-of-entry/reporting-province semantics.
+
 The source publishes exactly two broad product buckets:
 
 - **Crude oil and equivalents**: bitumen, heavy crude oil, lease condensate,

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { AssetDetails } from "../components/dashboard/AssetDetails";
+import { CanadaMovementRoutePanel } from "../components/dashboard/CanadaMovementRoutePanel";
 import { CollapsibleToolbar } from "../components/dashboard/CollapsibleToolbar";
 import {
   DashboardError,
@@ -10,6 +11,7 @@ import { DistributionPanel } from "../components/dashboard/DistributionPanel";
 import { DisplayUnitControl } from "../components/dashboard/DisplayUnitControl";
 import { FreshnessBadge } from "../components/dashboard/FreshnessBadge";
 import { LatestValueGrid } from "../components/dashboard/LatestValueGrid";
+import { RegionalContributionPanel } from "../components/dashboard/RegionalContributionPanel";
 import {
   RegionSelectionControl,
   type RegionSelectionMode,
@@ -23,8 +25,14 @@ import {
   type CanadaDashboardSelectionRequest,
   type CanadaGeographyOption,
 } from "../data/canadaDashboard";
+import {
+  canadaMovementContext,
+  movementRouteFromAsset,
+  movementRouteLabelFromSelection,
+} from "../data/canadaMovement";
 import { customAggregationPolicy } from "../data/customAggregation";
 import { overlappingSelection } from "../data/geographyContainment";
+import { regionalContributionSpec } from "../data/regionalContributions";
 import {
   forecastIsRenderable,
   forecastMismatchReason,
@@ -362,6 +370,20 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
     displayAsset?.unit ?? asset?.unit ?? series.unit,
     averageRateActive ? requestedDisplayUnit : undefined,
   );
+  const contributionSpec = regionalContributionSpec("canada", series);
+  const movementContext = canadaMovementContext(series);
+  const validatedMovementRoute = movementContext && singleAsset
+    ? movementRouteFromAsset(series, singleAsset, geography)
+    : null;
+  const movementRouteValidationFailed = Boolean(
+    movementContext && singleAsset && !validatedMovementRoute,
+  );
+  const movementRouteLabel = movementContext
+    ? validatedMovementRoute?.label
+      ?? (!singleAsset
+        ? movementRouteLabelFromSelection(movementContext, geography.label)
+        : null)
+    : null;
   const displayForecast = averageRateActive && monthlyRateView.forecastError
     ? undefined
     : forecast;
@@ -393,7 +415,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
         collapsed={filtersCollapsed}
         contentId="canada-market-filter-content"
         onCollapsedChange={setFiltersCollapsed}
-        summary={`${selectedSegment?.label ?? selection.segmentId} / ${selectedGeographies.map((item) => item.label).join(" + ")} / ${selectedProduct?.label ?? series.title} / ${selection.measures.find((item) => item.id === selection.measureId)?.label ?? series.title}`}
+        summary={`${selectedSegment?.label ?? selection.segmentId} / ${movementRouteValidationFailed ? "Route dimensions unavailable" : movementRouteLabel ?? selectedGeographies.map((item) => item.label).join(" + ")} / ${selectedProduct?.label ?? series.title} / ${selection.measures.find((item) => item.id === selection.measureId)?.label ?? series.title}`}
       >
         <div className="products-toolbar-heading">
           <div>
@@ -429,7 +451,9 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
           </div>
 
           <label className="series-field">
-            <span>2 · Geography level</span>
+            <span>
+              2 · {movementContext ? `${movementContext.geographyRole} level` : "Geography level"}
+            </span>
             <select
               value={selection.geographyLevelId}
               onChange={(event) => chooseGeographyLevel(event.target.value)}
@@ -440,12 +464,16 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
                 </option>
               ))}
             </select>
-            <small>Ordered from the smallest published grain to Canada.</small>
+            <small>
+              {movementContext
+                ? `The selected geography is the published ${movementContext.geographyRole.toLowerCase()}; the opposite endpoint is selected as the route measure.`
+                : "Ordered from the smallest published grain to Canada."}
+            </small>
           </label>
 
           <RegionSelectionControl
             idPrefix="canada-market"
-            label="3 / Official region"
+            label={`3 / ${movementContext?.geographyRole ?? "Official region"}`}
             mode={regionMode}
             selectedIds={selection.geographyIds}
             onModeChange={chooseRegionMode}
@@ -508,13 +536,17 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
           </label>
 
           <label className="series-field">
-            <span>6 · Market measure</span>
+            <span>6 · {movementContext ? "Movement route" : "Market measure"}</span>
             <select value={selection.measureId} onChange={(event) => chooseMeasure(event.target.value)}>
               {selection.measures.map((option) => (
                 <option key={option.id} value={option.id}>{option.label}</option>
               ))}
             </select>
-            <small>{compactUnit(series.unit)} · {series.frequency}</small>
+            <small>
+              {movementContext
+                ? `Current fixed endpoint — ${movementContext.measureRole}: ${movementContext.fixedEndpoint} · pipeline only`
+                : `${compactUnit(series.unit)} · ${series.frequency}`}
+            </small>
           </label>
 
           {selection.seriesOptions.length > 1 ? (
@@ -559,7 +591,25 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
 
         <div className="products-selection-context canada-selection-context">
           <span className="component-role-badge">{selection.segmentId} · {series.frequency}</span>
-          <p><strong>Geography boundary:</strong> {geographyBoundaryMessage(series)}</p>
+          {movementRouteValidationFailed ? (
+            <p className="route-validation-error" role="status">
+              <strong>Route withheld:</strong> the loaded asset dimensions do not match the selected
+              shipping and receiving endpoints. The observed chart remains visible while the route
+              metadata is corrected.
+            </p>
+          ) : movementContext && movementRouteLabel ? (
+            <div className="movement-route-card">
+              <span>Published pipeline route</span>
+              <strong>{movementRouteLabel}</strong>
+              <small>
+                {validatedMovementRoute
+                  ? `${validatedMovementRoute.classification.replaceAll("-", " ")} · ${validatedMovementRoute.mode} · ${validatedMovementRoute.product}`
+                  : `Validating source dimensions · ${movementContext.geographyRole} selected`}
+              </small>
+            </div>
+          ) : (
+            <p><strong>Geography boundary:</strong> {geographyBoundaryMessage(series)}</p>
+          )}
           {series.description ? (
             <p><strong>Accounting note:</strong> {series.description}</p>
           ) : null}
@@ -606,6 +656,22 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             <p className="refreshing-label" role="status">Checking for a newer asset…</p>
           ) : null}
           <LatestValueGrid asset={displayAsset} series={series} displayUnit={displayUnit ?? undefined} />
+          {contributionSpec && displayUnit ? (
+            <RegionalContributionPanel
+              series={series}
+              spec={contributionSpec}
+              displayUnit={displayUnit}
+              monthlyAverageRate={averageRateActive}
+            />
+          ) : null}
+          {movementContext && displayUnit ? (
+            <CanadaMovementRoutePanel
+              series={series}
+              context={movementContext}
+              displayUnit={displayUnit}
+              monthlyAverageRate={averageRateActive}
+            />
+          ) : null}
           <SeasonalChart
             asset={displayAsset}
             series={series}
@@ -615,6 +681,8 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             regionMode={aggregationPolicy ? regionMode : undefined}
             onGeographiesChange={aggregationPolicy ? chooseGeographies : undefined}
             onRegionModeChange={aggregationPolicy ? chooseRegionMode : undefined}
+            geographyLevelLabel={movementContext ? `${movementContext.geographyRole} level` : undefined}
+            regionLabel={movementContext?.geographyRole}
             displayUnit={displayUnit ?? undefined}
             forecast={displayForecast}
             forecastDisplayPoints={averageRateActive ? monthlyRateView.forecastPoints : undefined}
@@ -629,6 +697,8 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             regionMode={aggregationPolicy ? regionMode : undefined}
             onGeographiesChange={aggregationPolicy ? chooseGeographies : undefined}
             onRegionModeChange={aggregationPolicy ? chooseRegionMode : undefined}
+            geographyLevelLabel={movementContext ? `${movementContext.geographyRole} level` : undefined}
+            regionLabel={movementContext?.geographyRole}
             displayUnit={displayUnit ?? undefined}
           />
           <AssetDetails asset={asset} series={series} geography={displayGeography} />

@@ -198,6 +198,19 @@ Every official Phase 4 node is provider-published. The app does not calculate PA
 
 EIA's weekly trade route can encode stable areas with raw aliases such as `NUS-Z00` and `R10-Z00`. The geography registry maps these aliases to the same U.S./PADD nodes and rejects unknown codes. A trade PADD is a reporting concept specific to the measure: for imports it is district of entry, not destination or consumption region.
 
+Regional contribution charts do not create a new rollup or geography. They
+place same-period source-published members beside a separately published
+national total, using the custom-aggregation registry only as the positive
+authorization that the displayed component level is mutually exclusive and
+additive. The national value is never replaced by the component sum. Missing
+members remain nonnumeric, and any complete-coverage difference is labelled
+reconciliation or rounding rather than assigned to a fabricated region.
+
+Canada's table 25-10-0077-01 is an origin-destination matrix, not a contribution
+hierarchy. Its controls and route chart therefore name the shipping and receiving
+endpoints explicitly. Provincial route rows are never labelled as contributions
+to a Canada import total and remain excluded from custom aggregation.
+
 The broader table below remains onboarding guidance for illustrative and future sources.
 
 | Series type | Likely smallest official grain | Larger choices | City behavior |

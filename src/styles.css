@@ -3076,6 +3076,212 @@ h3 {
   height: 320px;
 }
 
+/* Source-published regional import composition and Canadian movement routes */
+
+.regional-contribution-panel .echarts-regional-contribution {
+  width: 100%;
+  height: 410px;
+  margin-top: 0.35rem;
+}
+
+.movement-route-panel .echarts-movement-routes {
+  width: 100%;
+  height: 330px;
+  margin-top: 0.35rem;
+}
+
+.contribution-period-badge {
+  min-width: 9.5rem;
+  padding: 0.62rem 0.75rem;
+  border: 1px solid #d7e1df;
+  border-radius: 0.72rem;
+  background: #f7faf9;
+}
+
+.contribution-period-badge span,
+.contribution-period-badge strong {
+  display: block;
+}
+
+.contribution-period-badge span {
+  color: #657a80;
+  font-size: 0.62rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.contribution-period-badge strong {
+  margin-top: 0.2rem;
+  color: var(--navy);
+  font-size: 0.84rem;
+}
+
+.contribution-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.contribution-summary-grid > div {
+  min-width: 0;
+  padding: 0.65rem 0.72rem;
+  border: 1px solid #d9e3e0;
+  border-radius: 0.72rem;
+  background: #f9fbfa;
+}
+
+.contribution-summary-grid span,
+.contribution-summary-grid strong,
+.contribution-summary-grid small {
+  display: block;
+}
+
+.contribution-summary-grid span {
+  color: #657a80;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.contribution-summary-grid strong {
+  margin-top: 0.25rem;
+  color: var(--navy);
+  font-size: 0.9rem;
+}
+
+.contribution-summary-grid small {
+  margin-top: 0.15rem;
+  color: #71858a;
+  font-size: 0.63rem;
+}
+
+.contribution-warning,
+.contribution-note,
+.movement-route-summary {
+  margin: 0.6rem 0 0;
+  padding: 0.58rem 0.72rem;
+  border-radius: 0.62rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.contribution-warning {
+  color: #714b1b;
+  border: 1px solid #e7c894;
+  background: #fff7e8;
+}
+
+.contribution-note {
+  color: #405b61;
+  border: 1px solid #d7e1df;
+  background: #f7faf9;
+}
+
+.movement-route-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #405b61;
+  border: 1px solid #d7e1df;
+  background: #f7faf9;
+}
+
+.movement-route-card {
+  display: grid;
+  gap: 0.15rem;
+  min-width: min(100%, 23rem);
+  padding: 0.62rem 0.75rem;
+  border: 1px solid #b9d8d1;
+  border-radius: 0.68rem;
+  background: #eef8f5;
+}
+
+.movement-route-card span {
+  color: #547078;
+  font-size: 0.6rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.movement-route-card strong {
+  color: var(--navy);
+  font-size: 0.9rem;
+}
+
+.movement-route-card small {
+  color: #61777c;
+  font-size: 0.67rem;
+  text-transform: capitalize;
+}
+
+.contribution-color-key {
+  display: inline-block;
+  width: 0.58rem;
+  height: 0.58rem;
+  margin-right: 0.38rem;
+  border-radius: 0.15rem;
+  vertical-align: 0.02rem;
+}
+
+.contribution-error {
+  margin-top: 0.65rem;
+  color: #7e2f24;
+  font-size: 0.75rem;
+}
+
+.contribution-error p {
+  margin: 0;
+}
+
+.route-validation-error {
+  margin: 0;
+  padding: 0.62rem 0.75rem;
+  color: #7e2f24;
+  border: 1px solid #e3b5aa;
+  border-radius: 0.68rem;
+  background: #fff1ed;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.echarts-tooltip-row small {
+  margin: 0 0 0 0.35rem;
+}
+
+.echarts-tooltip-total {
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 860px) {
+  .contribution-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contribution-period-badge {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .regional-contribution-panel .echarts-regional-contribution {
+    height: 360px;
+  }
+
+  .movement-route-panel .echarts-movement-routes {
+    height: 310px;
+  }
+
+  .contribution-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .movement-route-summary {
+    flex-direction: column;
+  }
+}
+
 .balance-context {
   margin: 0.35rem 0 0.4rem;
   color: #476168;

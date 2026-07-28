@@ -40,6 +40,7 @@ The promoted run contains 212,512 canonical observations, 326 observed chart ass
 - Days of supply uses canonical unit `days` and exact provider unit `DAYS`. It is a source-published ratio, not an additive quantity, confidence interval, or forecast of exhaustion.
 - Net imports are imports minus exports, can be negative, and must not be added to either gross flow.
 - PADD imports represent district of entry rather than destination or consumption region.
+- Every active import definition that publishes both PADD members and a U.S. total has a regional-composition chart. Colored PADD bars are aligned to the exact official-total week, and the separately published U.S. value remains a line/reference rather than being rebuilt. Shares use the official total; missing PADDs remain null, and the signed U.S.-minus-PADD difference is a rounding/reconciliation diagnostic rather than an “Other” district.
 - Propane stock series `WPRSTUS1` is the current EPLLPZ/SAXP definition excluding propylene at terminals. The older SAE series including terminal propylene ended in 2020 and is not spliced into the active history.
 - Propane export series `W_EPLLPZ_EEX_NUS-Z00_MBBLD` is labelled propane only. It is a separate product selection and must not be treated as having the same boundary as the nearby propane/propylene measures.
 - Product supplied remains implied demand rather than directly measured end-user consumption.
