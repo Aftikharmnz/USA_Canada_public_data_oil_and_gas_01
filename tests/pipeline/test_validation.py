@@ -69,10 +69,16 @@ class ValidationTests(unittest.TestCase):
     def test_phase_one_registries_are_universal_and_secret_free(self) -> None:
         allowed_rules = {"sum", "ratio_of_sums", "weighted_average", "not_aggregatable"}
         geography_by_country = {}
+        relational_levels_by_country = {}
         for geography_path in sorted((PROJECT_ROOT / "config" / "geographies").glob("*.json")):
             geography = json.loads(geography_path.read_text(encoding="utf-8"))
             self.assertEqual(find_embedded_secrets(geography), (), geography_path.name)
             levels = {item["id"]: item for item in geography["levels"]}
+            relational_levels = {
+                item["id"]
+                for item in geography["levels"]
+                if item.get("semantic_type") == "directed_route"
+            }
             nodes = {item["id"]: item for item in geography["nodes"]}
             self.assertEqual(len(levels), len(geography["levels"]))
             self.assertEqual(len(nodes), len(geography["nodes"]))
@@ -80,6 +86,26 @@ class ValidationTests(unittest.TestCase):
                 self.assertIn(node["level_id"], levels)
                 self.assertTrue(set(node["parent_ids"]).issubset(nodes))
                 self.assertEqual(node["country_code"], geography["country_code"])
+                if levels[node["level_id"]].get("semantic_type") == "directed_route":
+                    endpoints = node.get("route_endpoints")
+                    self.assertIsInstance(endpoints, dict)
+                    self.assertEqual(
+                        set(endpoints),
+                        {"origin_geography_id", "destination_geography_id"},
+                    )
+                    origin_id = endpoints["origin_geography_id"]
+                    destination_id = endpoints["destination_geography_id"]
+                    self.assertIn(origin_id, nodes)
+                    self.assertIn(destination_id, nodes)
+                    self.assertNotEqual(origin_id, destination_id)
+                    self.assertEqual(
+                        nodes[origin_id]["level_id"],
+                        nodes[destination_id]["level_id"],
+                    )
+                    self.assertFalse(
+                        node["parent_ids"],
+                        "A route is a relationship, not a containment child.",
+                    )
             city_nodes = [node for node in nodes.values() if node["level_id"] == "city"]
             self.assertEqual(
                 bool(city_nodes),
@@ -91,11 +117,13 @@ class ValidationTests(unittest.TestCase):
                     "Every city/local node must be an exact provider-published geography.",
                 )
             geography_by_country[geography["country_code"]] = levels
+            relational_levels_by_country[geography["country_code"]] = relational_levels
 
         for registry_path in sorted((PROJECT_ROOT / "config" / "series").glob("*.json")):
             registry = json.loads(registry_path.read_text(encoding="utf-8"))
             self.assertEqual(find_embedded_secrets(registry), (), registry_path.name)
             known_levels = geography_by_country[registry["country_code"]]
+            relational_levels = relational_levels_by_country[registry["country_code"]]
             series_by_id = {item["id"]: item for item in registry["series"]}
             for definition in registry["series"]:
                 profile_id = definition.get("geography_profile_id")
@@ -116,7 +144,12 @@ class ValidationTests(unittest.TestCase):
                         self.assertIn("city", unsupported)
                         self.assertTrue(unsupported["city"].strip())
                     self.assertEqual(
-                        set(availability["source_geography_level_ids"]) | set(unsupported),
+                        set(availability["source_geography_level_ids"])
+                        | set(unsupported)
+                        | (
+                            relational_levels
+                            - set(availability["source_geography_level_ids"])
+                        ),
                         set(known_levels),
                         "Every geography level needs an available or unavailable decision: "
                         f"{definition['id']}",
@@ -140,6 +173,10 @@ class ValidationTests(unittest.TestCase):
                     set(availability["source_geography_level_ids"])
                     | set(availability["allowed_rollup_geography_level_ids"])
                     | set(unsupported)
+                    | (
+                        relational_levels
+                        - set(availability["source_geography_level_ids"])
+                    )
                 )
                 self.assertEqual(
                     accounted_levels,

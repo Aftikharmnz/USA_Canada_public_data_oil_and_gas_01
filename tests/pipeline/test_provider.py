@@ -72,7 +72,7 @@ class ProviderBoundaryTests(unittest.TestCase):
         payload = json.loads(output.getvalue())
         self.assertEqual(result, 0)
         self.assertFalse(payload["network_calls"])
-        self.assertEqual(len(payload["series"]), 67)
+        self.assertEqual(len(payload["series"]), 69)
         planned_ids = {item["series_id"] for item in payload["series"]}
         self.assertIn("usa.eia.crude.commercial_stocks.weekly", planned_ids)
         self.assertIn("usa.eia.crude.spr_stocks.weekly", planned_ids)
@@ -82,6 +82,11 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertIn("usa.eia.refined.gasoline.total.stocks.weekly", planned_ids)
         self.assertIn("usa.eia.refined.distillate.total.product_supplied.weekly", planned_ids)
         self.assertIn("usa.eia.refined.jet.kerosene_type.exports.weekly", planned_ids)
+        self.assertIn("usa.eia.crude.padd_movements.monthly", planned_ids)
+        self.assertIn(
+            "usa.eia.refined.total_petroleum_products.padd_movements.monthly",
+            planned_ids,
+        )
 
     def test_canada_cli_dry_run_plans_both_providers_without_credentials(self) -> None:
         output = io.StringIO()

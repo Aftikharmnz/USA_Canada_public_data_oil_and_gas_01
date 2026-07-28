@@ -12,6 +12,7 @@ import { DisplayUnitControl } from "../components/dashboard/DisplayUnitControl";
 import { FreshnessBadge } from "../components/dashboard/FreshnessBadge";
 import { LatestValueGrid } from "../components/dashboard/LatestValueGrid";
 import { RegionalContributionPanel } from "../components/dashboard/RegionalContributionPanel";
+import { UsaPaddOriginDestinationPanel } from "../components/dashboard/UsaPaddOriginDestinationPanel";
 import {
   RegionSelectionControl,
   type RegionSelectionMode,
@@ -519,6 +520,14 @@ function UsaDashboard({
             <p className="refreshing-label" role="status">Checking for a newer asset…</p>
           ) : null}
           <LatestValueGrid asset={asset} series={series} displayUnit={displayUnit ?? undefined} />
+          {displayUnit && geography.level_id === "padd_route" ? (
+            <UsaPaddOriginDestinationPanel
+              series={series}
+              activeGeographyId={geography.geography_id}
+              displayUnit={displayUnit}
+              onGeographyChange={chooseGeography}
+            />
+          ) : null}
           {contributionSpec && displayUnit ? (
             <RegionalContributionPanel
               series={series}

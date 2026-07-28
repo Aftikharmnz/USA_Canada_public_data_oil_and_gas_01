@@ -77,14 +77,16 @@ class RegistryTests(unittest.TestCase):
         active_ids = {item.id for item in self.series}
         core_ids = {
             "usa.eia.crude.production.monthly",
+            "usa.eia.crude.padd_movements.monthly",
             "usa.eia.product_supplied.weekly",
+            "usa.eia.refined.total_petroleum_products.padd_movements.monthly",
             "usa.eia.refinery.utilization.weekly",
         }
-        self.assertEqual(len(active_ids), 67)
+        self.assertEqual(len(active_ids), 69)
         self.assertTrue(core_ids.issubset(active_ids))
 
         classified = [item for item in self.series if item.display is not None]
-        self.assertEqual(len(classified), 64)
+        self.assertEqual(len(classified), 66)
         self.assertTrue(
             all(
                 item.display.dashboard_group in {"refined_products", "usa_crude"}
@@ -99,8 +101,8 @@ class RegistryTests(unittest.TestCase):
         crude_weekly = [
             item for item in classified if item.display.dashboard_group == "usa_crude"
         ]
-        self.assertEqual(len(refined), 55)
-        self.assertEqual(len(crude_weekly), 9)
+        self.assertEqual(len(refined), 56)
+        self.assertEqual(len(crude_weekly), 10)
         self.assertEqual(
             {family: sum(item.display.product_family_id == family for item in refined)
              for family in (
@@ -178,6 +180,68 @@ class RegistryTests(unittest.TestCase):
             ("us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"),
         )
 
+        crude_movements = next(
+            item for item in self.series if item.id == "usa.eia.crude.padd_movements.monthly"
+        )
+        total_product_movements = next(
+            item
+            for item in self.series
+            if item.id == "usa.eia.refined.total_petroleum_products.padd_movements.monthly"
+        )
+        self.assertEqual(crude_movements.route, "/v2/petroleum/move/ptb/data")
+        self.assertEqual(dict(crude_movements.query.facets)["product"], ("EPC0",))
+        self.assertEqual(dict(crude_movements.query.facets)["process"], ("TNR",))
+        self.assertEqual(len(dict(crude_movements.query.facets)["series"]), 17)
+        self.assertEqual(len(crude_movements.source_geography_ids), 17)
+        self.assertEqual(len(dict(total_product_movements.query.facets)["series"]), 18)
+        self.assertEqual(len(total_product_movements.source_geography_ids), 18)
+        self.assertEqual(
+            dict(crude_movements.expected_series_geographies)["MCRMXP1P31"],
+            "R10-R30",
+        )
+        self.assertEqual(
+            set(dict(crude_movements.expected_series_geographies)),
+            set(dict(crude_movements.query.facets)["series"]),
+        )
+        self.assertEqual(
+            set(dict(total_product_movements.expected_series_geographies)),
+            set(dict(total_product_movements.query.facets)["series"]),
+        )
+        self.assertEqual(
+            {
+                self.geographies.resolve(provider_geography)[0]
+                for _, provider_geography
+                in crude_movements.expected_series_geographies
+            },
+            set(crude_movements.source_geography_ids),
+        )
+        self.assertEqual(
+            {
+                self.geographies.resolve(provider_geography)[0]
+                for _, provider_geography
+                in total_product_movements.expected_series_geographies
+            },
+            set(total_product_movements.source_geography_ids),
+        )
+        self.assertEqual(
+            crude_movements.dimensions,
+            ("duoarea", "product", "process", "series"),
+        )
+        self.assertEqual(
+            self.geographies.resolve("R10-R30"),
+            ("us.padd.route.3-to-1", "padd_route"),
+        )
+        self.assertNotIn(
+            "us.padd.route.1-to-5",
+            crude_movements.source_geography_ids,
+            "An absent official crude corridor must not be synthesized as zero.",
+        )
+        self.assertNotIn(
+            "us.padd.route.1-to-4",
+            total_product_movements.source_geography_ids,
+            "An absent official total-products corridor must not be synthesized as zero.",
+        )
+
     def test_normalizer_maps_provider_code_and_rejects_geo_unit_and_facet_drift(self) -> None:
         crude = next(item for item in self.series if item.id.endswith("crude.production.monthly"))
         rows = normalize_eia_records(
@@ -216,6 +280,53 @@ class RegistryTests(unittest.TestCase):
         bad_facet["product"] = "UNREGISTERED"
         with self.assertRaisesRegex(ValueError, "escaped registered"):
             normalize_eia_records(crude, (bad_facet,), self.geographies, retrieved_at=NOW)
+
+        movement = next(
+            item for item in self.series if item.id == "usa.eia.crude.padd_movements.monthly"
+        )
+        movement_record = {
+            "period": "2026-04",
+            "duoarea": "R10-R30",
+            "product": "EPC0",
+            "process": "TNR",
+            "series": "MCRMXP1P31",
+            "value": "1234",
+            "units": "MBBL",
+        }
+        movement_rows = normalize_eia_records(
+            movement,
+            (movement_record,),
+            self.geographies,
+            retrieved_at=NOW,
+        )
+        self.assertEqual(movement_rows[0].geography_id, "us.padd.route.3-to-1")
+        self.assertEqual(
+            dict(movement_rows[0].dimensions),
+            {
+                "duoarea": "R10-R30",
+                "product": "EPC0",
+                "process": "TNR",
+                "series": "MCRMXP1P31",
+            },
+        )
+        wrong_registered_pair = dict(movement_record)
+        wrong_registered_pair["duoarea"] = "R20-R10"
+        with self.assertRaisesRegex(ValueError, "series/geography pairing drifted"):
+            normalize_eia_records(
+                movement,
+                (wrong_registered_pair,),
+                self.geographies,
+                retrieved_at=NOW,
+            )
+        unregistered_route = dict(movement_record)
+        unregistered_route["duoarea"] = "R50-R10"
+        with self.assertRaisesRegex(ValueError, "escaped exact registered geography"):
+            normalize_eia_records(
+                movement,
+                (unregistered_route,),
+                self.geographies,
+                retrieved_at=NOW,
+            )
 
     def test_unit_is_explicit_row_selection_and_petroleum_symbols_remain_distinct(self) -> None:
         crude = next(item for item in self.series if item.id.endswith("crude.production.monthly"))

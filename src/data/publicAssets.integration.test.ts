@@ -7,6 +7,10 @@ import { parseUsaChartAsset, parseUsaManifest } from "./usaAssets";
 import { buildCustomRegionView } from "../lib/customRegionView";
 import { buildRegionalContributionModel } from "../charts/regionalContributionModel";
 import {
+  buildCanadaOriginDestinationModel,
+  canadaOriginDestinationAssetPlan,
+} from "../charts/canadaOriginDestinationModel";
+import {
   canadaMovementContext,
   movementRouteFromAsset,
 } from "./canadaMovement";
@@ -136,6 +140,46 @@ describe("promoted Canada data", () => {
         )).toBeNull();
       }
     }
+  }, 30_000);
+
+  it("joins the exact movement siblings into a province origin-destination matrix", async () => {
+    const manifest = parseCanadaManifest(
+      await readJson(new URL("manifest.json", canadaPublicRoot)),
+    );
+    const active = manifest.series.find(
+      (series) => series.series_id
+        === "can.statcan.crude.pipeline_movements.to_ontario.monthly",
+    );
+    expect(active).toBeDefined();
+    const plan = canadaOriginDestinationAssetPlan(manifest.series, active!);
+    // Only source-published routes with an available public asset are loaded.
+    // The active crude movement product currently exposes 19 such histories;
+    // dimension-declared routes without facts remain unpublished, not zero.
+    expect(plan.length).toBeGreaterThan(10);
+    const loaded = await Promise.all(plan.map(async (item) => ({
+      ...item,
+      asset: parseCanadaChartAsset(
+        await readJson(new URL(item.assetPath, canadaPublicRoot)),
+      ),
+    })));
+    const model = buildCanadaOriginDestinationModel(
+      manifest.series,
+      active!,
+      loaded,
+    );
+
+    expect(model.latestPeriod).toBe("2026-05");
+    expect(model.productLabel).toBe("Crude & equivalents pipeline movements");
+    expect(model.origins.some((node) => node.label === "Alberta")).toBe(true);
+    expect(model.destinations.some((node) => node.label === "Ontario")).toBe(true);
+    expect(model.destinations.some((node) => node.label === "United States")).toBe(true);
+    expect(model.routes.every(
+      (route) => route.originLabel !== "Canada" && route.destinationLabel !== "Canada",
+    )).toBe(true);
+    expect(model.routes.some(
+      (route) => route.originLabel === "Alberta"
+        && route.destinationLabel === "British Columbia",
+    )).toBe(true);
   }, 30_000);
 });
 

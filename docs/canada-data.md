@@ -176,9 +176,9 @@ claim that available province cells reconcile it. Missing and `..` route cells
 remain unavailable rather than zero.
 
 Movement series are intentionally absent from the custom-geography aggregation
-registry. Select one exact source-published shipping origin (or, for
-United-States-origin measures, one receiving destination); the browser does not
-sum origins into a synthetic route total.
+registry. The ordinary series controls still select one exact source-published
+shipping origin (or, for United-States-origin measures, one receiving
+destination); the browser does not sum origins into a synthetic route total.
 
 The dashboard renders these series as explicit route observations. For every
 `to-*` measure, the geography selector is labelled **Shipping origin** and the
@@ -186,10 +186,25 @@ measure supplies the fixed **Receiving destination**. For
 `from-united-states`, the geography selector is **Receiving destination** and
 the fixed shipping origin is the United States. Loaded asset dimensions must
 validate the visible `shipping origin → receiving destination` label and
-`Pipeline` mode; a mismatch fails closed. A separate colored route-bar view
-compares exact published corridors for one source period. Missing corridors
-remain “No published fact,” and the source-published Canada aggregate is not
-summed with or reconstructed from province routes.
+`Pipeline` mode; a mismatch fails closed.
+
+The dedicated origin-destination explorer joins only sibling movement series
+with the same registered product, source vintage, methodology, frequency, and
+unit. Its rows are shipping origins and its columns are receiving
+destinations, so a cell explicitly reads, for example, `Alberta → Ontario`.
+The current registered domestic destination set is Alberta, British Columbia,
+Manitoba, Ontario, Quebec, and Saskatchewan; no Northwest-Territories receiving
+series is invented. Province-to-United-States and United-States-to-province
+pipeline routes are retained as separate cross-border cells. Users can choose
+the source month and filter to one origin, one destination, or one exact
+corridor; the accompanying ranked bars and accessible table use those same
+published route cells.
+
+Missing corridors remain “No published fact” rather than zero. The
+source-published Canada aggregate stays outside the matrix and is not summed
+with or reconstructed from province routes. A route with no public asset
+because its entire retained history is nonnumeric is shown as unavailable; it
+is never stale-filled from a different period.
 
 Standard all-mode import balance series use a different national-composition
 view. It compares the source-published Canada total with same-period provincial

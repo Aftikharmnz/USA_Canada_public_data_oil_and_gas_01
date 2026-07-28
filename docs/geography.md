@@ -35,6 +35,15 @@ USA or Canada route
 -> measure
 ```
 
+`padd_route` is a relational exception to the ordinary place hierarchy. Its
+nodes represent an exact shipping-PADD → receiving-PADD edge, not a region
+contained by the origin, destination, or United States node. Route options have
+no `parent_ids`, cannot enter custom geography sums, and appear only for an
+official movement definition whose manifest explicitly lists that corridor.
+EIA encodes these routes receiving-first (`R{destination}0-R{origin}0`), while
+the stable project ID and UI label are origin-first. See
+[USA PADD movements](usa-padd-movements.md).
+
 Selecting a geography filters every downstream choice. For example, selecting a PADD 1 subdistrict can offer only the refined products and measures that publish an asset for that exact subdistrict; it cannot continue to expose finished-gasoline production or U.S.-only product supplied. Conversely, choosing a product never fabricates geography support. `/products/` is only a backwards-compatible USA entry with Refined selected and follows the same cascade.
 
 Example disabled explanation: “City data is not published for EIA weekly refinery utilization. The smallest official geography for this series is PADD.”

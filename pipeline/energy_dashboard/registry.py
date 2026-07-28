@@ -44,6 +44,7 @@ class RegistryEIASeries:
     query: EIAQuerySpec
     expected_unit: str
     expected_facets: tuple[tuple[str, str], ...]
+    expected_series_geographies: tuple[tuple[str, str], ...]
     dimensions: tuple[str, ...]
     source_geography_level_ids: tuple[str, ...]
     unsupported_levels: tuple[tuple[str, str], ...]
@@ -165,6 +166,34 @@ def load_eia_registry(
         expected = api_query.get("expected_facets", {})
         if not isinstance(expected, Mapping):
             raise ValueError("api_query.expected_facets must be an object")
+        expected_series_geographies_raw = api_query.get(
+            "expected_series_geographies", {}
+        )
+        if not isinstance(expected_series_geographies_raw, Mapping):
+            raise ValueError(
+                "api_query.expected_series_geographies must be an object"
+            )
+        expected_series_geographies = tuple(
+            sorted(
+                (str(series_key), str(provider_geography))
+                for series_key, provider_geography
+                in expected_series_geographies_raw.items()
+            )
+        )
+        if expected_series_geographies:
+            series_filter = dict(facets).get("series")
+            if series_filter is None:
+                raise ValueError(
+                    "api_query.expected_series_geographies requires a series facet filter"
+                )
+            if {key for key, _ in expected_series_geographies} != set(series_filter):
+                raise ValueError(
+                    "api_query.expected_series_geographies must cover the exact series facet filter"
+                )
+            if any(not key or not geography for key, geography in expected_series_geographies):
+                raise ValueError(
+                    "api_query.expected_series_geographies cannot contain empty values"
+                )
         unsupported_raw = _list(availability.get("unsupported_levels", []), "unsupported_levels")
         unsupported = tuple(
             (
@@ -224,6 +253,7 @@ def load_eia_registry(
                 query=query,
                 expected_unit=str(api_query["expected_unit"]),
                 expected_facets=tuple(sorted((str(key), str(value)) for key, value in expected.items())),
+                expected_series_geographies=expected_series_geographies,
                 dimensions=tuple(str(value) for value in _list(item.get("dimensions", []), "dimensions")),
                 source_geography_level_ids=tuple(
                     str(value)
@@ -331,6 +361,7 @@ def normalize_eia_records(
     if retrieved_at.tzinfo is None or retrieved_at.utcoffset() is None:
         raise ValueError("retrieved_at must be timezone-aware")
     expected_facets = dict(series.expected_facets)
+    expected_series_geographies = dict(series.expected_series_geographies)
     query_facets = {name: set(values) for name, values in series.query.facets}
     selected_records = tuple(
         (index, record)
@@ -369,6 +400,15 @@ def normalize_eia_records(
         for facet_name, allowed_values in query_facets.items():
             if _required_text(record, facet_name, index) not in allowed_values:
                 raise ValueError(f"EIA row escaped registered {facet_name!r} filter for {series.id}")
+        if expected_series_geographies:
+            returned_series = _required_text(record, "series", index)
+            expected_geography = expected_series_geographies.get(returned_series)
+            if expected_geography != provider_geography:
+                raise ValueError(
+                    f"EIA series/geography pairing drifted for {series.id}: "
+                    f"{returned_series!r} expected {expected_geography!r}, "
+                    f"received {provider_geography!r}"
+                )
         for facet_name, expected_value in expected_facets.items():
             if _required_text(record, facet_name, index) != expected_value:
                 raise ValueError(f"EIA expected facet {facet_name!r} drifted for {series.id}")

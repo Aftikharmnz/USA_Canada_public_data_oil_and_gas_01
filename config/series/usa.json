@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-07-22.phase4-weekly-breadth",
+  "registry_version": "2026-07-28.padd-movements",
   "country_code": "USA",
   "activation_status": "mixed_phase_4",
   "bootstrap_period_start_by_frequency": {
@@ -6073,6 +6073,277 @@
       ],
       "activation_status": "active",
       "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.padd_movements.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_inter_padd_movements",
+      "name": "Crude oil movements between PADDs",
+      "unit": "thousand_barrels",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "padd_route",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — PADD movements",
+        "route_template": "/v2/petroleum/move/ptb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/ptb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-28",
+        "api_query": {
+          "frequency": "monthly",
+          "data_fields": ["value"],
+          "facet_filters": {
+            "product": ["EPC0"],
+            "process": ["TNR"],
+            "series": [
+              "MCRMXP2P11",
+              "MCRMXP3P11",
+              "M_EPC0_TNR_R40-R10_1",
+              "MCRMXP1P21",
+              "MCRMXP3P21",
+              "MCRMXP4P21",
+              "MCRMX_R50-R20_1",
+              "MCRMXP1P31",
+              "MCRMXP2P31",
+              "MCRMX_R40-R30_1",
+              "MCRMXP5P31",
+              "M_EPC0_TNR_R10-R40_1",
+              "MCRMXP2P41",
+              "MCRMXP3P41",
+              "MCRMX_R50-R40_1",
+              "MCRMX_R20-R50_1",
+              "MCRMXP3P51"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPC0",
+            "process": "TNR"
+          },
+          "expected_series_geographies": {
+            "MCRMXP2P11": "R20-R10",
+            "MCRMXP3P11": "R30-R10",
+            "M_EPC0_TNR_R40-R10_1": "R40-R10",
+            "MCRMXP1P21": "R10-R20",
+            "MCRMXP3P21": "R30-R20",
+            "MCRMXP4P21": "R40-R20",
+            "MCRMX_R50-R20_1": "R50-R20",
+            "MCRMXP1P31": "R10-R30",
+            "MCRMXP2P31": "R20-R30",
+            "MCRMX_R40-R30_1": "R40-R30",
+            "MCRMXP5P31": "R50-R30",
+            "M_EPC0_TNR_R10-R40_1": "R10-R40",
+            "MCRMXP2P41": "R20-R40",
+            "MCRMXP3P41": "R30-R40",
+            "MCRMX_R50-R40_1": "R50-R40",
+            "MCRMX_R20-R50_1": "R20-R50",
+            "MCRMXP3P51": "R30-R50"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_total_movement",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd_route"],
+        "source_geography_ids": [
+          "us.padd.route.1-to-2",
+          "us.padd.route.1-to-3",
+          "us.padd.route.1-to-4",
+          "us.padd.route.2-to-1",
+          "us.padd.route.2-to-3",
+          "us.padd.route.2-to-4",
+          "us.padd.route.2-to-5",
+          "us.padd.route.3-to-1",
+          "us.padd.route.3-to-2",
+          "us.padd.route.3-to-4",
+          "us.padd.route.3-to-5",
+          "us.padd.route.4-to-1",
+          "us.padd.route.4-to-2",
+          "us.padd.route.4-to-3",
+          "us.padd.route.4-to-5",
+          "us.padd.route.5-to-2",
+          "us.padd.route.5-to-3"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": false,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this inter-PADD movement matrix by city."},
+          {"level_id": "county", "reason": "EIA does not publish this inter-PADD movement matrix by county."},
+          {"level_id": "state_or_area", "reason": "Do not allocate PADD movement corridors to states or producing areas."},
+          {"level_id": "padd_subdistrict", "reason": "This activated movement definition uses exact PADD-to-PADD corridors, not subdistrict estimates."},
+          {"level_id": "padd", "reason": "A single PADD is not a complete directional route; choose an official origin-to-destination corridor."},
+          {"level_id": "national", "reason": "EIA does not publish a non-overlapping national total for these directional route rows."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude",
+        "product_family_id": "crude-movements",
+        "product_family_label": "Crude movements",
+        "product_id": "crude-oil-padd-movements",
+        "product_label": "Crude oil PADD movements",
+        "measure_id": "inter-padd-movement",
+        "measure_label": "Origin → destination movement",
+        "component_role": "headline",
+        "parent_product_id": null,
+        "reference_term_ids": ["inter-padd-movements", "padd"],
+        "display_order": 100
+      },
+      "caveats": [
+        "Each observation is an official monthly shipping-PADD to receiving-PADD movement volume. It is not a customs import, foreign origin, final consumption region, or continuous physical-path trace.",
+        "The combined EIA process covers pipeline, tanker, barge, and selected rail movements. It does not establish truck movements, and a route absent from the exact source-series registry is not zero.",
+        "Crude-oil pipeline movements identify shipping and receiving PADDs without intermediate PADD movements. Never sum route rows into an invented national total or normalize published corridors to 100 percent.",
+        "Petroleum Supply Monthly values are preliminary; revised final monthly values appear in the Petroleum Supply Annual."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 5
+    },
+    {
+      "id": "usa.eia.refined.total_petroleum_products.padd_movements.monthly",
+      "provider_id": "eia",
+      "metric_id": "total_petroleum_products_inter_padd_movements",
+      "name": "Total petroleum products movements between PADDs",
+      "unit": "thousand_barrels",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "not_aggregatable"},
+      "default_geography_level_id": "padd_route",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — PADD movements",
+        "route_template": "/v2/petroleum/move/ptb/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/move/ptb",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-07-28",
+        "api_query": {
+          "frequency": "monthly",
+          "data_fields": ["value"],
+          "facet_filters": {
+            "product": ["EPP0"],
+            "process": ["TNR"],
+            "series": [
+              "MPEMXP2P11",
+              "MPEMXP3P11",
+              "MPEMXP5P11",
+              "MPEMXP1P21",
+              "MPEMXP3P21",
+              "MPEMXP4P21",
+              "MPEMXP5P21",
+              "MPEMXP1P31",
+              "MPEMXP2P31",
+              "MPEMXP4P31",
+              "MPEMXP5P31",
+              "MPEMXP2P41",
+              "MPEMXP3P41",
+              "MPEMXP5P41",
+              "MPEMXP1P51",
+              "MPEMXP2P51",
+              "MPEMXP3P51",
+              "MTXMX_R40-R50_1"
+            ]
+          },
+          "identity_fields": [
+            "period",
+            "duoarea",
+            "product",
+            "process",
+            "series",
+            "units"
+          ],
+          "expected_facets": {
+            "product": "EPP0",
+            "process": "TNR"
+          },
+          "expected_series_geographies": {
+            "MPEMXP2P11": "R20-R10",
+            "MPEMXP3P11": "R30-R10",
+            "MPEMXP5P11": "R50-R10",
+            "MPEMXP1P21": "R10-R20",
+            "MPEMXP3P21": "R30-R20",
+            "MPEMXP4P21": "R40-R20",
+            "MPEMXP5P21": "R50-R20",
+            "MPEMXP1P31": "R10-R30",
+            "MPEMXP2P31": "R20-R30",
+            "MPEMXP4P31": "R40-R30",
+            "MPEMXP5P31": "R50-R30",
+            "MPEMXP2P41": "R20-R40",
+            "MPEMXP3P41": "R30-R40",
+            "MPEMXP5P41": "R50-R40",
+            "MPEMXP1P51": "R10-R50",
+            "MPEMXP2P51": "R20-R50",
+            "MPEMXP3P51": "R30-R50",
+            "MTXMX_R40-R50_1": "R40-R50"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_total_movement",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd_route"],
+        "source_geography_ids": [
+          "us.padd.route.1-to-2",
+          "us.padd.route.1-to-3",
+          "us.padd.route.1-to-5",
+          "us.padd.route.2-to-1",
+          "us.padd.route.2-to-3",
+          "us.padd.route.2-to-4",
+          "us.padd.route.2-to-5",
+          "us.padd.route.3-to-1",
+          "us.padd.route.3-to-2",
+          "us.padd.route.3-to-4",
+          "us.padd.route.3-to-5",
+          "us.padd.route.4-to-2",
+          "us.padd.route.4-to-3",
+          "us.padd.route.4-to-5",
+          "us.padd.route.5-to-1",
+          "us.padd.route.5-to-2",
+          "us.padd.route.5-to-3",
+          "us.padd.route.5-to-4"
+        ],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": false,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "EIA does not publish this inter-PADD movement matrix by city."},
+          {"level_id": "county", "reason": "EIA does not publish this inter-PADD movement matrix by county."},
+          {"level_id": "state_or_area", "reason": "Do not allocate PADD movement corridors to states or producing areas."},
+          {"level_id": "padd_subdistrict", "reason": "This activated movement definition uses exact PADD-to-PADD corridors, not subdistrict estimates."},
+          {"level_id": "padd", "reason": "A single PADD is not a complete directional route; choose an official origin-to-destination corridor."},
+          {"level_id": "national", "reason": "EIA does not publish a non-overlapping national total for these directional route rows."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "refined_products",
+        "product_family_id": "petroleum-movements",
+        "product_family_label": "Petroleum movements",
+        "product_id": "total-petroleum-products-padd-movements",
+        "product_label": "Total petroleum products",
+        "measure_id": "inter-padd-movement",
+        "measure_label": "Origin → destination movement",
+        "component_role": "headline-total",
+        "parent_product_id": null,
+        "reference_term_ids": ["inter-padd-movements", "padd"],
+        "display_order": 5001
+      },
+      "caveats": [
+        "Each observation is an official monthly shipping-PADD to receiving-PADD movement volume. It is domestic logistics, not imports or exports, and it does not identify foreign origin or final consumption.",
+        "The combined EIA process covers pipeline, tanker, barge, and selected rail movements. Product-pipeline reporting can include intermediate PADD movements for systems crossing more than two PADDs, so route rows must not be summed into an invented national total.",
+        "Total petroleum products overlaps every published component product view. Never stack this parent with gasoline, distillate, jet fuel, propane, or other child movement series, and never treat an absent route as zero.",
+        "Petroleum Supply Monthly values are preliminary; revised final monthly values appear in the Petroleum Supply Annual."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 5
     }
   ]
 }

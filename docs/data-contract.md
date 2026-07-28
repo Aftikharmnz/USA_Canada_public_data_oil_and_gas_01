@@ -247,6 +247,13 @@ For a combined forecast, all component records must match schema, series, level,
 - Dimension maps are sorted before hashing and use canonical IDs rather than labels.
 - A new concept or incompatible methodology receives a new series ID or an explicit break; it is not silently mapped to an old series.
 
+An EIA directed-route definition registers an exact `series` → `duoarea`
+mapping in addition to the independent facet and geography allowlists. The
+normalizer rejects a provider row when two individually allowed values arrive
+as the wrong pair. This prevents a valid series key from being silently
+assigned to the wrong shipping-origin → receiving-destination route after
+provider metadata drift.
+
 Refined-product parent/child IDs are overlapping economic concepts, not mutually exclusive dimensions. Total gasoline, finished gasoline, MGBC, conventional/reformulated gasoline, CBOB/RBOB, and total/sulfur-grade distillate must retain their declared component roles. Fuel ethanol is a contextual oxygenate and is not an MGBC child. A user or asset consumer must never infer additivity merely because `parent_product_id` exists.
 
 The Statistics Canada crude hierarchy follows table 25-10-0063-01 exactly. Total crude production has net field production and synthetic crude as children. Net field production has light-and-medium crude, heavy crude, and non-upgraded bitumen as children. Non-upgraded bitumen is the signed reconciliation `in-situ + mined - sent for further processing`; the processing row therefore uses a subtractive component role and must never be stacked as positive production. Equivalent-products production is a separate parent for condensate and pentanes plus, outside total crude production. Condensate combines lease and plant condensate in the source and light-and-medium crude is a combined grade; neither may be split by the application.

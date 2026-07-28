@@ -666,8 +666,8 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
           ) : null}
           {movementContext && displayUnit ? (
             <CanadaMovementRoutePanel
+              allSeries={manifest.series}
               series={series}
-              context={movementContext}
               displayUnit={displayUnit}
               monthlyAverageRate={averageRateActive}
             />

@@ -2,7 +2,16 @@
 
 ## Status and activation rule
 
-The USA registry has 67 definitions with `activation_status: active`: three legacy overview definitions, 36 Phase 3 refined-product definitions, and 28 Phase 4 weekly breadth definitions. The active set is 66 weekly plus one monthly definition and resolves to 11 Crude/56 Refined navigation choices. The Phase 4 additions use 77 exact source-series keys because one logical definition can expose several official geographies. Gross refinery input and operable capacity remain `verified_supporting_phase_2`, and two generic route candidates remain illustrative.
+The USA registry has 69 definitions with `activation_status: active`: the 67
+definitions in the promoted Phase 4 generation plus two registered monthly
+PADD origin-destination movement definitions. The active set is 66 weekly plus
+three monthly definitions. The two movement definitions add 17 exact crude
+route keys and 18 exact total-petroleum-products route keys. They are eligible
+for the next validated refresh but are not claimed as part of the older
+promoted generation until its manifest and assets are replaced successfully.
+Gross refinery input and operable capacity remain
+`verified_supporting_phase_2`, and two generic route candidates remain
+illustrative.
 
 Phase 4 is publicly activated in promoted USA run `eia-20260722T202149Z`. The run contains all 67 definitions, 212,512 canonical observations, 326 verified observed chart assets, and 326 matching forecast records. Canonical JSON is 87,599,291 bytes (83.54 MiB), below the 90 MiB guard. The merge inserted 50,435 rows, revised 0, and matched 7,873 unchanged rows; forecast status is 325 ready, 1 `limited_history`, and 0 unavailable. All 66 weekly definitions reach `2026-07-17`, monthly crude production reaches `2026-04`, and workflow run `29954739606` successfully deployed the matching site. Registry activation remains ingestion eligibility; the generated manifest and asset verification prove publication.
 
@@ -36,6 +45,7 @@ Primary documentation: [EIA API v2](https://www.eia.gov/opendata/documentation.p
 | Product supplied (implied demand) | [`petroleum/cons/wpsup`](https://www.eia.gov/opendata/browser/petroleum/cons/wpsup) | Weekly | Active total-products and refined-product slices are U.S.-only | `not_aggregatable` | Phase 2 overview and Phase 3 products active |
 | Weekly petroleum summary | [`petroleum/sum/sndw`](https://www.eia.gov/opendata/browser/petroleum/sum/sndw) | Weekly | Exact Phase 4 series keys expose Alaska/Lower 48/U.S., Cushing/PADD/U.S., PADD/U.S., combined source districts, or U.S.-only according to the measure | Source-published views plus nine explicitly registered additive PADD definitions | Phase 4 active and publicly deployed |
 | Crude oil production | [`petroleum/crd/crpdn`](https://www.eia.gov/opendata/browser/petroleum/crd/crpdn) | Monthly | 32 states, 3 special areas, five PADDs, U.S. | Use source-published PADD/U.S. totals; do not sum overlapping special areas | Phase 2 active |
+| Inter-PADD movements | [`petroleum/move/ptb`](https://www.eia.gov/opendata/browser/petroleum/move/ptb) | Monthly | Exact shipping-PADD → receiving-PADD corridors | `not_aggregatable`; no invented national total | Crude and total-products definitions registered; see [USA PADD movements](usa-padd-movements.md) |
 | Spot/retail prices | EIA petroleum prices routes, selected after metadata review | Daily/weekly/monthly | Market location or route-specific area | Usually `not_aggregatable`; a price needs a justified weight | Later expansion |
 
 ### Legacy overview coordinates retained in Phase 4
