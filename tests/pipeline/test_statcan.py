@@ -18,6 +18,7 @@ from energy_dashboard.registry import load_provider_geographies
 from energy_dashboard.statcan import StatCanClient, StatCanTableSpec
 from energy_dashboard.statcan_registry import (
     RegistryStatCanSeries,
+    StatCanGeographyResolution,
     load_statcan_registry,
     normalize_statcan_records,
 )
@@ -28,6 +29,14 @@ HEADERS = (
     "SCALAR_FACTOR", "SCALAR_ID", "VECTOR", "COORDINATE", "VALUE", "STATUS",
     "SYMBOL", "TERMINATED",
 )
+
+MOVEMENT_HEADERS = (
+    "REF_DATE", "GEO", "DGUID", "Receiving region", "Mode of transport",
+    "Products", "UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID", "VECTOR",
+    "COORDINATE", "VALUE", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS",
+)
+
+CRUDE_MOVEMENT_PRODUCT = "Crude oil and equivalents"
 
 
 class FakeResponse:
@@ -55,6 +64,19 @@ def table_spec() -> StatCanTableSpec:
         csv_member="25100081.csv",
         metadata_member="25100081_MetaData.csv",
         required_headers=HEADERS,
+    )
+
+
+def movement_table_spec() -> StatCanTableSpec:
+    return StatCanTableSpec(
+        pid="25100077",
+        wds_url=(
+            "https://www150.statcan.gc.ca/t1/wds/rest/"
+            "getFullTableDownloadCSV/25100077/en"
+        ),
+        csv_member="25100077.csv",
+        metadata_member="25100077_MetaData.csv",
+        required_headers=MOVEMENT_HEADERS,
     )
 
 
@@ -87,6 +109,39 @@ def record(
     return dict(zip(HEADERS, values, strict=True))
 
 
+def movement_record(
+    period: str,
+    *,
+    shipping_region: str = "Alberta, shipping region",
+    receiving_region: str = "British Columbia, receiving region",
+    product: str = CRUDE_MOVEMENT_PRODUCT,
+    vector: str = "v1138738542",
+    coordinate: str = "6.7.1.1",
+    value: str = "12",
+    status: str = "",
+) -> dict[str, str]:
+    values = (
+        period,
+        shipping_region,
+        "",
+        receiving_region,
+        "Pipeline",
+        product,
+        "Cubic metres",
+        "72",
+        "units",
+        "0",
+        vector,
+        coordinate,
+        value,
+        status,
+        "",
+        "",
+        "0",
+    )
+    return dict(zip(MOVEMENT_HEADERS, values, strict=True))
+
+
 def registry_series(*, geography_ids: tuple[str, ...] = ("ca",)) -> RegistryStatCanSeries:
     return RegistryStatCanSeries(
         id="can.statcan.test.monthly",
@@ -107,6 +162,59 @@ def registry_series(*, geography_ids: tuple[str, ...] = ("ca",)) -> RegistryStat
         source_geography_level_ids=("province_territory", "national"),
         unsupported_levels=(),
         bootstrap_start="2019-01",
+    )
+
+
+def movement_registry_series(
+    *,
+    geography_ids: tuple[str, ...],
+    geography_resolution: StatCanGeographyResolution,
+    row_filters: tuple[tuple[str, str], ...],
+) -> RegistryStatCanSeries:
+    return RegistryStatCanSeries(
+        id="can.statcan.test.pipeline_movement.monthly",
+        metric_id="test_pipeline_movement",
+        title="Test pipeline movement",
+        description="",
+        source_name="Statistics Canada",
+        source_url="https://www150.statcan.gc.ca/t1/tbl1/en/",
+        canonical_unit="cubic_metres",
+        frequency=Frequency.MONTHLY,
+        table=movement_table_spec(),
+        row_filters=row_filters,
+        expected_fields=(
+            ("SCALAR_FACTOR", "units"),
+            ("SCALAR_ID", "0"),
+            ("UOM", "Cubic metres"),
+            ("UOM_ID", "72"),
+        ),
+        source_geography_ids=geography_ids,
+        source_geography_level_ids=("province_territory",),
+        unsupported_levels=(),
+        geography_resolution=geography_resolution,
+        bootstrap_start="2020-01",
+    )
+
+
+def shipping_origin_resolution(
+    *,
+    excluded_values: tuple[str, ...] = (),
+) -> StatCanGeographyResolution:
+    return StatCanGeographyResolution(
+        provider_code_field="statcan_label",
+        provider_code_row_field="GEO",
+        label_row_field="GEO",
+        strip_suffix=", shipping region",
+        excluded_values=excluded_values,
+    )
+
+
+def receiving_destination_resolution() -> StatCanGeographyResolution:
+    return StatCanGeographyResolution(
+        provider_code_field="statcan_label",
+        provider_code_row_field="Receiving region",
+        label_row_field="Receiving region",
+        strip_suffix=", receiving region",
     )
 
 
@@ -161,15 +269,34 @@ class StatCanRegistryTests(unittest.TestCase):
             PROJECT_ROOT / "config/geographies/canada.json",
             provider_id="statcan",
             provider_code_field="statcan_dguid",
+            additional_provider_code_fields=("statcan_label",),
         )
 
-    def test_active_registry_has_both_verified_tables_and_carries_classification(self) -> None:
+    def test_active_registry_has_all_verified_tables_and_carries_classification(self) -> None:
         specs = load_statcan_registry(PROJECT_ROOT / "config/series/canada.json")
-        self.assertEqual(len(specs), 49)
-        self.assertEqual({spec.table.pid for spec in specs}, {"25100063", "25100081"})
+        self.assertEqual(len(specs), 67)
+        self.assertEqual(
+            {spec.table.pid for spec in specs},
+            {"25100063", "25100077", "25100081"},
+        )
         self.assertTrue(all(spec.display is not None for spec in specs))
 
         by_id = {spec.id: spec for spec in specs}
+        movement_specs = [spec for spec in specs if spec.table.pid == "25100077"]
+        self.assertEqual(len(movement_specs), 18)
+        self.assertTrue(
+            all(
+                spec.geography_resolution.provider_code_field == "statcan_label"
+                for spec in movement_specs
+            )
+        )
+        self.assertEqual(
+            {
+                spec.geography_resolution.provider_code_row_field
+                for spec in movement_specs
+            },
+            {"GEO", "Receiving region"},
+        )
         crude_detail_ids = {
             "can.statcan.crude.production.net_field.monthly",
             "can.statcan.crude.production.light_medium.monthly",
@@ -239,6 +366,138 @@ class StatCanRegistryTests(unittest.TestCase):
             "can.statcan.crude.refinery_inputs.condensate_pentanes.monthly",
             by_id,
         )
+
+    def test_shipping_origin_is_normalized_from_the_source_label(self) -> None:
+        series = movement_registry_series(
+            geography_ids=("ca.ab",),
+            geography_resolution=shipping_origin_resolution(),
+            row_filters=(
+                ("Mode of transport", "Pipeline"),
+                ("Products", CRUDE_MOVEMENT_PRODUCT),
+                ("Receiving region", "British Columbia, receiving region"),
+            ),
+        )
+        normalized = normalize_statcan_records(
+            series,
+            (movement_record("2026-05"),),
+            self.geographies,
+            retrieved_at=datetime(2026, 7, 20, tzinfo=UTC),
+        )
+
+        self.assertEqual(len(normalized), 1)
+        self.assertEqual(normalized[0].geography_id, "ca.ab")
+        self.assertEqual(
+            dict(normalized[0].dimensions),
+            {
+                "coordinate": "6.7.1.1",
+                "mode_of_transport": "Pipeline",
+                "receiving_region": "British Columbia, receiving region",
+                "shipping_region": "Alberta, shipping region",
+                "source_product": CRUDE_MOVEMENT_PRODUCT,
+                "vector": "v1138738542",
+            },
+        )
+
+    def test_shipping_origin_resolution_excludes_registered_us_rows(self) -> None:
+        series = movement_registry_series(
+            geography_ids=("ca.ab",),
+            geography_resolution=shipping_origin_resolution(
+                excluded_values=("United States, shipping region",),
+            ),
+            row_filters=(
+                ("Mode of transport", "Pipeline"),
+                ("Products", CRUDE_MOVEMENT_PRODUCT),
+                ("Receiving region", "Alberta, receiving region"),
+            ),
+        )
+        normalized = normalize_statcan_records(
+            series,
+            (
+                movement_record(
+                    "2026-05",
+                    receiving_region="Alberta, receiving region",
+                    vector="v1138738540",
+                    coordinate="6.6.1.1",
+                ),
+                movement_record(
+                    "2026-05",
+                    shipping_region="United States, shipping region",
+                    receiving_region="Alberta, receiving region",
+                    vector="v1144239277",
+                    coordinate="9.6.1.1",
+                ),
+            ),
+            self.geographies,
+            retrieved_at=datetime(2026, 7, 20, tzinfo=UTC),
+        )
+
+        self.assertEqual([row.geography_id for row in normalized], ["ca.ab"])
+
+    def test_us_origin_flow_is_normalized_by_receiving_destination(self) -> None:
+        series = movement_registry_series(
+            geography_ids=("ca.ab",),
+            geography_resolution=receiving_destination_resolution(),
+            row_filters=(
+                ("GEO", "United States, shipping region"),
+                ("Mode of transport", "Pipeline"),
+                ("Products", CRUDE_MOVEMENT_PRODUCT),
+            ),
+        )
+        normalized = normalize_statcan_records(
+            series,
+            (
+                movement_record(
+                    "2026-05",
+                    shipping_region="United States, shipping region",
+                    receiving_region="Alberta, receiving region",
+                    vector="v1144239277",
+                    coordinate="9.6.1.1",
+                ),
+            ),
+            self.geographies,
+            retrieved_at=datetime(2026, 7, 20, tzinfo=UTC),
+        )
+
+        self.assertEqual(len(normalized), 1)
+        self.assertEqual(normalized[0].geography_id, "ca.ab")
+        self.assertEqual(
+            dict(normalized[0].dimensions)["receiving_region"],
+            "Alberta, receiving region",
+        )
+
+    def test_label_geography_resolution_rejects_unknown_or_invalid_values(self) -> None:
+        series = movement_registry_series(
+            geography_ids=("ca.ab",),
+            geography_resolution=shipping_origin_resolution(),
+            row_filters=(
+                ("Mode of transport", "Pipeline"),
+                ("Products", CRUDE_MOVEMENT_PRODUCT),
+                ("Receiving region", "British Columbia, receiving region"),
+            ),
+        )
+        cases = (
+            (
+                "unknown",
+                movement_record(
+                    "2026-05",
+                    shipping_region="Atlantis, shipping region",
+                ),
+                "Unverified statcan geography code",
+            ),
+            (
+                "invalid suffix",
+                movement_record("2026-05", shipping_region="Alberta"),
+                "lost suffix",
+            ),
+        )
+        for label, row, message in cases:
+            with self.subTest(label), self.assertRaisesRegex(ValueError, message):
+                normalize_statcan_records(
+                    series,
+                    (row,),
+                    self.geographies,
+                    retrieved_at=datetime(2026, 7, 20, tzinfo=UTC),
+                )
 
     def test_statuses_are_distinct_and_raw_codes_are_preserved(self) -> None:
         rows = (

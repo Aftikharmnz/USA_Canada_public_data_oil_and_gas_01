@@ -6,6 +6,7 @@ import {
   DataZoomComponent,
   GridComponent,
   LegendComponent,
+  MarkLineComponent,
   TooltipComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
@@ -68,6 +69,7 @@ echarts.use([
   DataZoomComponent,
   GridComponent,
   LegendComponent,
+  MarkLineComponent,
   TooltipComponent,
   CanvasRenderer,
 ]);
@@ -177,17 +179,42 @@ export function buildChangeEChartsOption(
   const isLevel = asset.unit === "thousand_barrels";
   const positiveColor = isLevel ? "#c0533f" : "#43646a";
   const negativeColor = isLevel ? "#0b7c68" : "#c18541";
-  const data = model.points.map((point) => ({
-    value: numericDisplayValue(point.change, asset.unit, resolvedDisplayUnit),
+  const changeSeriesName = isLevel ? "Build / draw" : "Period change";
+  const levelSeriesName = "Observed level";
+  const displayedChanges = model.points.map((point) => (
+    numericDisplayValue(point.change, asset.unit, resolvedDisplayUnit)
+  ));
+  const data = model.points.map((point, index) => ({
+    value: displayedChanges[index],
     itemStyle: { color: point.change >= 0 ? positiveColor : negativeColor },
   }));
+  const numericChanges = displayedChanges.filter(
+    (value): value is number => value !== null && Number.isFinite(value),
+  );
+  const averageChange = numericChanges.length
+    ? numericChanges.reduce((total, value) => total + value, 0) / numericChanges.length
+    : null;
+  const averageChangeLabel = averageChange === null
+    ? ""
+    : `Average ${axisDisplayValue(averageChange, resolvedDisplayUnit)} ${percentagePointChanges
+      ? "pp"
+      : displayUnitLabel(asset.unit, resolvedDisplayUnit)}`;
+  const levels = model.points.map((point) => (
+    numericDisplayValue(point.value, asset.unit, resolvedDisplayUnit)
+  ));
   return {
     animationDuration: 250,
     aria: {
       enabled: true,
-      description: `${seriesTitle}. ${labels.title}. Bars above zero are ${labels.positive.toLowerCase()}s and bars below zero are ${labels.negative.toLowerCase()}s. Consecutive source periods only; gaps are omitted, never zero-filled.`,
+      description: `${seriesTitle}. ${labels.title}. Bars above zero are ${labels.positive.toLowerCase()}s and bars below zero are ${labels.negative.toLowerCase()}s. The line on the right axis shows the observed series level. Consecutive source periods only; gaps are omitted, never zero-filled.`,
     },
-    grid: { left: 62, right: 26, top: 30, bottom: 78, containLabel: false },
+    grid: { left: 62, right: 72, top: 48, bottom: 78, containLabel: false },
+    legend: {
+      data: [changeSeriesName, levelSeriesName],
+      top: 0,
+      left: 0,
+      textStyle: { color: "#476168", fontSize: 11 },
+    },
     tooltip: {
       trigger: "axis",
       confine: true,
@@ -207,7 +234,8 @@ export function buildChangeEChartsOption(
           + `<div class="echarts-tooltip-row"><span>${direction}</span><b>${escapeHtml(formatChange(Math.abs(point.change)))}</b></div>`
           + percent
           + `<div class="echarts-tooltip-row"><span>Level</span><b>${escapeHtml(formattedDisplayValue(point.value, asset.unit, resolvedDisplayUnit))}</b></div>`
-          + `<div class="echarts-tooltip-row"><span>From</span><b>${escapeHtml(formatPeriod(point.previousPeriod))}</b></div></div>`;
+          + `<div class="echarts-tooltip-row"><span>Previous level</span><b>${escapeHtml(formattedDisplayValue(point.previousValue, asset.unit, resolvedDisplayUnit))}</b></div>`
+          + `<div class="echarts-tooltip-row"><span>Previous period</span><b>${escapeHtml(formatPeriod(point.previousPeriod))}</b></div></div>`;
       },
     },
     xAxis: {
@@ -222,22 +250,37 @@ export function buildChangeEChartsOption(
         formatter: (value: string) => formatPeriod(value),
       },
     },
-    yAxis: {
-      type: "value",
-      name: percentagePointChanges
-        ? "percentage points"
-        : displayUnitLabel(asset.unit, resolvedDisplayUnit),
-      nameLocation: "end",
-      nameTextStyle: { color: "#71858a", fontSize: 10, fontWeight: 700 },
-      axisLabel: {
-        color: "#71858a",
-        fontSize: 11,
-        formatter: (value: number) => percentagePointChanges
-          ? formatPlainNumber(value)
-          : axisDisplayValue(value, resolvedDisplayUnit),
+    yAxis: [
+      {
+        type: "value",
+        name: percentagePointChanges
+          ? "percentage points"
+          : displayUnitLabel(asset.unit, resolvedDisplayUnit),
+        nameLocation: "end",
+        nameTextStyle: { color: "#71858a", fontSize: 10, fontWeight: 700 },
+        axisLabel: {
+          color: "#71858a",
+          fontSize: 11,
+          formatter: (value: number) => percentagePointChanges
+            ? formatPlainNumber(value)
+            : axisDisplayValue(value, resolvedDisplayUnit),
+        },
+        splitLine: { lineStyle: { color: "#e3eae8" } },
       },
-      splitLine: { lineStyle: { color: "#e3eae8" } },
-    },
+      {
+        type: "value",
+        name: displayUnitLabel(asset.unit, resolvedDisplayUnit),
+        nameLocation: "end",
+        nameTextStyle: { color: "#71858a", fontSize: 10, fontWeight: 700 },
+        axisLabel: {
+          color: "#71858a",
+          fontSize: 11,
+          formatter: (value: number) => axisDisplayValue(value, resolvedDisplayUnit),
+        },
+        axisLine: { show: true, lineStyle: { color: "#9aadb0" } },
+        splitLine: { show: false },
+      },
+    ],
     dataZoom: [
       { type: "inside", xAxisIndex: 0, filterMode: "none", zoomOnMouseWheel: "shift", moveOnMouseMove: true },
       {
@@ -255,11 +298,37 @@ export function buildChangeEChartsOption(
     ],
     series: [
       {
-        name: labels.title,
+        name: changeSeriesName,
         type: "bar",
         data,
-        barMaxWidth: 16,
+        barMaxWidth: 18,
+        yAxisIndex: 0,
+        markLine: averageChange === null ? undefined : {
+          silent: true,
+          symbol: "none",
+          lineStyle: { color: "#8c9da0", type: "dashed", width: 1 },
+          label: {
+            color: "#61767a",
+            fontSize: 10,
+            formatter: averageChangeLabel,
+            position: "insideEndTop",
+          },
+          data: [{ yAxis: averageChange, name: "Average change" }],
+        },
         emphasis: { focus: "series" },
+      },
+      {
+        name: levelSeriesName,
+        type: "line",
+        data: levels,
+        yAxisIndex: 1,
+        symbol: "none",
+        showSymbol: false,
+        smooth: 0.16,
+        lineStyle: { color: "#6f858a", width: 1.8, opacity: 0.82 },
+        itemStyle: { color: "#6f858a" },
+        emphasis: { focus: "series" },
+        z: 5,
       },
     ],
   };
@@ -568,7 +637,15 @@ export function buildSeasonalEChartsOption(
   };
 }
 
-function EChartsCanvas({ option, ariaLabel }: { option: EChartsOption; ariaLabel: string }) {
+function EChartsCanvas({
+  option,
+  ariaLabel,
+  variant,
+}: {
+  option: EChartsOption;
+  ariaLabel: string;
+  variant: "seasonal" | "changes";
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof echarts.init> | null>(null);
 
@@ -598,7 +675,14 @@ function EChartsCanvas({ option, ariaLabel }: { option: EChartsOption; ariaLabel
     chartRef.current?.setOption(option, { notMerge: true });
   }, [option]);
 
-  return <div ref={containerRef} className="echarts-seasonal" role="img" aria-label={ariaLabel} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`echarts-seasonal echarts-${variant}-view`}
+      role="img"
+      aria-label={ariaLabel}
+    />
+  );
 }
 
 function ForecastDiagnostics({
@@ -849,7 +933,8 @@ export function SeasonalChart({
           <>
             <EChartsCanvas
               option={option}
-              ariaLabel={`${series.title}. ${changeLabels.title}. Interactive hover and horizontal zoom are available.`}
+              variant="changes"
+              ariaLabel={`${series.title}. ${changeLabels.title}. Bars show period changes and the line shows the observed level on a second axis. Interactive hover and horizontal zoom are available.`}
             />
             <p className="chart-footnote">
               {asset.unit === "thousand_barrels"
@@ -870,6 +955,8 @@ export function SeasonalChart({
                     <tr>
                       <th scope="col">Period</th>
                       <th scope="col">Change</th>
+                      <th scope="col">Percent change</th>
+                      <th scope="col">Previous level</th>
                       <th scope="col">Level</th>
                     </tr>
                   </thead>
@@ -880,6 +967,13 @@ export function SeasonalChart({
                         <td>{asset.unit.toLowerCase() === "percent"
                           ? formatValue(point.change, "percentage points")
                           : formattedDisplayValue(point.change, asset.unit, resolvedDisplayUnit)}</td>
+                        <td>{point.percentChange === null
+                          ? "Not available"
+                          : `${new Intl.NumberFormat("en-US", {
+                              maximumFractionDigits: 2,
+                              signDisplay: "always",
+                            }).format(point.percentChange)}%`}</td>
+                        <td>{formattedDisplayValue(point.previousValue, asset.unit, resolvedDisplayUnit)}</td>
                         <td>{formattedDisplayValue(point.value, asset.unit, resolvedDisplayUnit)}</td>
                       </tr>
                     ))}
@@ -896,7 +990,7 @@ export function SeasonalChart({
         )
       ) : model.slots.length ? (
         <>
-          <EChartsCanvas option={option} ariaLabel={chartAriaLabel} />
+          <EChartsCanvas option={option} ariaLabel={chartAriaLabel} variant="seasonal" />
           <p className="chart-footnote">
             Solid lines are observed values; dashed lines are forecasts. The forecast shading is an empirical prediction interval,
             not certainty or a guarantee. Hover for exact values. Missing observations are not zero-filled.

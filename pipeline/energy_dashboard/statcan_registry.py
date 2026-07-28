@@ -23,6 +23,17 @@ _MONTH = re.compile(r"^\d{4}-\d{2}$")
 
 
 @dataclass(frozen=True, slots=True)
+class StatCanGeographyResolution:
+    """Map one reviewed Statistics Canada row axis to a geography node."""
+
+    provider_code_field: str = "statcan_dguid"
+    provider_code_row_field: str = "DGUID"
+    label_row_field: str = "GEO"
+    strip_suffix: str = ""
+    excluded_values: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class RegistryStatCanSeries:
     id: str
     metric_id: str
@@ -38,6 +49,7 @@ class RegistryStatCanSeries:
     source_geography_ids: tuple[str, ...]
     source_geography_level_ids: tuple[str, ...]
     unsupported_levels: tuple[tuple[str, str], ...]
+    geography_resolution: StatCanGeographyResolution = StatCanGeographyResolution()
     display: SeriesDisplayClassification | None = None
     bootstrap_start: str | None = None
 
@@ -114,8 +126,17 @@ def load_statcan_registry(
             if item.get("expected_fields") is None
             else _string_mapping(item.get("expected_fields"), "expected_fields")
         )
+        resolution = _load_geography_resolution(
+            item.get("geography_resolution"),
+            table.required_headers,
+        )
         filter_names = {key for key, _ in filters}
-        if "REF_DATE" in filter_names or "GEO" in filter_names or "DGUID" in filter_names:
+        forbidden_filter_fields = {
+            "REF_DATE",
+            resolution.provider_code_row_field,
+            resolution.label_row_field,
+        }
+        if filter_names & forbidden_filter_fields:
             raise ValueError("Statistics Canada semantic filters cannot include period or geography")
         if not filter_names or not {"UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID"}.issubset(
             {key for key, _ in expected}
@@ -167,6 +188,7 @@ def load_statcan_registry(
                 source_geography_ids=geography_ids,
                 source_geography_level_ids=levels,
                 unsupported_levels=unsupported,
+                geography_resolution=resolution,
                 display=display,
                 bootstrap_start=(
                     bootstrap.get(frequency.value)
@@ -197,6 +219,7 @@ def normalize_statcan_records(
     if start is not None and end is not None and start > end:
         raise ValueError("Statistics Canada period_start cannot follow period_end")
     filters = dict(series.row_filters)
+    resolution = series.geography_resolution
     selected = tuple(
         (index, row)
         for index, row in enumerate(records)
@@ -215,8 +238,16 @@ def normalize_statcan_records(
         _validate_month(period)
         if (start is not None and period < start) or (end is not None and period > end):
             continue
-        dguid = _required(row, "DGUID", index)
-        geography_id, level_id = geographies.resolve(dguid)
+        raw_provider_code = _required(row, resolution.provider_code_row_field, index)
+        if raw_provider_code in resolution.excluded_values:
+            continue
+        provider_code = _strip_registered_suffix(
+            raw_provider_code,
+            resolution.strip_suffix,
+            resolution.provider_code_row_field,
+            index,
+        )
+        geography_id, level_id = geographies.resolve(provider_code)
         if geography_id not in series.source_geography_ids:
             raise ValueError(
                 f"Statistics Canada row geography {geography_id!r} escaped the registered set "
@@ -226,10 +257,15 @@ def normalize_statcan_records(
             raise ValueError(
                 f"Statistics Canada row geography {geography_id!r} is at an unavailable level"
             )
-        label = _required(row, "GEO", index)
+        label = _strip_registered_suffix(
+            _required(row, resolution.label_row_field, index),
+            resolution.strip_suffix,
+            resolution.label_row_field,
+            index,
+        )
         if label != geographies.label_by_geography_id[geography_id]:
             raise ValueError(
-                f"Statistics Canada DGUID/label mismatch for {geography_id}: {label!r}"
+                f"Statistics Canada geography code/label mismatch for {geography_id}: {label!r}"
             )
         for field, expected in expected_fields.items():
             if _required(row, field, index) != expected:
@@ -255,6 +291,19 @@ def normalize_statcan_records(
             )
             if value is not None
         )
+        dimensions: list[tuple[str, str]] = [
+            ("coordinate", coordinate),
+            ("vector", vector),
+        ]
+        if "Receiving region" in row:
+            dimensions.extend(
+                [
+                    ("shipping_region", _required(row, "GEO", index)),
+                    ("receiving_region", _required(row, "Receiving region", index)),
+                    ("mode_of_transport", _required(row, "Mode of transport", index)),
+                    ("source_product", _required(row, "Products", index)),
+                ]
+            )
         output.append(
             Observation(
                 provider_id="statcan",
@@ -265,7 +314,7 @@ def normalize_statcan_records(
                 unit=series.canonical_unit,
                 retrieved_at=retrieved_at,
                 status=status,
-                dimensions=(("coordinate", coordinate), ("vector", vector)),
+                dimensions=tuple(sorted(dimensions)),
                 flags=flags,
                 original_value=raw_value or None,
                 original_unit=_required(row, "UOM", index),
@@ -330,6 +379,80 @@ def _value_and_status(
     if not value.is_finite():
         raise ValueError(f"Statistics Canada row {row_number} has a non-finite value")
     return value, numeric_statuses[status_code]
+
+
+def _load_geography_resolution(
+    value: object,
+    required_headers: tuple[str, ...],
+) -> StatCanGeographyResolution:
+    if value is None:
+        return StatCanGeographyResolution()
+    item = _require_mapping(value, "geography_resolution")
+    resolution = StatCanGeographyResolution(
+        provider_code_field=str(item["provider_code_field"]),
+        provider_code_row_field=str(item["provider_code_row_field"]),
+        label_row_field=str(item["label_row_field"]),
+        strip_suffix=str(item.get("strip_suffix", "")),
+        excluded_values=tuple(
+            str(raw)
+            for raw in _list(item.get("excluded_values", []), "excluded_values")
+        ),
+    )
+    reviewed_axes = {
+        ("statcan_dguid", "DGUID", "GEO", ""),
+        ("statcan_label", "GEO", "GEO", ", shipping region"),
+        (
+            "statcan_label",
+            "Receiving region",
+            "Receiving region",
+            ", receiving region",
+        ),
+    }
+    identity = (
+        resolution.provider_code_field,
+        resolution.provider_code_row_field,
+        resolution.label_row_field,
+        resolution.strip_suffix,
+    )
+    if identity not in reviewed_axes:
+        raise ValueError(f"Unreviewed Statistics Canada geography resolution: {identity!r}")
+    for field in (resolution.provider_code_row_field, resolution.label_row_field):
+        if field not in required_headers:
+            raise ValueError(
+                f"Statistics Canada geography resolution field {field!r} is absent from table headers"
+            )
+    if len(resolution.excluded_values) != len(set(resolution.excluded_values)):
+        raise ValueError("Statistics Canada excluded geography values must be unique")
+    if any(not raw for raw in resolution.excluded_values):
+        raise ValueError("Statistics Canada excluded geography values cannot be blank")
+    if resolution.strip_suffix and any(
+        not raw.endswith(resolution.strip_suffix)
+        for raw in resolution.excluded_values
+    ):
+        raise ValueError(
+            "Statistics Canada excluded geography values must retain the registered suffix"
+        )
+    return resolution
+
+
+def _strip_registered_suffix(
+    value: str,
+    suffix: str,
+    field: str,
+    row_number: int,
+) -> str:
+    if not suffix:
+        return value
+    if not value.endswith(suffix):
+        raise ValueError(
+            f"Statistics Canada row {row_number} field {field!r} lost suffix {suffix!r}"
+        )
+    stripped = value[: -len(suffix)]
+    if not stripped:
+        raise ValueError(
+            f"Statistics Canada row {row_number} field {field!r} has no geography label"
+        )
+    return stripped
 
 
 def _load_display(value: object) -> SeriesDisplayClassification | None:

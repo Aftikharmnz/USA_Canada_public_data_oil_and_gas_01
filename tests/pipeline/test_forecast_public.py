@@ -19,11 +19,11 @@ class PromotedForecastAssetTests(unittest.TestCase):
         expected = {
             "usa": None,
             "canada": {
-                "assets": 404,
+                "assets": 467,
                 "ok": 360,
-                "limited_history": 18,
-                "latest_source_non_numeric": 25,
-                "insufficient_history": 1,
+                "limited_history": 74,
+                "latest_source_non_numeric": 27,
+                "insufficient_history": 6,
             },
         }
         for country, expectation in expected.items():

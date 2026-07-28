@@ -14,22 +14,26 @@ Machine-readable series and geography definitions remain authoritative in
 
 ## Current verified generation
 
-Promoted local run `canada-20260720T192043Z` contains 51 active definitions:
-49 Statistics Canada series and 2 CER series. The country page presents them as
-22 **Crude** and 29 **Refined** choices. Crude includes crude-oil balances,
-grade and bitumen detail, equivalent products, and refinery activity; placing
-refinery activity there is navigation only and does not alter provider
-semantics, units, observation identity, or aggregation rules.
+Promoted local run `canada-20260728T143908Z` contains 69 active definitions:
+67 Statistics Canada series and 2 CER series. The country page presents them as
+31 **Crude** and 38 **Refined** choices. Crude includes crude-oil balances,
+grade and bitumen detail, equivalent products, refinery activity, and
+crude/equivalent pipeline movements; placing refinery activity there is
+navigation only and does not alter provider semantics, units, observation
+identity, or aggregation rules.
 
-The run contains 49,726 canonical observations, 404 verified observed chart
-assets with matching forecast records, and 21.09 MiB of canonical JSON. The
-activation inserted 10,184 rows, revised 0, and matched 34,946 unchanged rows.
-Statistics Canada reaches source month `2026-04`; CER reaches week
-`2026-06-16`. Forecast status is 360 ready, 18 `limited_history`, and 26
-unavailable. The previous last-known-good generation was
-`analytics-20260720T152511Z`, and the initial Canada activation was
-`canada-20260720T000329Z`. Public manifest and asset verification passed
-locally; this is not evidence of a public GitHub Pages deployment.
+The run contains 60,814 canonical observations, 467 verified observed chart
+assets with 467 matching forecast records (934 integrity entries), and
+29,518,923 bytes (28.15 MiB) of canonical JSON. Public assets occupy 12.67 MiB.
+The activation inserted 11,088 rows, revised 0, and matched 44,908 unchanged
+rows. Statistics Canada balance tables 25-10-0063-01 and 25-10-0081-01 reach
+source month `2026-04`; movement table 25-10-0077-01 reaches `2026-05`; CER
+reaches week `2026-06-16`. Forecast status is 360 ready, 74 `limited_history`,
+and 33 unavailable. The previous last-known-good generation is
+`canada-20260720T192043Z`. Retention keeps that generation and the current one,
+and pruned `analytics-20260720T152511Z`. Public manifest, asset, and integrity
+verification passed locally; this is not by itself evidence of a matching
+public GitHub Pages deployment.
 
 ## Official sources
 
@@ -61,6 +65,11 @@ Important interpretation rules:
 - Canada totals can contain adjustments or confidential contributions that are
   not reconstructible from the visible provinces. Prefer the source-published
   Canada value.
+- The table's dimension metadata declares `Net inter-regional receipts,
+  supply`, but the current full-table fact file contains no rows for that
+  member. It remains absent: the dashboard does not treat it as zero, derive it
+  from table 25-10-0077-01, or insert pipeline movements into a
+  supply/disposition balance.
 - The January 2019 survey-methodology and frame change prevents an invisible
   splice to legacy table 25-10-0041-01.
 
@@ -124,6 +133,68 @@ provinces. For imports and exports, the source documents a January 2020
 methodology change: pipeline exports are allocated to the province where they
 are loaded and imports to the province of destination, rather than the former
 border-clearance treatment. Analytics must not hide this break.
+
+### Statistics Canada table 25-10-0077-01
+
+[Crude oil and petroleum products movements, by mode of transport and by
+product type, monthly](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510007701)
+is a non-seasonally-adjusted origin-destination movement matrix from January
+2020. Each observation is a monthly cubic-metre volume identified by four
+source dimensions:
+
+```text
+shipping region
+-> receiving region
+-> mode of transport
+-> broad product type
+```
+
+The current cube contains one mode, `Pipeline`. Statistics Canada's note says
+marine and rail data may be added later; that is a possible source expansion,
+not permission for the application to relabel pipeline observations as
+all-mode movements. A new mode must be reviewed and registered separately.
+
+Shipping and receiving are independent geography dimensions. Each currently
+contains Canada, Quebec, Ontario, Manitoba, Saskatchewan, Alberta, British
+Columbia, Northwest Territories, and the United States. The two endpoints must
+remain in every observation's identity:
+
+- a province-to-different-province route is an interprovincial pipeline
+  movement;
+- a province-to-the-same-province diagonal is a source-published
+  intraprovincial movement, not a zero or an interprovincial flow;
+- a province-to-United-States or United-States-to-province route is a
+  cross-border **pipeline** movement, not total customs exports or imports
+  across all transportation modes; and
+- opposite directions are separate gross flows and are not silently netted.
+
+`Canada, shipping region` and `Canada, receiving region` are source-published
+aggregates that overlap the provincial matrix. They are broader views, not
+extra route components. The dashboard therefore does not add a Canada row to
+provincial routes, reconstruct a Canada aggregate from visible corridors, or
+claim that available province cells reconcile it. Missing and `..` route cells
+remain unavailable rather than zero.
+
+Movement series are intentionally absent from the custom-geography aggregation
+registry. Select one exact source-published shipping origin (or, for
+United-States-origin measures, one receiving destination); the browser does not
+sum origins into a synthetic route total.
+
+The source publishes exactly two broad product buckets:
+
+- **Crude oil and equivalents**: bitumen, heavy crude oil, lease condensate,
+  light crude oil, and synthetic crude oil.
+- **Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)**:
+  butane, ethane, pentanes plus, propane, mixed HGLs, motor gasoline, fuel
+  oils, jet fuel, asphalt, and other refined petroleum products.
+
+These are combined transportation scopes. Table 25-10-0077-01 does not provide
+separate light/heavy/bitumen movement series or separate gasoline, diesel,
+jet-fuel, propane, and other HGL/RPP movement series. The HGL/RPP value must not
+be presented as a refined-products-only total or allocated to one component.
+Likewise, the movement matrix is not a substitute for the empty
+`Net inter-regional receipts, supply` member in table 25-10-0081-01 and is not
+automatically reconciled to that table's product balances.
 
 ### Monthly-average `kb/d` display
 
@@ -282,6 +353,13 @@ distribution calculations applied after selecting a valid geography.
   inferred density or benchmark-grade mapping.
 - No invented condensate-and-pentanes-plus refinery-input observations where
   the table declares the member but publishes no fact rows.
+- No invented 25-10-0081-01 net-inter-regional-receipts observations where the
+  table declares the member but publishes no fact rows, and no substitution of
+  the 25-10-0077-01 pipeline matrix for that missing balance member.
+- No marine, rail, truck, or all-mode interpretation of the current
+  pipeline-only movement data.
+- No individual crude-grade, gasoline, diesel, jet-fuel, or HGL-component
+  movement split from either broad 25-10-0077-01 product bucket.
 - No silent legacy/current-table splice.
 - No inferred CER capacity series or national mean of utilization percentages.
 - No product-parent/component stacking.

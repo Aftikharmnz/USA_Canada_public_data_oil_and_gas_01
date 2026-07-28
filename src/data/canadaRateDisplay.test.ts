@@ -12,7 +12,7 @@ describe("Canada monthly-average rate registry", () => {
   it("authorizes exactly the current Statistics Canada monthly flow series", async () => {
     const manifest = parseCanadaManifest(JSON.parse(await readFile(manifestUrl, "utf8")) as unknown);
     const authorized = canadaMonthlyAverageRateRegistry.series_ids;
-    expect(authorized).toHaveLength(43);
+    expect(authorized).toHaveLength(61);
     for (const seriesId of authorized) {
       const series = manifest.series.find((candidate) => candidate.series_id === seriesId);
       expect(series, seriesId).toBeDefined();

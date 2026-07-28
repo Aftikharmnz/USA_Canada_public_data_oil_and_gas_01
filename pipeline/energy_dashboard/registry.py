@@ -253,6 +253,7 @@ def load_provider_geographies(
     *,
     provider_id: str = "eia",
     provider_code_field: str = "eia_duoarea",
+    additional_provider_code_fields: tuple[str, ...] = (),
 ) -> ProviderGeographyIndex:
     document = _load_json(path)
     nodes = document.get("nodes")
@@ -283,22 +284,30 @@ def load_provider_geographies(
         codes = node.get("provider_codes", {})
         if not isinstance(codes, Mapping):
             raise ValueError(f"provider_codes must be an object for {geography_id}")
-        provider_codes: list[str] = []
-        code = codes.get(provider_code_field)
-        if code is not None:
-            provider_codes.append(str(code))
+        provider_code_fields = (
+            provider_code_field,
+            *additional_provider_code_fields,
+        )
+        if len(provider_code_fields) != len(set(provider_code_fields)):
+            raise ValueError("Provider geography code fields must be unique")
+        provider_codes: list[tuple[str, str]] = []
+        for code_field in provider_code_fields:
+            code = codes.get(code_field)
+            if code is not None:
+                provider_codes.append((code_field, str(code)))
         aliases = node.get("provider_code_aliases", {})
         if not isinstance(aliases, Mapping):
             raise ValueError(f"provider_code_aliases must be an object for {geography_id}")
-        alias_values = aliases.get(provider_code_field, [])
-        provider_codes.extend(
-            str(value)
-            for value in _list(alias_values, f"provider_code_aliases.{provider_code_field}")
-        )
-        for provider_code in provider_codes:
+        for code_field in provider_code_fields:
+            alias_values = aliases.get(code_field, [])
+            provider_codes.extend(
+                (code_field, str(value))
+                for value in _list(alias_values, f"provider_code_aliases.{code_field}")
+            )
+        for code_field, provider_code in provider_codes:
             if provider_code in code_to_id:
                 raise ValueError(
-                    f"Duplicate {provider_code_field} code {provider_code!r}"
+                    f"Duplicate {code_field} code {provider_code!r}"
                 )
             code_to_id[provider_code] = geography_id
     return ProviderGeographyIndex(

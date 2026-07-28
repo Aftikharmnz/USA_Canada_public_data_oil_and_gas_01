@@ -100,8 +100,11 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertFalse(payload["network_calls"])
         self.assertEqual(payload["providers"], ["statcan", "cer"])
-        self.assertEqual({table["pid"] for table in payload["tables"]}, {"25100063", "25100081"})
-        self.assertEqual(len(payload["series"]), 51)
+        self.assertEqual(
+            {table["pid"] for table in payload["tables"]},
+            {"25100063", "25100077", "25100081"},
+        )
+        self.assertEqual(len(payload["series"]), 69)
         providers = {item["provider"] for item in payload["series"]}
         self.assertEqual(providers, {"statcan", "cer"})
         self.assertTrue(all(not table["credential_required"] for table in payload["tables"]))

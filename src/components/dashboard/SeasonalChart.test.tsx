@@ -324,12 +324,25 @@ describe("seasonal forecast chart", () => {
       latest: null,
       skippedGaps: 0,
     }, "percent");
-    const yAxis = option.yAxis as { name?: string };
+    const yAxes = option.yAxis as Array<{ name?: string }>;
     const tooltip = option.tooltip as { formatter?: (params: unknown) => string };
     const rendered = tooltip.formatter?.([{ dataIndex: 0 }]) ?? "";
+    const renderedSeries = option.series as Array<Record<string, unknown>>;
 
-    expect(yAxis.name).toBe("percentage points");
+    expect(yAxes[0]?.name).toBe("percentage points");
+    expect(yAxes[1]?.name).toBe("%");
+    expect(renderedSeries.map((item) => item.name)).toEqual([
+      "Period change",
+      "Observed level",
+    ]);
+    expect(renderedSeries[1]?.data).toEqual([91.3]);
+    expect(renderedSeries[0]?.markLine).toMatchObject({
+      label: { formatter: "Average -1.2 pp" },
+      data: [{ yAxis: -1.2, name: "Average change" }],
+    });
     expect(rendered).toContain("1.2 percentage points");
     expect(rendered).toContain("91.3 %");
+    expect(rendered).toContain("92.5 %");
+    expect(rendered).toContain("Previous level");
   });
 });

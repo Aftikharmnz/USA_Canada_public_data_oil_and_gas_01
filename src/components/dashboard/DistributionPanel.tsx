@@ -61,7 +61,7 @@ function Histogram({
     return <p className="insufficient-message">No validated histogram is available for this sample.</p>;
   }
   return (
-    <div className="histogram" role="img" aria-label={`${label} histogram with ${sample.count} observations`}>
+    <div className="histogram" role="group" aria-label={`${label} histogram with ${sample.count} observations`}>
       <div className="histogram-scale"><span>{sharedMaxCount}</span><span>count</span></div>
       <div className="histogram-bars">
         {sample.histogram.map((bin, index) => {
@@ -70,7 +70,11 @@ function Histogram({
             : displayUnit
               ? formatDisplayValue(value, sourceUnit, displayUnit)
               : formatValue(value, sourceUnit);
-          const binLabel = `${formatBinValue(bin.lower)} to ${formatBinValue(bin.upper)}: ${bin.count} observations`;
+          const share = sample.count > 0 ? (bin.count / sample.count) * 100 : 0;
+          const formattedShare = new Intl.NumberFormat("en-US", {
+            maximumFractionDigits: 1,
+          }).format(share);
+          const binLabel = `${formatBinValue(bin.lower)} to ${formatBinValue(bin.upper)}: ${bin.count} observations (${formattedShare}% of the sample)`;
           return (
             <button
               type="button"
@@ -80,7 +84,7 @@ function Histogram({
               title={binLabel}
               aria-label={binLabel}
             >
-              <span>{bin.count}</span>
+              <span>{bin.count} · {formattedShare}%</span>
             </button>
           );
         })}

@@ -188,6 +188,7 @@ def main(argv: list[str] | None = None) -> int:
             args.geography_registry,
             provider_id="statcan",
             provider_code_field="statcan_dguid",
+            additional_provider_code_fields=("statcan_label",),
         )
         selected_frequencies = {spec.frequency.value for spec in (*statcan_specs, *cer_specs)}
         if args.expected_period and len(selected_frequencies) > 1:

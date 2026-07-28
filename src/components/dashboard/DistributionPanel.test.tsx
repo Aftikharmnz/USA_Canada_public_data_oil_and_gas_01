@@ -64,7 +64,7 @@ describe("DistributionPanel display units", () => {
     );
 
     expect(html).toContain("1.5 MMbbl");
-    expect(html).toContain("1 MMbbl to 2 MMbbl: 10 observations");
+    expect(html).toContain("1 MMbbl to 2 MMbbl: 10 observations (100% of the sample)");
     expect(html).toContain("0.1 MMbbl");
     expect(html).toContain("10 observations");
   });

@@ -77,7 +77,7 @@ describe("promoted Canada data", () => {
     const manifest = parseCanadaManifest(
       await readJson(new URL("manifest.json", canadaPublicRoot)),
     );
-    expect(manifest.series).toHaveLength(51);
+    expect(manifest.series).toHaveLength(69);
 
     const providerCounts = manifest.series.reduce<Record<string, number>>(
       (counts, series) => {
@@ -88,7 +88,7 @@ describe("promoted Canada data", () => {
     );
     expect(providerCounts).toEqual({
       "Canada Energy Regulator": 2,
-      "Statistics Canada": 49,
+      "Statistics Canada": 67,
     });
 
     const available = manifest.series.flatMap((series) =>
@@ -96,7 +96,7 @@ describe("promoted Canada data", () => {
         .filter((geography) => geography.status === "available" && geography.asset_path)
         .map((geography) => ({ series, geography })),
     );
-    expect(available).toHaveLength(404);
+    expect(available).toHaveLength(467);
 
     const cerUtilization = manifest.series.find(
       (series) => series.series_id === "can.cer.refinery.utilization.weekly",

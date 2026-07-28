@@ -641,7 +641,7 @@ h3 {
 
 /* USA data dashboard */
 .usa-dashboard-shell {
-  width: min(1320px, calc(100% - 2rem));
+  width: min(1440px, calc(100% - 2rem));
 }
 
 .dashboard-toolbar {
@@ -1294,8 +1294,16 @@ h3 {
 
 .echarts-seasonal {
   width: 100%;
-  height: 27rem;
+  height: 28rem;
   margin-top: 0.65rem;
+}
+
+.echarts-seasonal.echarts-seasonal-view {
+  height: 31rem;
+}
+
+.echarts-seasonal.echarts-changes-view {
+  height: 29rem;
 }
 
 .echarts-tooltip {
@@ -1772,7 +1780,7 @@ h3 {
 
 @media (max-width: 620px) {
   .usa-dashboard-shell {
-    width: min(100% - 1rem, 1320px);
+    width: min(100% - 1rem, 1440px);
   }
 
   .dashboard-toolbar,
@@ -1817,7 +1825,12 @@ h3 {
   }
 
   .echarts-seasonal {
-    height: 25rem;
+    height: 26rem;
+  }
+
+  .echarts-seasonal.echarts-seasonal-view,
+  .echarts-seasonal.echarts-changes-view {
+    height: 27rem;
   }
 
   .chart-tooltip {

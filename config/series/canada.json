@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-07-20.canada-crude-detail",
+  "registry_version": "2026-07-28.canada-movements",
   "country_code": "CAN",
   "activation_status": "active",
   "bootstrap_period_start_by_frequency": {"weekly": "2014-01-01", "monthly": "2016-01"},
@@ -44,6 +44,18 @@
       "expected_fields": {"UOM": "Cubic metres", "UOM_ID": "72", "SCALAR_FACTOR": "units", "SCALAR_ID": "0", "DECIMALS": "0"},
       "max_archive_bytes": 33554432,
       "max_uncompressed_bytes": 268435456
+    },
+    {
+      "pid": "25100077",
+      "name": "Crude oil and petroleum products movements, by mode of transport and by product type, monthly",
+      "landing_page": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510007701",
+      "wds_url": "https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/25100077/en",
+      "csv_member": "25100077.csv",
+      "metadata_member": "25100077_MetaData.csv",
+      "required_headers": ["REF_DATE", "GEO", "DGUID", "Receiving region", "Mode of transport", "Products", "UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID", "VECTOR", "COORDINATE", "VALUE", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS"],
+      "expected_fields": {"UOM": "Cubic metres", "UOM_ID": "72", "SCALAR_FACTOR": "units", "SCALAR_ID": "0", "DECIMALS": "0"},
+      "max_archive_bytes": 8388608,
+      "max_uncompressed_bytes": 33554432
     }
   ],
   "geography_profiles": {
@@ -197,6 +209,15 @@
       "unsupported_levels": [
         {"level_id": "city", "reason": "Crude inventories are not published at city or facility level in this table."},
         {"level_id": "census_metropolitan_area", "reason": "Published inventories are not allocated to CMAs."}
+      ]
+    },
+    "movement_canadian_regions": {
+      "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.nt", "ca.on", "ca.qc", "ca.sk"],
+      "source_geography_level_ids": ["province_territory", "national"],
+      "unsupported_levels": [
+        {"level_id": "city", "reason": "Table 25-10-0077-01 publishes shipping and receiving regions, not city or terminal observations."},
+        {"level_id": "census_metropolitan_area", "reason": "Pipeline movements are not allocated to census metropolitan areas."},
+        {"level_id": "source_region", "reason": "No compatible intermediate Canadian region is published for these movement coordinates."}
       ]
     },
     "cer_runs": {
@@ -528,6 +549,132 @@
       "row_filters": {"Supply and disposition": "Ending stocks", "Products": "Kerosene-type jet fuel", "Unit of measure": "Cubic metres"},
       "display": {"dashboard_group": "canada_refined_products", "product_family_id": "jet-fuel", "product_family_label": "Jet fuel", "product_id": "kerosene-type-jet-fuel", "product_label": "Kerosene-type jet fuel", "measure_id": "ending-stocks", "measure_label": "Ending stocks", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["kerosene-type-jet-fuel", "petroleum-stocks"], "display_order": 650},
       "caveats": ["Ending stocks are month-end levels and all-suppressed provinces remain unavailable."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_canada.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_canada", "name": "Crude oil and equivalents pipeline movements to Canada", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Canada, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-canada", "measure_label": "To Canada (domestic total)", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 700},
+      "caveats": ["The selected geography is the source-published shipping region and Canada is the fixed receiving region. This is a pipeline movement, not all-mode trade; the Canada shipping aggregate overlaps the provincial origins."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_alberta.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_alberta", "name": "Crude oil and equivalents pipeline movements to Alberta", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Alberta, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-alberta", "measure_label": "Domestic movement to Alberta", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 710},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Alberta is the fixed receiving region. United States-origin movements are excluded into a separate measure. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_british_columbia.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_british_columbia", "name": "Crude oil and equivalents pipeline movements to British Columbia", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "British Columbia, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-british-columbia", "measure_label": "Domestic movement to British Columbia", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 720},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and British Columbia is the fixed receiving region. United States-origin movements are excluded into a separate measure. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_manitoba.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_manitoba", "name": "Crude oil and equivalents pipeline movements to Manitoba", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Manitoba, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-manitoba", "measure_label": "Domestic movement to Manitoba", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 730},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Manitoba is the fixed receiving region. United States-origin movements are excluded into a separate measure. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_ontario.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_ontario", "name": "Crude oil and equivalents pipeline movements to Ontario", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Ontario, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-ontario", "measure_label": "Domestic movement to Ontario", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 740},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Ontario is the fixed receiving region. United States-origin movements are excluded into a separate measure. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_quebec.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_quebec", "name": "Crude oil and equivalents pipeline movements to Quebec", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Quebec, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-quebec", "measure_label": "Domestic movement to Quebec", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 750},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Quebec is the fixed receiving region. United States-origin movements are excluded into a separate measure. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_saskatchewan.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_saskatchewan", "name": "Crude oil and equivalents pipeline movements to Saskatchewan", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Saskatchewan, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-saskatchewan", "measure_label": "Domestic movement to Saskatchewan", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements"], "display_order": 760},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Saskatchewan is the fixed receiving region. United States-origin movements are excluded into a separate measure. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.to_united_states.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_united_states", "name": "Crude oil and equivalents pipeline movements to the United States", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "United States, receiving region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "to-united-states", "measure_label": "Pipeline movement to United States", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements", "petroleum-exports"], "display_order": 770},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and the United States is the fixed receiving region. This is pipeline-only movement and is narrower than Statistics Canada's all-mode crude exports."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.pipeline_movements.from_united_states.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_from_united_states", "name": "Crude oil and equivalents pipeline movements from the United States", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"GEO": "United States, shipping region", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "Receiving region", "label_row_field": "Receiving region", "strip_suffix": ", receiving region", "excluded_values": ["United States, receiving region"]},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-movements", "product_family_label": "Crude movements", "product_id": "crude-equivalents-pipeline-movements", "product_label": "Crude & equivalents pipeline movements", "measure_id": "from-united-states", "measure_label": "Pipeline movement from United States", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-crude-equivalent-movements", "petroleum-imports"], "display_order": 780},
+      "caveats": ["The selected geography is the source-published Canadian receiving region and the United States is the fixed shipping region. This is pipeline-only movement and is narrower than Statistics Canada's all-mode crude imports."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_canada.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_canada", "name": "Combined HGL and refined petroleum products pipeline movements to Canada", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Canada, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-canada", "measure_label": "To Canada (domestic total)", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 700},
+      "caveats": ["The selected geography is the source-published shipping region and Canada is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products here, so no gasoline, distillate, jet, or propane component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_alberta.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_alberta", "name": "Combined HGL and refined petroleum products pipeline movements to Alberta", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Alberta, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-alberta", "measure_label": "Domestic movement to Alberta", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 710},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Alberta is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products; no product component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_british_columbia.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_british_columbia", "name": "Combined HGL and refined petroleum products pipeline movements to British Columbia", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "British Columbia, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-british-columbia", "measure_label": "Domestic movement to British Columbia", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 720},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and British Columbia is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products; no product component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_manitoba.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_manitoba", "name": "Combined HGL and refined petroleum products pipeline movements to Manitoba", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Manitoba, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-manitoba", "measure_label": "Domestic movement to Manitoba", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 730},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Manitoba is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products; no product component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_ontario.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_ontario", "name": "Combined HGL and refined petroleum products pipeline movements to Ontario", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Ontario, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-ontario", "measure_label": "Domestic movement to Ontario", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 740},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Ontario is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products; no product component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_quebec.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_quebec", "name": "Combined HGL and refined petroleum products pipeline movements to Quebec", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Quebec, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-quebec", "measure_label": "Domestic movement to Quebec", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 750},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Quebec is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products; no product component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_saskatchewan.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_saskatchewan", "name": "Combined HGL and refined petroleum products pipeline movements to Saskatchewan", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "Saskatchewan, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-saskatchewan", "measure_label": "Domestic movement to Saskatchewan", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements"], "display_order": 760},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and Saskatchewan is the fixed receiving region. Statistics Canada combines HGLs and refined petroleum products; no product component is inferred. Pipeline only."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.to_united_states.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_to_united_states", "name": "Combined HGL and refined petroleum products pipeline movements to the United States", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Receiving region": "United States, receiving region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "GEO", "label_row_field": "GEO", "strip_suffix": ", shipping region", "excluded_values": ["United States, shipping region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "to-united-states", "measure_label": "Pipeline movement to United States", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements", "petroleum-exports"], "display_order": 770},
+      "caveats": ["The selected geography is the source-published Canadian shipping region and the United States is the fixed receiving region. This pipeline-only combined HGL/RPP movement cannot be reconciled directly to product-specific all-mode exports."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.pipeline_movements.from_united_states.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "hgl_rpp_pipeline_movement_from_united_states", "name": "Combined HGL and refined petroleum products pipeline movements from the United States", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"GEO": "United States, shipping region", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "geography_resolution": {"provider_code_field": "statcan_label", "provider_code_row_field": "Receiving region", "label_row_field": "Receiving region", "strip_suffix": ", receiving region", "excluded_values": ["United States, receiving region"]},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-movements", "product_family_label": "Petroleum movements", "product_id": "hgl-rpp-pipeline-movements", "product_label": "HGL + refined products pipeline movements", "measure_id": "from-united-states", "measure_label": "Pipeline movement from United States", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["statcan-pipeline-movements", "statcan-hgl-rpp-movements", "petroleum-imports"], "display_order": 780},
+      "caveats": ["The selected geography is the source-published Canadian receiving region and the United States is the fixed shipping region. This pipeline-only combined HGL/RPP movement cannot be reconciled directly to product-specific all-mode imports."], "activation_status": "active"
     }
   ]
 }

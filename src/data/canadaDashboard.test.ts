@@ -124,13 +124,13 @@ describe("Canada country-dashboard hierarchy", () => {
   const promoted = canadaManifestFixture as unknown as CanadaAssetManifest;
   const promotedSeries = availableCanadaSeries(promoted);
 
-  it("maps the promoted manifest to exactly 22 crude and 29 refined series", () => {
+  it("maps the promoted manifest to exactly 31 crude and 38 refined series", () => {
     expect(canadaSegmentOptions(promotedSeries).map((option) => ({
       id: option.id,
       count: option.seriesCount,
     }))).toEqual([
-      { id: "crude", count: 22 },
-      { id: "refined", count: 29 },
+      { id: "crude", count: 31 },
+      { id: "refined", count: 38 },
     ]);
   });
 
@@ -172,6 +172,42 @@ describe("Canada country-dashboard hierarchy", () => {
     ]) {
       expect(customAggregationPolicy("canada", seriesId, "province_territory"), seriesId)
         .toBeUndefined();
+    }
+  });
+
+  it("exposes both movement product scopes without authorizing route aggregation", () => {
+    const movements = promotedSeries.filter(
+      (candidate) => candidate.series_id.includes(".pipeline_movements."),
+    );
+    expect(movements).toHaveLength(18);
+    expect(new Set(movements.map(
+      (candidate) => candidate.classification?.product_id,
+    ))).toEqual(new Set([
+      "crude-equivalents-pipeline-movements",
+      "hgl-rpp-pipeline-movements",
+    ]));
+    expect(new Set(movements.map(
+      (candidate) => candidate.classification?.measure_id,
+    ))).toEqual(new Set([
+      "to-canada",
+      "to-alberta",
+      "to-british-columbia",
+      "to-manitoba",
+      "to-ontario",
+      "to-quebec",
+      "to-saskatchewan",
+      "to-united-states",
+      "from-united-states",
+    ]));
+    for (const movement of movements) {
+      expect(
+        customAggregationPolicy(
+          "canada",
+          movement.series_id,
+          "province_territory",
+        ),
+        movement.series_id,
+      ).toBeUndefined();
     }
   });
 
