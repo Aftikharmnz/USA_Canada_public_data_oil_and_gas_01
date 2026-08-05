@@ -121,14 +121,18 @@ describe("promoted USA data", () => {
       ),
     })));
     const model = buildUsaPaddOriginDestinationModel(series!, loaded);
+    const expectedLatestPeriod = loaded.flatMap(
+      ({ asset }) => asset.history?.map(({ period }) => period) ?? [],
+    ).sort().at(-1);
     const latest = model.snapshots.find(
       (snapshot) => snapshot.period === model.latestPeriod,
     )!;
 
+    expect(expectedLatestPeriod).toBeDefined();
     expect(model.origins).toHaveLength(5);
     expect(model.destinations).toHaveLength(5);
     expect(model.routes).toHaveLength(expectedRoutes);
-    expect(model.latestPeriod).toBe("2026-04");
+    expect(model.latestPeriod).toBe(expectedLatestPeriod);
     expect(latest.cells.find((cell) => (
       cell.origin.id === absentOrigin
       && cell.destination.id === absentDestination
@@ -240,8 +244,11 @@ describe("promoted Canada data", () => {
       active!,
       loaded,
     );
+    const latestSourcePeriods = new Set(
+      loaded.map(({ asset }) => asset.latest_source?.period),
+    );
 
-    expect(model.latestPeriod).toBe("2026-05");
+    expect(latestSourcePeriods).toEqual(new Set([model.latestPeriod]));
     expect(model.productLabel).toBe(productLabel);
     expect(model.origins.some((node) => node.label === "Alberta")).toBe(true);
     expect(model.destinations.some((node) => node.label === "Ontario")).toBe(true);
