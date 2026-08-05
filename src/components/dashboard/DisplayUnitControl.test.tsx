@@ -7,7 +7,7 @@ const monthlyAverageOption: DisplayUnitOption = {
   id: "thousand_barrels_per_day",
   dimension: "flow_rate",
   compactLabel: "kb/d",
-  longLabel: "Thousand barrels per day (monthly average)",
+  longLabel: "Thousand barrels per day — monthly average",
   numberFormat: {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
@@ -28,9 +28,22 @@ describe("DisplayUnitControl", () => {
       />,
     );
 
-    expect(html).toContain("Cubic metres (source)");
-    expect(html).toContain("Thousand barrels per day (monthly average)");
+    expect(html).toContain("Cubic metres (m³, source)");
+    expect(html).toContain("Thousand barrels per day — monthly average (kb/d)");
     expect(html).toContain("Source monthly volumes remain unchanged.");
   });
-});
 
+  it("shows trader abbreviations beside ordinary daily-rate options", () => {
+    const html = renderToStaticMarkup(
+      <DisplayUnitControl
+        sourceUnit="thousand_barrels_per_day"
+        value="thousand_barrels_per_day"
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Barrels per day (bbl/d)");
+    expect(html).toContain("Thousand barrels per day (kb/d, source)");
+    expect(html).toContain("Million barrels per day (MMbbl/d)");
+  });
+});

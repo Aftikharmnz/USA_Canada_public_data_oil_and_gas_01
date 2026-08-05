@@ -587,6 +587,19 @@ export function forecastIsRenderable(forecast: ForecastAsset | undefined): boole
   );
 }
 
+function dimensionsMatch(
+  forecastDimensions: Record<string, string>,
+  observedDimensions: Record<string, string>,
+): boolean {
+  const forecastKeys = Object.keys(forecastDimensions);
+  const observedKeys = Object.keys(observedDimensions);
+  return forecastKeys.length === observedKeys.length
+    && forecastKeys.every((key) => (
+      Object.hasOwn(observedDimensions, key)
+      && observedDimensions[key] === forecastDimensions[key]
+    ));
+}
+
 export function forecastMismatchReason(
   forecast: ForecastAsset,
   observed: UsaChartAsset,
@@ -599,6 +612,9 @@ export function forecastMismatchReason(
   }
   if (forecast.geography_id !== geographyId || forecast.geography_id !== observed.geography_id) {
     return "Forecast geography does not match the selected official region.";
+  }
+  if (!dimensionsMatch(forecast.dimensions, observed.dimensions)) {
+    return "Forecast dimensions do not match the observed asset.";
   }
   if (forecast.frequency.toLowerCase() !== observed.frequency.toLowerCase()) {
     return "Forecast frequency does not match the observed asset.";

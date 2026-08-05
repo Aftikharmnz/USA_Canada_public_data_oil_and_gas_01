@@ -221,14 +221,14 @@ Each live run:
 
 1. runs all Python contract tests;
 2. refreshes the active EIA catalog using the default overlaps, skip-unchanged policy, and two-generation retention;
-3. on `changed: true`, verifies every manifest path/checksum/byte count and scans generated cache/public files for credential material;
-4. installs locked frontend dependencies, runs frontend checks, and builds with the repository Pages base path;
-5. commits only `data/cache/eia` and `public/data/usa`, then pushes;
-6. uploads and deploys the same tested `dist` artifact to GitHub Pages in the same workflow.
+3. on `changed: true`, scans the complete generated cache/public trees for credential material before creating any commit, then commits only `data/cache/eia` and `public/data/usa` locally and rebases that commit onto the latest branch head;
+4. reruns the Python contracts, verifies every manifest path/checksum/byte count, and repeats the generated-data credential scan against the rebased code;
+5. installs locked frontend dependencies, runs frontend checks, and builds with the repository Pages base path from that rebased revision;
+6. pushes that exact tested revision, then uploads and deploys the matching `dist` artifact to GitHub Pages in the same workflow.
 
 A `GITHUB_TOKEN` commit does not start another workflow, so same-run deployment is intentional. The refresh workflow and ordinary Pages workflow share the `pages` concurrency group with cancellation disabled.
 
-An unchanged poll exits successfully without a commit, frontend build, or deployment. A failure before commit leaves the repository and site unchanged. If a failure occurs after push but before Pages deployment, the prior Pages deployment remains live; manually rerun with `publish_unchanged: true` so the already-current canonical generation is rebuilt/deployed even if EIA is then unchanged.
+An unchanged poll exits successfully without a commit, frontend build, or deployment. A failure before the guarded push leaves the repository and site unchanged. If the remote branch advances again after the rebase, the normal push rejects the run before artifact upload. If a failure occurs after push but before Pages deployment, the prior Pages deployment remains live; manually rerun with `publish_unchanged: true` so the already-current canonical generation is rebuilt/deployed even if EIA is then unchanged.
 
 Manual dispatch provides `dry_run` (required boolean, default false), optional `period_start`/`period_end` strings applied to every active series, and `publish_unchanged` (required boolean, default false). Dry run makes no network call, data write, commit, or deployment. Because period bounds apply to both weekly and monthly series, leave them blank unless the supplied EIA formats are valid for every active query; use the local CLI for frequency-specific bounded work.
 

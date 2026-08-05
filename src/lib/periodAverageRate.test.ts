@@ -3,8 +3,11 @@ import { BARREL_TO_CUBIC_METRES } from "./units";
 import {
   buildMonthlyAverageRateAsset,
   daysInMonthlyPeriod,
+  isMonthlyAverageRateDisplayUnit,
   monthlyAverageRateForecastPoints,
   monthlyAverageRateOption,
+  monthlyAverageRateOptions,
+  monthlyVolumeToAverageRate,
   monthlyVolumeToKbPerDay,
   supportsMonthlyAverageRate,
 } from "./periodAverageRate";
@@ -95,7 +98,7 @@ function sourceAsset(): UsaChartAsset {
   };
 }
 
-describe("Canada monthly-average kb/d display", () => {
+describe("Canada monthly-average daily-rate display", () => {
   it("uses exact Gregorian month lengths, including leap February", () => {
     expect(daysInMonthlyPeriod("2023-02")).toBe(28);
     expect(daysInMonthlyPeriod("2024-02")).toBe(29);
@@ -105,10 +108,16 @@ describe("Canada monthly-average kb/d display", () => {
     expect(() => daysInMonthlyPeriod("2024-2")).toThrow(/YYYY-MM/);
   });
 
-  it("normalizes a monthly volume with that period's day count", () => {
+  it("normalizes a monthly volume with that period's day count and scales kb/d to bbl/d", () => {
     const oneKbDay = 1_000 * BARREL_TO_CUBIC_METRES;
     expect(monthlyVolumeToKbPerDay(oneKbDay * 29, "2024-02", "cubic_metres"))
       .toBeCloseTo(1, 12);
+    expect(monthlyVolumeToAverageRate(
+      oneKbDay * 29,
+      "2024-02",
+      "cubic_metres",
+      "barrels_per_day",
+    )).toBeCloseTo(1_000, 12);
     const fixedVolume = oneKbDay * 31;
     expect(monthlyVolumeToKbPerDay(fixedVolume, "2024-01", "cubic_metres"))
       .toBeCloseTo(1, 12);
@@ -119,14 +128,51 @@ describe("Canada monthly-average kb/d display", () => {
   it("authorizes registered flows but not point-in-time inventories", () => {
     const production = series("can.statcan.crude.production.monthly", "production");
     const inventory = series("can.statcan.crude.closing_inventory.monthly", "ending-stocks");
+    const options = monthlyAverageRateOptions(production);
     expect(supportsMonthlyAverageRate(production)).toBe(true);
+    expect(options.map((option) => option.id)).toEqual([
+      "barrels_per_day",
+      "thousand_barrels_per_day",
+      "million_barrels_per_day",
+      "cubic_metres_per_day",
+      "thousand_cubic_metres_per_day",
+    ]);
+    expect(options).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "barrels_per_day",
+        compactLabel: "bbl/d",
+        longLabel: "Barrels per day — monthly average",
+        isSourceUnit: false,
+      }),
+      expect.objectContaining({
+        id: "thousand_barrels_per_day",
+        compactLabel: "kb/d",
+        longLabel: "Thousand barrels per day — monthly average",
+        isSourceUnit: false,
+      }),
+    ]));
     expect(monthlyAverageRateOption(production)).toMatchObject({
       id: "thousand_barrels_per_day",
       compactLabel: "kb/d",
-      longLabel: "Thousand barrels per day (monthly average)",
+      longLabel: "Thousand barrels per day — monthly average",
     });
+    expect(isMonthlyAverageRateDisplayUnit(production, "barrels_per_day")).toBe(true);
+    expect(isMonthlyAverageRateDisplayUnit(production, "thousand_barrels_per_day")).toBe(true);
     expect(supportsMonthlyAverageRate(inventory)).toBe(false);
+    expect(monthlyAverageRateOptions(inventory)).toEqual([]);
     expect(monthlyAverageRateOption(inventory)).toBeNull();
+    expect(isMonthlyAverageRateDisplayUnit(inventory, "barrels_per_day")).toBe(false);
+  });
+
+  it("rejects unregistered closing-inventory assets", () => {
+    const inventoryAsset = {
+      ...sourceAsset(),
+      series_id: "can.statcan.crude.closing_inventory.monthly",
+    };
+
+    expect(() => buildMonthlyAverageRateAsset(inventoryAsset)).toThrow(
+      /not registered for can\.statcan\.crude\.closing_inventory\.monthly/,
+    );
   });
 
   it("preserves statuses and recomputes chart analytics from normalized history", () => {
@@ -166,6 +212,7 @@ describe("Canada monthly-average kb/d display", () => {
   it("normalizes forecast points and every interval bound by target month", () => {
     const oneKbDay = 1_000 * BARREL_TO_CUBIC_METRES;
     const forecast = {
+      target_series_id: "can.statcan.crude.production.monthly",
       frequency: "monthly",
       unit: "cubic_metres",
       points: [
@@ -208,5 +255,17 @@ describe("Canada monthly-average kb/d display", () => {
     expect(points[1]?.intervals["95"].upper).toBeCloseTo(4, 12);
     expect(forecast.points[0]?.value).toBeCloseTo(oneKbDay * 29, 12);
   });
-});
 
+  it("rejects unregistered closing-inventory forecasts", () => {
+    const forecast = {
+      target_series_id: "can.statcan.crude.closing_inventory.monthly",
+      frequency: "monthly",
+      unit: "cubic_metres",
+      points: [],
+    } as unknown as ForecastAsset;
+
+    expect(() => monthlyAverageRateForecastPoints(forecast)).toThrow(
+      /not registered for can\.statcan\.crude\.closing_inventory\.monthly/,
+    );
+  });
+});

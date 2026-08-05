@@ -16,6 +16,12 @@ interface DisplayUnitControlProps {
   helpText?: string;
 }
 
+function optionLabel(option: DisplayUnitOption): string {
+  const qualifiers = [option.compactLabel, option.isSourceUnit ? "source" : null]
+    .filter((value): value is string => Boolean(value));
+  return `${option.longLabel} (${qualifiers.join(", ")})`;
+}
+
 export function DisplayUnitControl({
   sourceUnit,
   value,
@@ -48,7 +54,7 @@ export function DisplayUnitControl({
         >
           {options.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.longLabel}{option.isSourceUnit ? " (source)" : ""}
+              {optionLabel(option)}
             </option>
           ))}
         </select>

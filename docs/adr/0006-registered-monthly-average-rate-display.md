@@ -6,7 +6,8 @@
 ## Context
 
 Most Statistics Canada petroleum series are monthly volumes in cubic metres,
-while traders commonly compare flows in thousand barrels per day (`kb/d`). A
+while traders commonly compare flows in daily-rate scales such as barrels per
+day (`bbl/d`) and thousand barrels per day (`kb/d`). A
 fixed barrel conversion cannot turn a monthly volume into a daily rate: the
 calculation also requires the exact 28, 29, 30, or 31 days in each source
 period. Treating all months as equal would distort observations, seasonal
@@ -33,6 +34,10 @@ dimensions, and aggregation lineage. Reject unregistered series, malformed
 periods, missing history, incompatible units, percentages, and ending or
 closing stocks.
 
+Use `kb/d` as the canonical in-memory derived rate, then apply the ordinary
+fixed-factor rate engine for display in `bbl/d`, `kb/d`, `MMbbl/d`, `m³/d`, or
+`10³ m³/d`. This does not authorize any additional volume-to-rate derivation.
+
 All regional aggregation and forecast construction remains in canonical
 monthly cubic metres. Combined point forecasts and residual-calibrated
 prediction intervals are completed first; only the final point and interval
@@ -43,7 +48,7 @@ forecast asset.
 
 ## Consequences
 
-- Canada flow series can be compared in the trader-standard `kb/d` scale
+- Canada flow series can be compared in trader-standard daily-rate scales
   without changing or republishing canonical assets.
 - Leap February and different month lengths are handled exactly.
 - Combined-region values remain reproducible because summation precedes the
@@ -52,4 +57,3 @@ forecast asset.
   explicit registry review before receiving the derived option.
 - Display analytics are rebuilt in the browser from period history rather than
   scaling precomputed monthly-volume statistics.
-

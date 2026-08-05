@@ -227,14 +227,14 @@ Likewise, the movement matrix is not a substitute for the empty
 `Net inter-regional receipts, supply` member in table 25-10-0081-01 and is not
 automatically reconciled to that table's product balances.
 
-### Monthly-average `kb/d` display
+### Monthly-average daily-rate display
 
 Statistics Canada publishes these petroleum balances as monthly cubic-metre
 volumes. The flow and activity series explicitly registered in
-`config/display/monthly-average-rate.json` offer **Thousand barrels per day
-(monthly average)**. The browser divides each observation by that source
-month's actual 28, 29, 30, or 31 calendar days and applies the exact barrel
-conversion. It then recomputes the seasonal band, latest comparisons,
+`config/display/monthly-average-rate.json` offer daily-rate choices in
+`bbl/d`, `kb/d`, `MMbbl/d`, `m³/d`, and `10³ m³/d`. The browser divides each
+observation by that source month's actual 28, 29, 30, or 31 calendar days and
+then applies the selected fixed-factor display scale. It recomputes the seasonal band, latest comparisons,
 distribution diagnostics, and other displayed statistics from those derived
 period values.
 
@@ -243,8 +243,8 @@ checksums, regional aggregation, forecast fitting, and interval calibration
 stay in monthly cubic metres. Forecast point values and prediction bounds are
 converted only after publication using each target month's own day count.
 Scale-dependent backtest errors stay labelled in source monthly cubic metres.
-Closing inventory and ending stocks are point-in-time levels, so `kb/d` is not
-offered for them. Percentages and unregistered future measures also remain
+Closing inventory and ending stocks are point-in-time levels, so daily-rate
+units are not offered for them. Percentages and unregistered future measures also remain
 ineligible.
 
 ### Canada Energy Regulator weekly crude runs

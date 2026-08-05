@@ -17,10 +17,11 @@ import type { RegionalContributionSpec } from "../../data/regionalContributions"
 import { useCountryChartAssets } from "../../hooks/useCountryAssets";
 import {
   compactUnit,
+  formatDisplayNumber,
   formatPeriod,
   formatValue,
 } from "../../lib/formatters";
-import { monthlyVolumeToKbPerDay } from "../../lib/periodAverageRate";
+import { monthlyVolumeToAverageRate } from "../../lib/periodAverageRate";
 import {
   convertUnitValue,
   type DisplayUnitId,
@@ -79,10 +80,7 @@ function displayNumber(
   monthlyAverageRate: boolean,
 ): number | null {
   if (monthlyAverageRate) {
-    if (displayUnit !== "thousand_barrels_per_day") {
-      throw new Error("Monthly-average contribution display requires kb/d.");
-    }
-    return monthlyVolumeToKbPerDay(value, period, sourceUnit);
+    return monthlyVolumeToAverageRate(value, period, sourceUnit, displayUnit);
   }
   return convertUnitValue(value, sourceUnit, displayUnit);
 }
@@ -243,10 +241,7 @@ export function regionalContributionOption(
       axisLabel: {
         color: "#71858a",
         fontSize: 10,
-        formatter: (value: number) => new Intl.NumberFormat("en-US", {
-          notation: Math.abs(value) >= 10_000 ? "compact" : "standard",
-          maximumFractionDigits: 1,
-        }).format(value),
+        formatter: (value: number) => formatDisplayNumber(value, displayUnit, true),
       },
       splitLine: { lineStyle: { color: "#e3eae8" } },
     },

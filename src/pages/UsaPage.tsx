@@ -177,7 +177,7 @@ function UsaDashboard({
       ? customViewState.data.forecastNotice
       : customViewState.status === "error"
         ? `${customViewState.error} Observed component data remain unchanged.`
-        : "Validating bottom-up regional forecasts and aligned residualsâ€¦"
+        : "Validating bottom-up regional forecasts and aligned residuals…"
     : !geography.forecast_path
     ? "No validated statistical forecast has been published for this exact selection."
     : forecastMismatch
@@ -192,6 +192,13 @@ function UsaDashboard({
               ? "Checking for the latest validated forecast…"
               : undefined;
   const displayUnit = resolveDisplayUnit(asset?.unit ?? series.unit, requestedDisplayUnit);
+  const unitHelpText = series.unit === "thousand_barrels"
+    ? series.classification?.measure_id === "stocks"
+      ? "Daily-rate units are unavailable because this is a point-in-time inventory, not a flow."
+      : series.classification?.measure_id === "inter-padd-movement"
+        ? "This EIA monthly movement is published as a period volume; daily-rate normalization is not authorized for this series."
+        : undefined
+    : undefined;
   const contributionSpec = regionalContributionSpec("usa", series);
 
   const selectedProduct = selection.products.find((item) => item.id === selection.productId);
@@ -462,6 +469,7 @@ function UsaDashboard({
               sourceUnit={asset?.unit ?? series.unit}
               value={displayUnit}
               onChange={setRequestedDisplayUnit}
+              helpText={unitHelpText}
             />
           ) : null}
         </div>

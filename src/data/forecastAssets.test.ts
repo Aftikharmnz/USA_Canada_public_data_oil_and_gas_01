@@ -125,7 +125,7 @@ function observedFixture(): UsaChartAsset {
     schema_version: "1.0.0",
     series_id: forecastFixture.target_series_id,
     geography_id: forecastFixture.geography_id,
-    dimensions: {},
+    dimensions: { ...forecastFixture.dimensions },
     frequency: forecastFixture.frequency,
     unit: forecastFixture.unit,
     generated_at: "2026-01-02T18:00:00Z",
@@ -252,6 +252,7 @@ describe("forecast public asset contract", () => {
       [{ ...parsed, target_view_id: "another-view" }, /view/],
       [{ ...parsed, target_series_id: "another-series" }, /series/],
       [{ ...parsed, geography_id: "us.padd.2" }, /geography/],
+      [{ ...parsed, dimensions: { process: "refinery_inputs" } }, /dimensions/],
       [{ ...parsed, frequency: "weekly" }, /frequency/],
       [{ ...parsed, unit: "thousand_barrels" }, /unit/],
       [{ ...parsed, training_source_checksum: "b".repeat(64) }, /training data/],
@@ -265,6 +266,30 @@ describe("forecast public asset contract", () => {
         observed.geography_id,
       )).toMatch(expected);
     }
+  });
+
+  it("treats dimension key order as immaterial while requiring the exact key/value set", () => {
+    const parsed = parseForecastAsset({
+      ...forecastFixture,
+      dimensions: { process: "refinery_utilization", product: "crude_oil" },
+    });
+    const observed = {
+      ...observedFixture(),
+      dimensions: { product: "crude_oil", process: "refinery_utilization" },
+    };
+
+    expect(forecastMismatchReason(
+      parsed,
+      observed,
+      seriesFixture,
+      observed.geography_id,
+    )).toBeNull();
+    expect(forecastMismatchReason(
+      { ...parsed, dimensions: { ...parsed.dimensions, grade: "heavy" } },
+      observed,
+      seriesFixture,
+      observed.geography_id,
+    )).toMatch(/dimensions/i);
   });
 
   it("builds country-relative local paths and rejects remote forecast injection", () => {
