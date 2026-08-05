@@ -10,9 +10,9 @@ The USA registry includes two active monthly EIA movement definitions:
 They use the official EIA API v2 route
 [`/v2/petroleum/move/ptb/data`](https://www.eia.gov/opendata/browser/petroleum/move/ptb)
 and the Petroleum Supply Monthly movement tables. Both are activated in
-promoted run `eia-20260728T164833Z`, which passed the complete refresh,
+promoted run `eia-20260805T163902Z`, which passed the complete refresh,
 analytics, integrity, size, and Pages-deployment gates in workflow run
-`30379912166`.
+`31026239390`.
 
 These are domestic logistics observations. They are separate from:
 
@@ -149,14 +149,14 @@ transport sources. For these reasons:
 
 ## Activation and storage evidence
 
-Promoted run `eia-20260728T164833Z` contains 17 crude route assets and 18
-total-products route assets within 217,223 canonical observations. All crude
-routes reach `2026-04`. The total-products definition conservatively reports
-`2026-03` because 16 route assets reach `2026-04` while two end at `2026-03`;
-the older route values are not stale-filled into the newer month. The complete
-USA generation is 89,851,624 bytes (85.69 MiB), below the 90 MiB promotion
-guard, and the previous last-known-good generation is
-`eia-20260722T202149Z`.
+Promoted run `eia-20260805T163902Z` contains 17 crude route assets and 18
+total-products route assets within 217,582 canonical observations. Fifteen
+crude routes reach `2026-05`; routes 3→5 and 5→3 remain at `2026-04`, so the
+crude definition conservatively reports `2026-04`. All 18 total-products
+routes reach `2026-05`; older route values are never stale-filled into a newer
+month. The complete USA generation is 90,001,839 bytes (85.83 MiB), below the
+90 MiB promotion guard, and the previous last-known-good generation is
+`eia-20260729T175851Z`.
 
 This measured result does not replace the 90 MiB check on every future
 promotion. More movement products—such as 0–15 ppm distillate, finished

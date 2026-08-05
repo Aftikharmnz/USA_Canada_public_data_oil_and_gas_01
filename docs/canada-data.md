@@ -14,7 +14,7 @@ Machine-readable series and geography definitions remain authoritative in
 
 ## Current verified generation
 
-Promoted local run `canada-20260728T143908Z` contains 69 active definitions:
+Promoted run `canada-20260803T170245Z` contains 69 active definitions:
 67 Statistics Canada series and 2 CER series. The country page presents them as
 31 **Crude** and 38 **Refined** choices. Crude includes crude-oil balances,
 grade and bitumen detail, equivalent products, refinery activity, and
@@ -22,18 +22,15 @@ crude/equivalent pipeline movements; placing refinery activity there is
 navigation only and does not alter provider semantics, units, observation
 identity, or aggregation rules.
 
-The run contains 60,814 canonical observations, 467 verified observed chart
+The run contains 61,310 canonical observations, 467 verified observed chart
 assets with 467 matching forecast records (934 integrity entries), and
-29,518,923 bytes (28.15 MiB) of canonical JSON. Public assets occupy 12.67 MiB.
-The activation inserted 11,088 rows, revised 0, and matched 44,908 unchanged
-rows. Statistics Canada balance tables 25-10-0063-01 and 25-10-0081-01 reach
-source month `2026-04`; movement table 25-10-0077-01 reaches `2026-05`; CER
-reaches week `2026-06-16`. Forecast status is 360 ready, 74 `limited_history`,
+29,739,716 bytes (28.36 MiB) of canonical JSON. Public assets occupy 12.78 MiB.
+The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. All
+three Statistics Canada tables reach source month `2026-05`; CER reaches week
+`2026-07-21`. Forecast status is 360 ready, 74 `limited_history`,
 and 33 unavailable. The previous last-known-good generation is
-`canada-20260720T192043Z`. Retention keeps that generation and the current one,
-and pruned `analytics-20260720T152511Z`. Public manifest, asset, and integrity
-verification passed locally; this is not by itself evidence of a matching
-public GitHub Pages deployment.
+`canada-20260731T162758Z`. Retention keeps that generation and the current one.
+Public manifest, asset, integrity, and Pages verification passed.
 
 ## Official sources
 
