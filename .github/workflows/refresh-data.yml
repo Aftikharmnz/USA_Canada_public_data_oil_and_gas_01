@@ -117,7 +117,75 @@ jobs:
               output.write(f"changed={'true' if changed else 'false'}\n")
           PY
 
-      - name: Verify promoted public generation and scan generated data
+      - name: Scan generated EIA changes before commit
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          forbidden = (
+              b"api_key=",
+              b'"api_key"',
+              b'"eia_api_key"',
+              b"authorization: bearer",
+          )
+          secret = os.environ.get("EIA_API_KEY", "").encode("utf-8")
+          if not secret:
+              raise SystemExit("EIA_API_KEY is required for a live refresh")
+
+          for root in (Path("data/cache/eia"), Path("public/data/usa")):
+              for path in root.rglob("*"):
+                  if not path.is_file():
+                      continue
+                  payload = path.read_bytes()
+                  lowered = payload.lower()
+                  if secret in payload or any(marker in lowered for marker in forbidden):
+                      raise SystemExit(
+                          f"Credential-like material found before commit: {path}"
+                      )
+
+          print("Pre-commit EIA credential scan passed")
+          PY
+
+      - uses: pnpm/action-setup@v4
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v6
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Commit refreshed cache and public assets, then rebase
+        if: steps.refresh.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -- data/cache/eia public/data/usa
+          if git diff --cached --quiet; then
+            echo "The refresh reported changes but produced no tracked data diff." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: refresh EIA assets"
+          # Replay the data commit on the latest branch head before validation
+          # and build. Pages must never receive an artifact built before this
+          # rebase.
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+
+      - name: Validate rebased pipeline contracts
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          PYTHONPATH: pipeline
+        run: python -m unittest discover -s tests/pipeline -p "test_*.py" -v
+
+      - name: Verify rebased public generation and scan generated data
         if: steps.refresh.outputs.changed == 'true'
         env:
           PYTHONPATH: pipeline
@@ -167,48 +235,31 @@ jobs:
           )
           PY
 
-      - uses: pnpm/action-setup@v4
-        if: steps.refresh.outputs.changed == 'true'
-        with:
-          version: 11.9.0
-
-      - uses: actions/setup-node@v6
-        if: steps.refresh.outputs.changed == 'true'
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies from rebased lockfile
         if: steps.refresh.outputs.changed == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Validate frontend
+      - name: Validate rebased frontend
         if: steps.refresh.outputs.changed == 'true'
         run: pnpm run check
 
-      - name: Build repository-scoped Pages artifact
+      - name: Build repository-scoped Pages artifact from rebased revision
         if: steps.refresh.outputs.changed == 'true'
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: pnpm run build
 
-      - name: Commit refreshed cache and public assets
+      - name: Push the exact tested revision
         if: steps.refresh.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          git add -A -- data/cache/eia public/data/usa
-          if git diff --cached --quiet; then
-            echo "The refresh reported changes but produced no tracked data diff." >&2
-            exit 1
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "data: refresh EIA assets"
-          # A human push while this run was working must not fail the refresh:
-          # replay the data commit on the updated branch head before pushing.
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push
+          # A concurrent branch update now rejects this ordinary push. That
+          # fails closed before artifact upload instead of deploying a build
+          # that does not match the pushed revision.
+          git diff --quiet
+          git diff --cached --quiet
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - uses: actions/configure-pages@v5
         if: steps.refresh.outputs.changed == 'true'

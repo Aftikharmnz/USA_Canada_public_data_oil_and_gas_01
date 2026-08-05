@@ -43,8 +43,9 @@ import { useCustomRegionView } from "../hooks/useCustomRegionView";
 import { compactUnit, formatDateTime } from "../lib/formatters";
 import {
   buildMonthlyAverageRateAsset,
+  isMonthlyAverageRateDisplayUnit,
   monthlyAverageRateForecastPoints,
-  monthlyAverageRateOption,
+  monthlyAverageRateOptions,
   MONTHLY_AVERAGE_RATE_UNIT,
 } from "../lib/periodAverageRate";
 import { appPath } from "../lib/routes";
@@ -323,7 +324,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
       ? customViewState.data.forecastNotice
       : customViewState.status === "error"
         ? `${customViewState.error} Observed component data remain unchanged.`
-        : "Validating bottom-up regional forecasts and aligned residualsâ€¦"
+        : "Validating bottom-up regional forecasts and aligned residuals…"
     : !geography.forecast_path
     ? "No validated statistical forecast has been published for this exact selection."
     : forecastMismatch
@@ -337,10 +338,8 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             : forecastState.status === "loading"
               ? "Checking for the latest validated forecast…"
               : undefined;
-  const averageRateOption = monthlyAverageRateOption(series);
-  const averageRateRequested = Boolean(
-    averageRateOption && requestedDisplayUnit === MONTHLY_AVERAGE_RATE_UNIT,
-  );
+  const averageRateOptions = monthlyAverageRateOptions(series);
+  const averageRateRequested = isMonthlyAverageRateDisplayUnit(series, requestedDisplayUnit);
   const monthlyRateView: MonthlyRateDisplayView = (() => {
     if (!averageRateRequested || !asset) return { asset };
     let derivedAsset: UsaChartAsset;
@@ -368,7 +367,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
     && displayAsset?.unit === MONTHLY_AVERAGE_RATE_UNIT;
   const displayUnit = resolveDisplayUnit(
     displayAsset?.unit ?? asset?.unit ?? series.unit,
-    averageRateActive ? requestedDisplayUnit : undefined,
+    requestedDisplayUnit,
   );
   const contributionSpec = regionalContributionSpec("canada", series);
   const movementContext = canadaMovementContext(series);
@@ -390,14 +389,14 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
   const displayForecastNotice = averageRateActive && monthlyRateView.forecastError
     ? `${monthlyRateView.forecastError} The observed monthly-average view remains available.`
     : forecastNotice;
-  const unitHelpText = averageRateOption
+  const unitHelpText = averageRateOptions.length
     ? averageRateActive
       ? "Monthly average: source monthly volume divided by that month's exact calendar-day count; canonical data remain cubic metres."
-      : "Source data remain monthly cubic metres; kb/d is available as a monthly average using each month's exact calendar-day count."
+      : "Source data remain monthly cubic metres; daily-rate choices use each month's exact calendar-day count."
     : series.frequency.toLowerCase().startsWith("month")
       && series.unit === "cubic_metres"
       && series.classification?.measure_id === "ending-stocks"
-      ? "kb/d is unavailable because this is a point-in-time inventory, not a monthly flow."
+      ? "Daily-rate units are unavailable because this is a point-in-time inventory, not a monthly flow."
       : undefined;
   const sourceLink = series.source.url;
   const selectedSegment = selection.segments.find(
@@ -567,7 +566,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
               sourceUnit={asset?.unit ?? series.unit}
               value={displayUnit}
               onChange={setRequestedDisplayUnit}
-              additionalOptions={averageRateOption ? [averageRateOption] : undefined}
+              additionalOptions={averageRateOptions}
               helpText={unitHelpText}
             />
           ) : null}

@@ -12,6 +12,7 @@ import {
 import { fetchUsaChartAsset } from "../../data/usaAssets";
 import {
   convertDisplayValue,
+  formatDisplayNumber,
   formatDisplayValue,
   formatPeriod,
   formatSignedDisplayValue,
@@ -138,12 +139,7 @@ function waterfallOption(
       axisLabel: {
         color: "#71858a",
         fontSize: 11,
-        formatter: (value: number) => new Intl.NumberFormat(
-          "en-US",
-          getUnitFormattingMetadata(volumeDisplayUnit)?.numberFormat ?? {
-            maximumFractionDigits: 2,
-          },
-        ).format(value),
+        formatter: (value: number) => formatDisplayNumber(value, volumeDisplayUnit),
       },
       splitLine: { lineStyle: { color: "#e3eae8" } },
     },

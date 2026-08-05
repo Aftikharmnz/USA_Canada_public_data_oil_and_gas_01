@@ -190,7 +190,7 @@ function componentForecast(
     frequency: "monthly",
     unit: "cubic_metres",
     generated_at: "2026-07-20T10:00:00Z",
-    training_source_checksum: `forecast-sha-${geography.geography_id}`,
+    training_source_checksum: `sha-${geography.geography_id}`,
     status: "ok",
     methodology_version: "2026-07-20.4",
     forecast_kind: "univariate_statistical_projection",
@@ -198,6 +198,7 @@ function componentForecast(
       period: "2026-04",
       value: 100,
       training_observations: 120,
+      data_vintage_id: `sha-${geography.geography_id}`,
       vintage_policy: "latest_revised_pseudo_out_of_sample",
     },
     horizon: { periods: 3, unit: "monthly" },
@@ -371,6 +372,57 @@ describe("buildCustomRegionView", () => {
       lower: 29.5,
       upper: 30.5,
     });
+  });
+
+  it.each([
+    {
+      name: "training checksum",
+      mutate: (forecast: ForecastAsset) => ({
+        ...forecast,
+        training_source_checksum: "stale-source-checksum",
+      }),
+      expected: /training data no longer match/i,
+    },
+    {
+      name: "forecast origin",
+      mutate: (forecast: ForecastAsset) => ({
+        ...forecast,
+        origin: { ...forecast.origin, period: "2026-03" },
+      }),
+      expected: /origin is older/i,
+    },
+    {
+      name: "series identity",
+      mutate: (forecast: ForecastAsset) => ({
+        ...forecast,
+        target_series_id: "can.statcan.unrelated.monthly",
+      }),
+      expected: /series does not match/i,
+    },
+  ])("keeps observed combinations but fails the forecast closed on a mismatched $name", async ({
+    mutate,
+    expected,
+  }) => {
+    const albertaAsset = chartAsset(alberta, completeHistory("ab"));
+    const saskatchewanAsset = chartAsset(saskatchewan, completeHistory("sk"));
+    const result = await buildCustomRegionView({
+      country: "canada",
+      series,
+      registryPolicy,
+      geographies: [alberta, saskatchewan],
+      assets: [albertaAsset, saskatchewanAsset],
+      forecasts: [
+        mutate(componentForecast(alberta, [10, 11, 12], 1)),
+        componentForecast(saskatchewan, [20, 22, 24], 2),
+      ],
+    });
+
+    expect(result.asset.latest.value).toBe(
+      albertaAsset.latest.value! + saskatchewanAsset.latest.value!,
+    );
+    expect(result.forecast).toBeUndefined();
+    expect(result.forecastNotice).toMatch(expected);
+    expect(result.forecastNotice).toMatch(/observed combined data remain available/i);
   });
 });
 

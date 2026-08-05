@@ -17,6 +17,7 @@ import {
   compactUnit,
   convertDisplayValue,
   formatDateTime,
+  formatDisplayNumber,
   formatDisplayValue,
   formatPeriod,
   formatPlainNumber,
@@ -78,6 +79,12 @@ echarts.use([
 
 export type SeasonalViewMode = "seasonal" | "changes";
 
+const INVENTORY_LEVEL_MEASURE_IDS = new Set(["stocks", "ending-stocks"]);
+
+export function isInventoryLevelSeries(series: UsaManifestSeries): boolean {
+  return INVENTORY_LEVEL_MEASURE_IDS.has(series.classification?.measure_id ?? "");
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"]/g, (character) => ({
     "&": "&amp;",
@@ -123,10 +130,7 @@ function axisDisplayValue(
   displayUnit: DisplayUnitId | null,
 ): string {
   if (!displayUnit) return formatPlainNumber(value);
-  const metadata = getUnitFormattingMetadata(displayUnit);
-  return new Intl.NumberFormat("en-US", metadata?.numberFormat ?? {
-    maximumFractionDigits: 2,
-  }).format(value);
+  return formatDisplayNumber(value, displayUnit);
 }
 
 function numericDisplayValue(
@@ -142,12 +146,12 @@ function displayUnitLabel(sourceUnit: string, displayUnit: DisplayUnitId | null)
     ?? compactUnit(displayUnit ?? sourceUnit);
 }
 
-export function changeChartLabels(asset: UsaChartAsset): {
+export function changeChartLabels(asset: UsaChartAsset, series: UsaManifestSeries): {
   positive: string;
   negative: string;
   title: string;
 } {
-  const isLevel = asset.unit === "thousand_barrels";
+  const isLevel = isInventoryLevelSeries(series);
   const cadence = asset.frequency.toLowerCase().startsWith("month") ? "Month" : "Week";
   if (isLevel) {
     return {
@@ -166,11 +170,12 @@ export function changeChartLabels(asset: UsaChartAsset): {
 
 export function buildChangeEChartsOption(
   asset: UsaChartAsset,
-  seriesTitle: string,
+  series: UsaManifestSeries,
   model: PeriodChangeModel,
   displayUnit?: DisplayUnitId,
 ): EChartsOption {
-  const labels = changeChartLabels(asset);
+  const labels = changeChartLabels(asset, series);
+  const seriesTitle = series.title;
   const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, displayUnit);
   const percentagePointChanges = asset.unit.toLowerCase() === "percent";
   const formatChange = (value: number | null) => percentagePointChanges
@@ -178,7 +183,7 @@ export function buildChangeEChartsOption(
     : formattedDisplayValue(value, asset.unit, resolvedDisplayUnit);
   // Stock builds read as supply-heavy (warm color) and draws as tightening
   // (teal); generic rate series keep neutral analytic colors instead.
-  const isLevel = asset.unit === "thousand_barrels";
+  const isLevel = isInventoryLevelSeries(series);
   const positiveColor = isLevel ? "#c0533f" : "#43646a";
   const negativeColor = isLevel ? "#0b7c68" : "#c18541";
   const changeSeriesName = isLevel ? "Build / draw" : "Period change";
@@ -700,6 +705,61 @@ function ForecastDiagnostics({
 }) {
   const backtest = forecast.backtest;
   const intervalKey = String(intervalLevel) as PredictionIntervalKey;
+  if (forecast.forecast_kind === "bottom_up_custom_geography_projection") {
+    const intervalCalibration = forecast.prediction_intervals;
+    const hasIndependentHoldout = backtest?.status === "independent_holdout";
+    return (
+      <aside
+        className="forecast-diagnostics"
+        aria-label="Combined regional forecast methodology and limitations"
+      >
+        <div className="forecast-diagnostics-lead">
+          <span>Combined regional forecast</span>
+          <strong>Bottom-up component projection</strong>
+          <small>
+            Forecast origin period {formatPeriod(forecast.origin.period)} · source data through period {formatPeriod(forecast.origin.information_cutoff ?? forecast.origin.period)} · generated {formatDateTime(forecast.generated_at)}
+          </small>
+        </div>
+        <dl>
+          {forecast.horizon ? (
+            <div><dt>Horizon</dt><dd>{forecast.horizon.periods} {forecast.horizon.unit} periods</dd></div>
+          ) : null}
+          <div><dt>Point forecast</dt><dd>Sum of component forecasts</dd></div>
+          <div><dt>Interval method</dt><dd>Aligned residual recalibration</dd></div>
+          <div>
+            <dt>Calibration errors</dt>
+            <dd>{intervalCalibration?.calibration_errors ?? "Not available"}</dd>
+          </div>
+          <div><dt>Independent holdout</dt><dd>{hasIndependentHoldout ? "Available" : "Not available"}</dd></div>
+        </dl>
+        <p>
+          Point forecasts are built bottom-up by summing the selected regions&apos; compatible
+          component point forecasts.
+        </p>
+        <p>
+          The selected {intervalLevel}% prediction interval is recalibrated from exact cross-region
+          residual sums aligned by forecast horizon and target period. Component interval bounds
+          are never summed.
+        </p>
+        <p>
+          {hasIndependentHoldout
+            ? "An independent latest-revised pseudo-out-of-sample aggregate holdout is available; this is not a first-release vintage backtest."
+            : "No independent aggregate holdout/backtest is available for this custom combination; component backtests do not become an aggregate backtest."}
+        </p>
+        {forecast.limitations.length ? (
+          <div className="forecast-combination-limitations">
+            <strong>Forecast limitations</strong>
+            <ul aria-label="Combined forecast limitations">
+              {forecast.limitations.map((limitation, index) => (
+                <li key={`${index}-${limitation}`}>{limitation}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {sourceDomainNotice ? <p>{sourceDomainNotice}</p> : null}
+      </aside>
+    );
+  }
   if (!forecast.model || !forecast.horizon || !backtest) return null;
   return (
     <aside className="forecast-diagnostics" aria-label="Forecast model and backtest diagnostics">
@@ -811,15 +871,16 @@ export function SeasonalChart({
     ? resolveDisplayUnit(forecast.unit, displayUnit)
     : null;
   const forecastSourceDomainNotice = forecast && forecast.unit !== asset.unit
-    ? `Model selection, directional accuracy, and backtest error metrics remain in the source monthly ${getSourceUnitLabel(forecast.unit)} domain; the public forecast asset does not contain the dated evaluation errors needed to recompute them as kb/d.`
+    ? `Model selection, directional accuracy, and backtest error metrics remain in the source monthly ${getSourceUnitLabel(forecast.unit)} domain; the public forecast asset does not contain the dated evaluation errors needed to recompute them in a daily-rate scale.`
     : undefined;
   const monthlyAverageRateView = asset.methodology_version.includes("monthly-average-rate-");
+  const inventoryLevel = isInventoryLevelSeries(series);
   const model = useMemo(() => buildSeasonalChartModel(asset, chartForecast), [asset, chartForecast]);
   const changeModel = useMemo(() => buildPeriodChangeModel(asset), [asset]);
-  const changeLabels = useMemo(() => changeChartLabels(asset), [asset]);
+  const changeLabels = useMemo(() => changeChartLabels(asset, series), [asset, series]);
   const option = useMemo(
     () => (viewMode === "changes"
-      ? buildChangeEChartsOption(asset, series.title, changeModel, resolvedDisplayUnit ?? undefined)
+      ? buildChangeEChartsOption(asset, series, changeModel, resolvedDisplayUnit ?? undefined)
       : buildSeasonalEChartsOption(
           asset,
           series.title,
@@ -827,7 +888,7 @@ export function SeasonalChart({
           intervalLevel,
           resolvedDisplayUnit ?? undefined,
         )),
-    [asset, changeModel, chartForecast, intervalLevel, resolvedDisplayUnit, series.title, viewMode],
+    [asset, changeModel, chartForecast, intervalLevel, resolvedDisplayUnit, series, viewMode],
   );
 
   useEffect(() => {
@@ -842,7 +903,7 @@ export function SeasonalChart({
     },
     {
       id: "changes",
-      label: asset.unit === "thousand_barrels" ? "Builds & draws" : "Period changes",
+      label: inventoryLevel ? "Builds & draws" : "Period changes",
       description: changeLabels.title,
     },
   ];
@@ -943,7 +1004,7 @@ export function SeasonalChart({
               ariaLabel={`${series.title}. ${changeLabels.title}. Bars show period changes and the line shows the observed level on a second axis. Interactive hover and horizontal zoom are available.`}
             />
             <p className="chart-footnote">
-              {asset.unit === "thousand_barrels"
+              {inventoryLevel
                 ? "Bars above zero are stock builds; bars below zero are draws."
                 : "Bars show the change from the directly preceding source period."}
               {" "}Changes are strictly period over period — distinct from year-over-year, seasonal,
@@ -1001,7 +1062,7 @@ export function SeasonalChart({
             Solid lines are observed values; dashed lines are forecasts. The forecast shading is an empirical prediction interval,
             not certainty or a guarantee. Hover for exact values. Missing observations are not zero-filled.
             {monthlyAverageRateView
-              ? " Monthly-average kb/d divides each source monthly flow by that month's exact calendar-day count."
+              ? " Monthly-average daily rates divide each source monthly flow by that month's exact calendar-day count."
               : ""}
           </p>
           <details className="accessible-chart-summary">

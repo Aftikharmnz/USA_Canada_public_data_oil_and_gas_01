@@ -122,7 +122,67 @@ jobs:
               output.write(f"changed={'true' if result.get('changed') is True else 'false'}\n")
           PY
 
-      - name: Verify promoted Canada generation
+      - name: Scan generated Canada changes before commit
+        if: steps.refresh.outputs.changed == 'true'
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          forbidden = (
+              b"api_key=",
+              b'"api_key"',
+              b'"eia_api_key"',
+              b"authorization: bearer",
+          )
+          for root in (Path("data/cache/canada"), Path("public/data/canada")):
+              for path in root.rglob("*"):
+                  if not path.is_file():
+                      continue
+                  payload = path.read_bytes().lower()
+                  if any(marker in payload for marker in forbidden):
+                      raise SystemExit(
+                          f"Credential-like material found before commit: {path}"
+                      )
+
+          print("Pre-commit Canada credential scan passed")
+          PY
+
+      - uses: pnpm/action-setup@v4
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v6
+        if: steps.refresh.outputs.changed == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Commit refreshed Canada cache and public assets, then rebase
+        if: steps.refresh.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -- data/cache/canada public/data/canada
+          if git diff --cached --quiet; then
+            echo "The Canada refresh reported changes but produced no tracked data diff." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: refresh Canada assets"
+          # Replay the data commit on the latest branch head before validation
+          # and build. Pages must never receive an artifact built before this
+          # rebase.
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+
+      - name: Validate rebased pipeline contracts
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          PYTHONPATH: pipeline
+        run: python -m unittest discover -s tests/pipeline -p "test_*.py" -v
+
+      - name: Verify rebased Canada generation
         if: steps.refresh.outputs.changed == 'true'
         env:
           PYTHONPATH: pipeline
@@ -166,48 +226,31 @@ jobs:
           )
           PY
 
-      - uses: pnpm/action-setup@v4
-        if: steps.refresh.outputs.changed == 'true'
-        with:
-          version: 11.9.0
-
-      - uses: actions/setup-node@v6
-        if: steps.refresh.outputs.changed == 'true'
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies from rebased lockfile
         if: steps.refresh.outputs.changed == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Validate frontend
+      - name: Validate rebased frontend
         if: steps.refresh.outputs.changed == 'true'
         run: pnpm run check
 
-      - name: Build repository-scoped Pages artifact
+      - name: Build repository-scoped Pages artifact from rebased revision
         if: steps.refresh.outputs.changed == 'true'
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: pnpm run build
 
-      - name: Commit refreshed Canada cache and public assets
+      - name: Push the exact tested revision
         if: steps.refresh.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          git add -A -- data/cache/canada public/data/canada
-          if git diff --cached --quiet; then
-            echo "The Canada refresh reported changes but produced no tracked data diff." >&2
-            exit 1
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "data: refresh Canada assets"
-          # A human push while this run was working must not fail the refresh:
-          # replay the data commit on the updated branch head before pushing.
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push
+          # A concurrent branch update now rejects this ordinary push. That
+          # fails closed before artifact upload instead of deploying a build
+          # that does not match the pushed revision.
+          git diff --quiet
+          git diff --cached --quiet
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - uses: actions/configure-pages@v5
         if: steps.refresh.outputs.changed == 'true'

@@ -4,6 +4,7 @@ import type { ForecastAsset, UsaChartAsset, UsaManifestSeries } from "../../type
 import {
   buildChangeEChartsOption,
   buildSeasonalEChartsOption,
+  changeChartLabels,
   SeasonalChart,
 } from "./SeasonalChart";
 
@@ -155,6 +156,19 @@ const series = {
   frequency: "monthly",
   source: { name: "Official test source" },
   freshness: { status: "unknown" },
+  classification: {
+    dashboard_group: "test",
+    product_family_id: "crude-oil",
+    product_family_label: "Crude oil",
+    product_id: "crude-oil",
+    product_label: "Crude oil",
+    measure_id: "stocks",
+    measure_label: "Stocks",
+    component_role: "headline",
+    parent_product_id: null,
+    reference_term_ids: [],
+    display_order: 1,
+  },
   geographies: [{
     geography_id: "us",
     label: "United States",
@@ -210,6 +224,69 @@ describe("seasonal forecast chart", () => {
     expect(html).toContain("<table>");
     expect(html).toContain("Lower 90%");
     expect(html).toContain("Jan 2026");
+  });
+
+  it("discloses bottom-up methodology, residual recalibration, holdout status, and limitations for combined forecasts", () => {
+    const combinedForecast = {
+      ...forecast,
+      geography_id: "computed:test-policy:ca-ab+ca-sk",
+      status: "limited_history",
+      forecast_kind: "bottom_up_custom_geography_projection",
+      model: undefined,
+      origin: {
+        ...forecast.origin,
+        period: "2026-04",
+        information_cutoff: "2026-04",
+      },
+      prediction_intervals: {
+        ...forecast.prediction_intervals!,
+        method: "aligned_component_residual_sum_empirical_quantiles",
+        calibration_errors: 40,
+        minimum_errors_per_horizon: 40,
+      },
+      backtest: {
+        ...forecast.backtest!,
+        status: "not_available",
+        evaluation_window: null,
+        forecast_errors: 0,
+        mae: null,
+        rmse: null,
+        bias: null,
+        directional_accuracy: null,
+        interval_coverage: { "80": null, "90": null, "95": null },
+        seasonal_naive_mae: null,
+        skill_vs_seasonal_naive: null,
+      },
+      limitations: [
+        "Bottom-up point forecasts add the selected regional projections.",
+        "This custom combination has no independent aggregate holdout evaluation.",
+      ],
+    } as ForecastAsset;
+
+    const html = renderToStaticMarkup(
+      <SeasonalChart
+        asset={asset}
+        series={series}
+        geographyId={combinedForecast.geography_id}
+        onGeographyChange={() => undefined}
+        forecast={combinedForecast}
+      />,
+    );
+
+    expect(html).toContain("Combined regional forecast methodology and limitations");
+    expect(html).toContain("Bottom-up component projection");
+    expect(html).toContain("Forecast origin period Apr 2026");
+    expect(html).toContain("source data through period Apr 2026");
+    expect(html).not.toContain("Mar 31, 2026");
+    expect(html).toContain("Sum of component forecasts");
+    expect(html).toContain("Aligned residual recalibration");
+    expect(html).toContain("recalibrated from exact cross-region residual sums aligned by forecast horizon and target period");
+    expect(html).toContain("Component interval bounds are never summed");
+    expect(html).toContain("No independent aggregate holdout/backtest is available");
+    expect(html).toContain("Bottom-up point forecasts add the selected regional projections.");
+    expect(html).toContain("This custom combination has no independent aggregate holdout evaluation.");
+    expect(html).not.toContain("Directional accuracy");
+    expect(html).not.toContain("Vs. seasonal naive");
   });
 
   it("keeps the observed chart visible when no forecast is available", () => {
@@ -306,12 +383,22 @@ describe("seasonal forecast chart", () => {
     expect(html).toContain("0.7 kb/d");
     expect(html).toContain("2 m³");
     expect(html).toContain("backtest error metrics remain in the source monthly Cubic metres domain");
-    expect(html).toContain("Monthly-average kb/d divides each source monthly flow");
+    expect(html).toContain("Monthly-average daily rates divide each source monthly flow");
   });
 
   it("labels percent changes as percentage points while keeping levels as percent", () => {
     const percentAsset = { ...asset, unit: "percent" } as UsaChartAsset;
-    const option = buildChangeEChartsOption(percentAsset, "Utilization", {
+    const percentSeries = {
+      ...series,
+      title: "Utilization",
+      unit: "percent",
+      classification: {
+        ...series.classification!,
+        measure_id: "percent-of-capacity",
+        measure_label: "Percent of capacity",
+      },
+    } as UsaManifestSeries;
+    const option = buildChangeEChartsOption(percentAsset, percentSeries, {
       frequency: "monthly",
       points: [{
         period: "2026-02",
@@ -344,5 +431,106 @@ describe("seasonal forecast chart", () => {
     expect(rendered).toContain("91.3 %");
     expect(rendered).toContain("92.5 %");
     expect(rendered).toContain("Previous level");
+  });
+
+  it("keeps USA monthly PADD movements as generic flows despite their thousand-barrel unit", () => {
+    const movementAsset = {
+      ...asset,
+      series_id: "usa.eia.crude.padd_movements.monthly",
+      geography_id: "padd-1-to-padd-2",
+      unit: "thousand_barrels",
+    } as UsaChartAsset;
+    const movementSeries = {
+      ...series,
+      view_id: "usa.eia.crude.padd_movements.monthly",
+      series_id: movementAsset.series_id,
+      title: "Crude oil movement from PADD 1 to PADD 2",
+      classification: {
+        ...series.classification!,
+        measure_id: "inter-padd-movement",
+        measure_label: "Inter-PADD movement",
+      },
+    } as UsaManifestSeries;
+    const labels = changeChartLabels(movementAsset, movementSeries);
+    const option = buildChangeEChartsOption(movementAsset, movementSeries, {
+      frequency: "monthly",
+      points: [{
+        period: "2026-02",
+        previousPeriod: "2026-01",
+        value: 120,
+        previousValue: 100,
+        change: 20,
+        percentChange: 20,
+      }],
+      latest: null,
+      skippedGaps: 0,
+    });
+    const renderedSeries = option.series as Array<Record<string, unknown>>;
+    const html = renderToStaticMarkup(
+      <SeasonalChart
+        asset={movementAsset}
+        series={movementSeries}
+        geographyId={movementAsset.geography_id}
+        onGeographyChange={() => undefined}
+      />,
+    );
+
+    expect(labels.positive).toBe("Increase");
+    expect(labels.negative).toBe("Decrease");
+    expect(labels.title).toBe("Month-over-month change");
+    expect(renderedSeries[0]?.name).toBe("Period change");
+    expect(html).toContain("Period changes");
+    expect(html).not.toContain("Builds &amp; draws");
+  });
+
+  it("labels Canadian cubic-metre ending stocks as inventory builds and draws", () => {
+    const endingStockAsset = {
+      ...asset,
+      series_id: "can.statcan.crude.closing_inventory.monthly",
+      geography_id: "ca-ab",
+      unit: "cubic_metres",
+    } as UsaChartAsset;
+    const endingStockSeries = {
+      ...series,
+      view_id: "can.statcan.crude.closing_inventory.monthly",
+      series_id: endingStockAsset.series_id,
+      title: "Crude oil closing inventory",
+      unit: "cubic_metres",
+      classification: {
+        ...series.classification!,
+        measure_id: "ending-stocks",
+        measure_label: "Closing inventory",
+      },
+    } as UsaManifestSeries;
+    const labels = changeChartLabels(endingStockAsset, endingStockSeries);
+    const option = buildChangeEChartsOption(endingStockAsset, endingStockSeries, {
+      frequency: "monthly",
+      points: [{
+        period: "2026-02",
+        previousPeriod: "2026-01",
+        value: 120,
+        previousValue: 100,
+        change: 20,
+        percentChange: 20,
+      }],
+      latest: null,
+      skippedGaps: 0,
+    });
+    const renderedSeries = option.series as Array<Record<string, unknown>>;
+    const html = renderToStaticMarkup(
+      <SeasonalChart
+        asset={endingStockAsset}
+        series={endingStockSeries}
+        geographyId={endingStockAsset.geography_id}
+        onGeographyChange={() => undefined}
+      />,
+    );
+
+    expect(labels.positive).toBe("Build");
+    expect(labels.negative).toBe("Draw");
+    expect(labels.title).toContain("stock change");
+    expect(renderedSeries[0]?.name).toBe("Build / draw");
+    expect(html).toContain("Builds &amp; draws");
+    expect(html).not.toContain("Period changes");
   });
 });

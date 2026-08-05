@@ -1,9 +1,10 @@
 import type {
+  DisplayUnitId,
   DisplayUnitOption,
 } from "./units";
 import {
   convertUnitValue,
-  getUnitFormattingMetadata,
+  getDisplayUnitOptions,
 } from "./units";
 import { buildChartAssetFromHistory } from "./customChartAnalytics";
 import {
@@ -38,17 +39,32 @@ export function supportsMonthlyAverageRate(series: UsaManifestSeries): boolean {
 export function monthlyAverageRateOption(
   series: UsaManifestSeries,
 ): DisplayUnitOption | null {
-  if (!supportsMonthlyAverageRate(series)) return null;
-  const metadata = getUnitFormattingMetadata(MONTHLY_AVERAGE_RATE_UNIT);
-  if (!metadata) return null;
-  return {
-    id: MONTHLY_AVERAGE_RATE_UNIT,
-    dimension: "flow_rate",
-    compactLabel: metadata.compactLabel,
-    longLabel: "Thousand barrels per day (monthly average)",
-    numberFormat: metadata.numberFormat,
+  return monthlyAverageRateOptions(series).find(
+    (option) => option.id === MONTHLY_AVERAGE_RATE_UNIT,
+  ) ?? null;
+}
+
+/**
+ * Every fixed-factor daily-rate scale is valid after the registered monthly
+ * volume has been normalized by its own calendar-day count. The canonical
+ * in-memory rate remains kb/d; the other choices are display-only scales.
+ */
+export function monthlyAverageRateOptions(
+  series: UsaManifestSeries,
+): readonly DisplayUnitOption[] {
+  if (!supportsMonthlyAverageRate(series)) return [];
+  return getDisplayUnitOptions(MONTHLY_AVERAGE_RATE_UNIT).map((option) => ({
+    ...option,
+    longLabel: `${option.longLabel} — monthly average`,
     isSourceUnit: false,
-  };
+  }));
+}
+
+export function isMonthlyAverageRateDisplayUnit(
+  series: UsaManifestSeries,
+  requested: string | undefined,
+): requested is DisplayUnitId {
+  return monthlyAverageRateOptions(series).some((option) => option.id === requested);
 }
 
 /** Exact UTC/Gregorian day count for a strict YYYY-MM source period. */
@@ -79,12 +95,26 @@ export function monthlyVolumeToKbPerDay(
   return thousandBarrels === null ? null : thousandBarrels / days;
 }
 
+/** Convert a registered monthly volume to any ordinary daily-rate display scale. */
+export function monthlyVolumeToAverageRate(
+  value: number | null,
+  period: string,
+  sourceUnit: string,
+  displayUnit: DisplayUnitId,
+): number | null {
+  const kbPerDay = monthlyVolumeToKbPerDay(value, period, sourceUnit);
+  return convertUnitValue(kbPerDay, MONTHLY_AVERAGE_RATE_UNIT, displayUnit);
+}
+
 /**
  * Build an in-memory rate view from canonical monthly history. Statistics are
  * recomputed after period-specific normalization; precomputed volume bands,
  * deltas, and histogram endpoints are never reused as rate statistics.
  */
 export function buildMonthlyAverageRateAsset(asset: UsaChartAsset): UsaChartAsset {
+  if (!isRegisteredMonthlyAverageRateSeries(asset.series_id)) {
+    throw new Error(`Monthly-average rate is not registered for ${asset.series_id}.`);
+  }
   if (!asset.frequency.toLowerCase().startsWith("month")) {
     throw new Error("Monthly-average rate requires a monthly chart asset.");
   }
@@ -121,6 +151,9 @@ export function buildMonthlyAverageRateAsset(asset: UsaChartAsset): UsaChartAsse
 export function monthlyAverageRateForecastPoints(
   forecast: ForecastAsset,
 ): ForecastPoint[] {
+  if (!isRegisteredMonthlyAverageRateSeries(forecast.target_series_id)) {
+    throw new Error(`Monthly-average rate is not registered for ${forecast.target_series_id}.`);
+  }
   if (!forecast.frequency.toLowerCase().startsWith("month")) {
     throw new Error("Monthly-average forecast display requires a monthly forecast.");
   }

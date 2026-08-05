@@ -11,6 +11,7 @@ const unitSuffixes: Record<string, string> = {
   million_barrels: "MMbbl",
   thousand_barrels_per_day: "kb/d",
   million_barrels_per_day: "MMbbl/d",
+  barrels_per_calendar_day: "bbl/cd",
   thousand_barrels_per_calendar_day: "kbbl/cd",
   million_barrels_per_calendar_day: "MMbbl/cd",
   barrels_per_day: "bbl/d",
@@ -28,19 +29,53 @@ export function compactUnit(unit: string): string {
   return unitSuffixes[unit.toLowerCase()] ?? unit.replaceAll("_", " ");
 }
 
+function magnitudeAwareNumber(
+  value: number,
+  options: Intl.NumberFormatOptions,
+  compact: boolean,
+): string {
+  // Intl preserves the sign bit on negative zero, even though it represents no
+  // direction or quantity. Normalize it before any formatting decision.
+  const normalized = Object.is(value, -0) ? 0 : value;
+  const notation = compact && Math.abs(normalized) >= 10_000 ? "compact" : "standard";
+  const formatter = new Intl.NumberFormat("en-US", { ...options, notation });
+  const rendered = formatter.format(normalized);
+  if (normalized === 0) return rendered;
+
+  const hasVisibleNonzeroDigit = formatter.formatToParts(normalized).some((part) => (
+    (part.type === "integer" || part.type === "fraction") && /[1-9]/.test(part.value)
+  ));
+  if (hasVisibleNonzeroDigit) return rendered;
+
+  // Fixed unit precision can otherwise turn a real small flow into 0 or -0.
+  // Fall back to three significant digits; scientific notation keeps extreme
+  // magnitudes readable without ever misrepresenting a nonzero value as zero.
+  const {
+    minimumFractionDigits: _minimumFractionDigits,
+    maximumFractionDigits: _maximumFractionDigits,
+    minimumSignificantDigits: _minimumSignificantDigits,
+    maximumSignificantDigits: _maximumSignificantDigits,
+    ...significantOptions
+  } = options;
+  return new Intl.NumberFormat("en-US", {
+    ...significantOptions,
+    notation: Math.abs(normalized) < 0.000001 ? "scientific" : "standard",
+    maximumSignificantDigits: 3,
+  }).format(normalized);
+}
+
 export function formatValue(value: number | null, unit: string, compact = false): string {
   if (value === null || !Number.isFinite(value)) return "Not available";
   const maximumFractionDigits = Math.abs(value) < 10 ? 2 : Math.abs(value) < 1000 ? 1 : 0;
-  const rendered = new Intl.NumberFormat("en-US", {
-    notation: compact && Math.abs(value) >= 10_000 ? "compact" : "standard",
+  const rendered = magnitudeAwareNumber(value, {
     maximumFractionDigits,
-  }).format(value);
+  }, compact);
   return `${rendered} ${compactUnit(unit)}`.trim();
 }
 
 export function formatPlainNumber(value: number | null, digits = 1): string {
   if (value === null || !Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits }).format(value);
+  return magnitudeAwareNumber(value, { maximumFractionDigits: digits }, false);
 }
 
 export function formatPercent(value: number | null): string {
@@ -64,11 +99,27 @@ export function formatDisplayValue(
   const converted = convertUnitValue(value, sourceUnit, displayUnit);
   if (converted === null || !Number.isFinite(converted)) return "Not available";
   const metadata = getUnitFormattingMetadata(displayUnit);
-  const rendered = new Intl.NumberFormat("en-US", {
-    ...(metadata?.numberFormat ?? { maximumFractionDigits: 2 }),
-    notation: compact && Math.abs(converted) >= 10_000 ? "compact" : "standard",
-  }).format(converted);
+  const rendered = magnitudeAwareNumber(
+    converted,
+    metadata?.numberFormat ?? { maximumFractionDigits: 2 },
+    compact,
+  );
   return `${rendered} ${metadata?.compactLabel ?? compactUnit(displayUnit)}`.trim();
+}
+
+/** Format an already-converted display number without appending its unit label. */
+export function formatDisplayNumber(
+  value: number | null,
+  displayUnit: DisplayUnitId,
+  compact = false,
+): string {
+  if (value === null || !Number.isFinite(value)) return "Not available";
+  const metadata = getUnitFormattingMetadata(displayUnit);
+  return magnitudeAwareNumber(
+    value,
+    metadata?.numberFormat ?? { maximumFractionDigits: 2 },
+    compact,
+  );
 }
 
 export function formatSignedDisplayValue(

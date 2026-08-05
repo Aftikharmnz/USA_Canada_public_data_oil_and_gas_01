@@ -1,4 +1,5 @@
 import type { CustomAggregationPolicy } from "../data/customAggregation";
+import { forecastMismatchReason } from "../data/forecastAssets";
 import { atomicMembershipIds } from "../data/geographyContainment";
 import type {
   ForecastAsset,
@@ -239,10 +240,31 @@ function residualMember(
 function combineForecast(
   policy: AdditiveRegionAggregationPolicy,
   series: UsaManifestSeries,
+  assets: UsaChartAsset[],
   forecasts: ForecastAsset[],
   asset: UsaChartAsset,
 ): ForecastAsset {
+  const forecastsByGeography = new Map<string, ForecastAsset>();
   for (const forecast of forecasts) {
+    if (forecastsByGeography.has(forecast.geography_id)) {
+      throw new Error(`More than one forecast was supplied for ${forecast.geography_id}.`);
+    }
+    forecastsByGeography.set(forecast.geography_id, forecast);
+  }
+  const assetsByGeography = new Map(assets.map((component) => [component.geography_id, component]));
+  const verifiedForecasts = policy.allowed_members.map((member) => {
+    const observed = assetsByGeography.get(member.geography_id);
+    const forecast = forecastsByGeography.get(member.geography_id);
+    if (!observed || !forecast) {
+      throw new Error(`A matching observed asset and forecast are required for ${member.label}.`);
+    }
+    const mismatch = forecastMismatchReason(forecast, observed, series, member.geography_id);
+    if (mismatch) {
+      throw new Error(`Forecast for ${member.label} cannot be combined: ${mismatch}`);
+    }
+    return forecast;
+  });
+  for (const forecast of verifiedForecasts) {
     if (canonicalJson(normalizedProviderDimensions({ country: policy.country_code as "usa" | "canada", series }, forecast.dimensions))
         !== policy.dimensions_hash) {
       throw new Error(`Forecast for ${forecast.geography_id} has incompatible source dimensions.`);
@@ -251,12 +273,12 @@ function combineForecast(
   const pointForecast = aggregateBottomUpPointForecasts(
     policy,
     policy.allowed_members.map((member) => member.geography_id),
-    forecasts.map((forecast) => forecastMember(policy, forecast)),
+    verifiedForecasts.map((forecast) => forecastMember(policy, forecast)),
   );
   const calibrated = calibrateCombinedPredictionIntervals(
     policy,
     pointForecast,
-    forecasts.map((forecast) => residualMember(policy, forecast)),
+    verifiedForecasts.map((forecast) => residualMember(policy, forecast)),
   );
   const alignedCounts = Object.values(calibrated.prediction_intervals.aligned_errors_by_horizon);
   return {
@@ -407,7 +429,11 @@ export async function buildCustomRegionView(
     };
   }
   try {
-    return { asset, geography, forecast: combineForecast(policy, input.series, input.forecasts, asset) };
+    return {
+      asset,
+      geography,
+      forecast: combineForecast(policy, input.series, input.assets, input.forecasts, asset),
+    };
   } catch (error) {
     return {
       asset,
