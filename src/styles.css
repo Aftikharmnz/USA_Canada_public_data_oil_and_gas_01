@@ -3923,6 +3923,10 @@ h3 {
   background: #f7faf9;
 }
 
+.od-controls-endpoints {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .od-controls label,
 .od-controls label > span {
   display: block;
@@ -4531,6 +4535,49 @@ h3 {
 
 .display-unit-control-micro .display-unit-fixed {
   padding-right: 0.38rem;
+}
+
+.movement-period-control {
+  display: grid;
+  width: auto;
+  max-width: 8.75rem;
+  min-width: 0;
+  gap: 0.08rem;
+  margin: 0;
+}
+
+.movement-period-control > span {
+  color: #64797e;
+  font-size: 0.46rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.movement-period-control select {
+  width: auto;
+  min-width: 5.7rem;
+  max-width: 8.75rem;
+  min-height: 1.62rem;
+  padding: 0.12rem 1.35rem 0.12rem 0.38rem;
+  color: #294a4f;
+  border: 1px solid #c8d7d3;
+  border-radius: 0.38rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.57rem;
+  font-weight: 750;
+}
+
+.movement-period-control select:focus-visible {
+  outline: 3px solid rgba(11, 124, 104, 0.22);
+  outline-offset: 2px;
+}
+
+.od-panel .graph-first-actions,
+.profile-movement-card .graph-first-actions {
+  flex-wrap: wrap;
 }
 
 .analysis-panel.graph-first-panel,

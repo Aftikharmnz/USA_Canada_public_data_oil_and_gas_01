@@ -80,6 +80,9 @@ describe("seasonal chart model", () => {
     expect(slotLabel(1, "monthly")).toBe("Jan");
     expect(slotLabel(12, "monthly")).toBe("Dec");
     expect(slotLabel(53, "weekly")).toBe("W53");
+    expect(slotLabel(30, "weekly", "2026-07-24")).toBe("W30\nJul 24");
+    expect(slotLabel(1, "weekly", "2024-12-30")).toBe("W1\nDec 30");
+    expect(slotLabel(30, "weekly", "not-a-date")).toBe("W30");
   });
 
   it("includes every forecast interval extreme in the scale and future slots on the axis", () => {

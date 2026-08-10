@@ -116,10 +116,23 @@ export function buildSeasonalChartModel(
   };
 }
 
-export function slotLabel(slot: number, frequency: string): string {
+export function slotLabel(
+  slot: number,
+  frequency: string,
+  exactPeriod?: string,
+): string {
   if (frequency.toLowerCase().startsWith("month")) {
     return new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" })
       .format(new Date(Date.UTC(2024, Math.max(0, slot - 1), 1)));
   }
-  return `W${slot}`;
+  const week = `W${slot}`;
+  if (!exactPeriod || !/^\d{4}-\d{2}-\d{2}$/.test(exactPeriod)) return week;
+  const date = new Date(`${exactPeriod}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return week;
+  const compactDate = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+  return `${week}\n${compactDate}`;
 }

@@ -46,6 +46,7 @@ import { ChartDetailsToggle } from "./ChartDetailsToggle";
 import { DashboardError, DashboardLoading, LastKnownGoodNotice } from "./DashboardStates";
 import { DisplayUnitControl } from "./DisplayUnitControl";
 import { ExpandablePanel } from "./ExpandablePanel";
+import { MovementPeriodControl } from "./MovementPeriodControl";
 import type { ProfileFrequencyMode } from "./ProfileMetricCard";
 
 echarts.use([BarChart, AriaComponent, GridComponent, TooltipComponent, CanvasRenderer]);
@@ -145,6 +146,12 @@ function buildModel(
 }
 
 function routeLabel(cell: OriginDestinationCell, selectedRegionId: string): string {
+  if (
+    cell.origin.id === selectedRegionId
+    && cell.destination.id === selectedRegionId
+  ) {
+    return `Within ${cell.origin.shortLabel ?? cell.origin.label}`;
+  }
   return cell.origin.id === selectedRegionId
     ? `To ${cell.destination.shortLabel ?? cell.destination.label}`
     : `From ${cell.origin.shortLabel ?? cell.origin.label}`;
@@ -164,8 +171,10 @@ export function profileMovementValueForDisplay(
 export interface ProfileMovementRouteCoverage {
   declaredInbound: number;
   declaredOutbound: number;
+  declaredWithin: number;
   numericInbound: number;
   numericOutbound: number;
+  numericWithin: number;
 }
 
 export function profileMovementRouteCoverage(
@@ -173,17 +182,37 @@ export function profileMovementRouteCoverage(
   selectedRegionId: string,
 ): ProfileMovementRouteCoverage {
   const declaredInbound = cells.filter((cell) => (
-    cell.declared && cell.destination.id === selectedRegionId
+    cell.declared
+    && cell.destination.id === selectedRegionId
+    && cell.origin.id !== selectedRegionId
   ));
   const declaredOutbound = cells.filter((cell) => (
-    cell.declared && cell.origin.id === selectedRegionId
+    cell.declared
+    && cell.origin.id === selectedRegionId
+    && cell.destination.id !== selectedRegionId
+  ));
+  const declaredWithin = cells.filter((cell) => (
+    cell.declared
+    && cell.origin.id === selectedRegionId
+    && cell.destination.id === selectedRegionId
   ));
   return {
     declaredInbound: declaredInbound.length,
     declaredOutbound: declaredOutbound.length,
+    declaredWithin: declaredWithin.length,
     numericInbound: declaredInbound.filter((cell) => cell.value !== null).length,
     numericOutbound: declaredOutbound.filter((cell) => cell.value !== null).length,
+    numericWithin: declaredWithin.filter((cell) => cell.value !== null).length,
   };
+}
+
+export function resolveProfileMovementPeriod(
+  model: Pick<OriginDestinationModel, "periods" | "latestPeriod">,
+  requestedPeriod?: string,
+): string {
+  return requestedPeriod && model.periods.includes(requestedPeriod)
+    ? requestedPeriod
+    : model.latestPeriod;
 }
 
 function routeOption(
@@ -200,7 +229,7 @@ function routeOption(
     animationDuration: 250,
     aria: {
       enabled: true,
-      description: "Largest exact source-published inbound and outbound movement routes for the selected region.",
+      description: "Largest exact source-published movement routes touching the selected region.",
     },
     grid: { left: 86, right: 18, top: 12, bottom: 36 },
     tooltip: {
@@ -237,7 +266,9 @@ function routeOption(
       data: rows.map((row) => ({
         value: convertUnitValue(row.value, sourceUnit, displayUnit),
         itemStyle: {
-          color: row.origin.id === selectedRegionId ? "#d78a25" : "#007f6d",
+          color: row.origin.id === selectedRegionId && row.destination.id === selectedRegionId
+            ? "#7a5195"
+            : row.origin.id === selectedRegionId ? "#d78a25" : "#007f6d",
         },
       })),
       barMaxWidth: 22,
@@ -289,6 +320,10 @@ export function ProfileMovementCard({
   );
   const { state, retry } = useCountryChartAssets(country, plan.paths);
   const [requestedUnit, setRequestedUnit] = useState<DisplayUnitId>();
+  const [periodSelection, setPeriodSelection] = useState<{
+    modelId: string;
+    period: string;
+  }>();
   const built = useMemo(() => {
     if (!("data" in state) || !state.data || state.data.length !== plan.paths.length) return {};
     try {
@@ -328,7 +363,11 @@ export function ProfileMovementCard({
   }
 
   const model = built.model;
-  const snapshot = originDestinationSnapshot(model);
+  const requestedPeriod = periodSelection?.modelId === model.id
+    ? periodSelection.period
+    : undefined;
+  const selectedPeriod = resolveProfileMovementPeriod(model, requestedPeriod);
+  const snapshot = originDestinationSnapshot(model, selectedPeriod);
   const regionCells = snapshot.cells.filter(
     (cell) => cell.declared && (cell.origin.id === region.geography_id || cell.destination.id === region.geography_id),
   );
@@ -363,32 +402,53 @@ export function ProfileMovementCard({
   const incompleteRouteCoverage = (
     routeCoverage.numericInbound < routeCoverage.declaredInbound
     || routeCoverage.numericOutbound < routeCoverage.declaredOutbound
+    || routeCoverage.numericWithin < routeCoverage.declaredWithin
   );
   const numericInbound = displayCells.filter(
     (cell): cell is OriginDestinationCell & { value: number } => (
-      cell.destination.id === region.geography_id && cell.value !== null
+      cell.destination.id === region.geography_id
+      && cell.origin.id !== region.geography_id
+      && cell.value !== null
     ),
   );
   const numericOutbound = displayCells.filter(
     (cell): cell is OriginDestinationCell & { value: number } => (
-      cell.origin.id === region.geography_id && cell.value !== null
+      cell.origin.id === region.geography_id
+      && cell.destination.id !== region.geography_id
+      && cell.value !== null
+    ),
+  );
+  const numericWithin = displayCells.filter(
+    (cell): cell is OriginDestinationCell & { value: number } => (
+      cell.origin.id === region.geography_id
+      && cell.destination.id === region.geography_id
+      && cell.value !== null
     ),
   );
   const displayUnit = resolveDisplayUnit(displaySourceUnit, requestedUnit)
     ?? resolveDisplayUnit(displaySourceUnit)!;
   const inbound = numericInbound.reduce((sum, cell) => sum + cell.value, 0);
   const outbound = numericOutbound.reduce((sum, cell) => sum + cell.value, 0);
+  const within = numericWithin.reduce((sum, cell) => sum + cell.value, 0);
+  const hasNumericRoutes = Boolean(
+    numericInbound.length || numericOutbound.length || numericWithin.length,
+  );
   const option = routeOption(displayCells, region.geography_id, displaySourceUnit, displayUnit);
 
   return (
     <ExpandablePanel className="profile-movement-card" title={`${region.label} logistics context`}>
       <header className="profile-card-heading graph-first-heading">
         <div className="graph-first-title">
-          <h3>Inbound and outbound published routes</h3>
+          <h3>Published routes touching this region</h3>
           <p className="graph-first-location">Geography: {region.label}</p>
         </div>
         <div className="graph-first-actions">
-        <span className="profile-frequency-badge">Monthly · source</span>
+          <MovementPeriodControl
+            periods={model.periods}
+            value={snapshot.period}
+            onChange={(period) => setPeriodSelection({ modelId: model.id, period })}
+          />
+          <span className="profile-frequency-badge">Monthly · source</span>
           <DisplayUnitControl
             compact
             micro
@@ -404,7 +464,10 @@ export function ProfileMovementCard({
         <div className="profile-source-notice" role="status">
           <strong>
             Route coverage: {routeCoverage.numericInbound}/{routeCoverage.declaredInbound} inbound{" "}
-            and {routeCoverage.numericOutbound}/{routeCoverage.declaredOutbound} outbound rows are numeric.
+            and {routeCoverage.numericOutbound}/{routeCoverage.declaredOutbound} outbound rows are numeric
+            {routeCoverage.declaredWithin
+              ? `; ${routeCoverage.numericWithin}/${routeCoverage.declaredWithin} within-region rows are numeric`
+              : ""}.
           </strong>
           <span>Declared nonnumeric or missing routes remain unavailable and are not treated as zero.</span>
         </div>
@@ -437,12 +500,32 @@ export function ProfileMovementCard({
                 <span>{routeCoverage.numericOutbound}/{routeCoverage.declaredOutbound} numeric routes</span>
               </dd>
             </div>
+            {routeCoverage.declaredWithin ? (
+              <div className="chart-micro-summary-item">
+                <dt>Known within region</dt>
+                <dd>
+                  <strong>
+                    {numericWithin.length
+                      ? formatDisplayValue(within, displaySourceUnit, displayUnit)
+                      : "Unavailable"}
+                  </strong>
+                  <span>{routeCoverage.numericWithin}/{routeCoverage.declaredWithin} numeric routes</span>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </section>
-        <MovementCanvas
-          option={option}
-          ariaLabel={`${plan.scopeLabel} for ${region.label} in ${formatPeriod(snapshot.period)}. ${routeCoverage.numericInbound} of ${routeCoverage.declaredInbound} declared inbound routes and ${routeCoverage.numericOutbound} of ${routeCoverage.declaredOutbound} declared outbound routes are numeric.`}
-        />
+        {hasNumericRoutes ? (
+          <MovementCanvas
+            option={option}
+            ariaLabel={`${plan.scopeLabel} for ${region.label} in ${formatPeriod(snapshot.period)}. ${routeCoverage.numericInbound} of ${routeCoverage.declaredInbound} declared inbound routes and ${routeCoverage.numericOutbound} of ${routeCoverage.declaredOutbound} declared outbound routes are numeric.${routeCoverage.declaredWithin ? ` ${routeCoverage.numericWithin} of ${routeCoverage.declaredWithin} within-region routes are numeric.` : ""}`}
+          />
+        ) : (
+          <p className="od-empty-note profile-movement-empty" role="status">
+            No numeric route value is published for {region.label} in this exact source period.
+            Missing, suppressed, or unavailable routes are not treated as zero.
+          </p>
+        )}
       </div>
       <ChartDetailsToggle summary="Route totals and source notes">
         <div className="profile-card-statline">
@@ -464,6 +547,17 @@ export function ProfileMovementCard({
             </strong>
             <small>{routeCoverage.numericOutbound}/{routeCoverage.declaredOutbound} numeric routes</small>
           </div>
+          {routeCoverage.declaredWithin ? (
+            <div>
+              <span>Known within region</span>
+              <strong>
+                {numericWithin.length
+                  ? formatDisplayValue(within, displaySourceUnit, displayUnit)
+                  : "Unavailable"}
+              </strong>
+              <small>{routeCoverage.numericWithin}/{routeCoverage.declaredWithin} numeric routes</small>
+            </div>
+          ) : null}
         </div>
         <p className="profile-card-boundary">Source scope: {plan.scopeLabel}.</p>
         {plan.series?.description ? (

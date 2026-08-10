@@ -40,6 +40,7 @@ import {
 } from "../../lib/units";
 import { ChartDetailsToggle } from "./ChartDetailsToggle";
 import { DisplayUnitControl } from "./DisplayUnitControl";
+import { MovementPeriodControl } from "./MovementPeriodControl";
 
 echarts.use([
   BarChart,
@@ -438,10 +439,11 @@ export function OriginDestinationPanel({
           <h2 id={headingId}>{panelTitle}</h2>
         </div>
         <div className="graph-first-actions">
-          <div className="contribution-period-badge graph-first-location">
-            <span>Displayed source period</span>
-            <strong>{formatPeriod(snapshot.period)}</strong>
-          </div>
+          <MovementPeriodControl
+            periods={model.periods}
+            value={snapshot.period}
+            onChange={setPeriod}
+          />
           {onDisplayUnitChange ? (
             <DisplayUnitControl
               sourceUnit={monthlyAverageRate ? MONTHLY_AVERAGE_RATE_UNIT : model.sourceUnit}
@@ -607,17 +609,7 @@ export function OriginDestinationPanel({
         className="od-detail-table"
         summary={`${model.productLabel} · ${model.modeLabel} · From ${originSummary} to ${destinationSummary} · gross, not netted · missing ≠ zero · ${sourceScopeSummary}`}
       >
-        <div className="od-controls" aria-label="Origin-destination view controls">
-          <label>
-            <span>Source period</span>
-            <select value={snapshot.period} onChange={(event) => setPeriod(event.target.value)}>
-              {[...model.periods].reverse().map((candidate) => (
-                <option key={candidate} value={candidate}>
-                  {formatPeriod(candidate)}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="od-controls od-controls-endpoints" aria-label="Origin-destination endpoint controls">
           <label>
             <span>From shipping origin</span>
             <select value={originId} onChange={(event) => setOriginId(event.target.value)}>

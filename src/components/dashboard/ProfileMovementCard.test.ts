@@ -4,6 +4,7 @@ import type { OriginDestinationCell } from "../../charts/originDestinationModel"
 import {
   profileMovementRouteCoverage,
   profileMovementValueForDisplay,
+  resolveProfileMovementPeriod,
 } from "./ProfileMovementCard";
 
 describe("profile movement display units", () => {
@@ -60,8 +61,43 @@ describe("profile movement display units", () => {
     expect(profileMovementRouteCoverage(cells, "p2")).toEqual({
       declaredInbound: 2,
       declaredOutbound: 2,
+      declaredWithin: 0,
       numericInbound: 1,
       numericOutbound: 1,
+      numericWithin: 0,
     });
+  });
+
+  it("counts a same-region route once as within-region rather than as both inbound and outbound", () => {
+    const node = { id: "ca.ab", label: "Alberta" };
+    const diagonal: OriginDestinationCell = {
+      routeId: "ca.ab-to-ca.ab",
+      origin: node,
+      destination: node,
+      period: "2026-05",
+      value: 250,
+      status: "observed",
+      declared: true,
+    };
+
+    expect(profileMovementRouteCoverage([diagonal], "ca.ab")).toEqual({
+      declaredInbound: 0,
+      declaredOutbound: 0,
+      declaredWithin: 1,
+      numericInbound: 0,
+      numericOutbound: 0,
+      numericWithin: 1,
+    });
+  });
+
+  it("retains a requested historical period and falls back safely when it is unavailable", () => {
+    const model = {
+      periods: ["2026-03", "2026-04", "2026-05"],
+      latestPeriod: "2026-05",
+    };
+
+    expect(resolveProfileMovementPeriod(model, "2026-03")).toBe("2026-03");
+    expect(resolveProfileMovementPeriod(model, "2025-12")).toBe("2026-05");
+    expect(resolveProfileMovementPeriod(model)).toBe("2026-05");
   });
 });

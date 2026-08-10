@@ -11,6 +11,7 @@ import {
 } from "./OriginDestinationPanel";
 
 const period = "2026-01";
+const previousPeriod = "2025-12";
 const oneKbPerDayMonthlyVolume = 1_000 * BARREL_TO_CUBIC_METRES * 31;
 const model = buildOriginDestinationModel({
   id: "canada.test.pipeline.movements",
@@ -21,13 +22,19 @@ const model = buildOriginDestinationModel({
   modeLabel: "Pipeline",
   origins: [{ id: "ca.ab", label: "Alberta" }],
   destinations: [{ id: "ca.on", label: "Ontario" }],
-  periods: [period],
+  periods: [previousPeriod, period],
   latestPeriod: period,
   routes: [{
     id: "ca.ab-to-ca.on",
     originId: "ca.ab",
     destinationId: "ca.on",
     history: [{
+      period: previousPeriod,
+      year: 2025,
+      slot: 12,
+      value: oneKbPerDayMonthlyVolume / 2,
+      status: "observed",
+    }, {
       period,
       year: 2026,
       slot: 1,
@@ -86,6 +93,9 @@ describe("originDestinationRankedOption monthly-average display", () => {
     const details = html.slice(hiddenRegionIndex);
 
     expect(visible).toContain("Jan 2026");
+    expect(visible).toContain('aria-label="Movement source period"');
+    expect(visible).toContain('value="2025-12"');
+    expect(visible).toContain("Dec 2025");
     expect(visible).toContain("Crude oil");
     expect(visible).toContain("Pipeline");
     expect(visible).toContain('aria-label="Convert chart values to display unit"');
@@ -101,5 +111,23 @@ describe("originDestinationRankedOption monthly-average display", () => {
     expect(details).toContain("exact-period route observations");
     expect(details).toContain("remain distinct from numeric zero");
     expect(details).toContain("This view is pipeline only");
+    expect(details).not.toContain('aria-label="Movement source period"');
+  });
+
+  it("uses an explicitly selected historical source period", () => {
+    const html = renderToStaticMarkup(
+      <OriginDestinationPanel
+        model={model}
+        initialPeriod={previousPeriod}
+        displayUnit="million_cubic_metres"
+        title="Province movements"
+      />,
+    );
+    const hiddenRegionIndex = html.indexOf('class="chart-details-toggle-content"');
+    const visible = html.slice(0, hiddenRegionIndex);
+
+    expect(visible).toContain('aria-label="Movement source period"');
+    expect(visible).toContain('<option value="2025-12" selected="">Dec 2025</option>');
+    expect(visible).toContain("Crude oil, Pipeline, Dec 2025");
   });
 });

@@ -447,6 +447,59 @@ describe("seasonal forecast chart", () => {
     expect(JSON.stringify(noBaseline.aria)).not.toContain("historical minimum");
   });
 
+  it("pairs weekly ISO slots with real week-ending dates for every displayed year", () => {
+    const weeklyAsset = {
+      ...asset,
+      frequency: "weekly",
+      recent_years: [
+        { year: 2024, points: [{ period: "2024-07-26", slot: 30, value: 90, status: "observed" }] },
+        { year: 2025, points: [{ period: "2025-07-25", slot: 30, value: 95, status: "observed" }] },
+        { year: 2026, points: [{ period: "2026-07-24", slot: 30, value: 100, status: "observed" }] },
+      ],
+      latest: {
+        ...asset.latest,
+        period: "2026-07-24",
+        value: 100,
+      },
+    } as UsaChartAsset;
+    const weeklySeries = { ...series, frequency: "weekly" } as UsaManifestSeries;
+    const option = buildSeasonalEChartsOption(weeklyAsset, weeklySeries.title);
+    const xAxis = option.xAxis as { data?: string[] };
+    const tooltip = option.tooltip as { formatter?: (params: unknown) => string };
+    const renderedTooltip = tooltip.formatter?.([{ dataIndex: 0 }]) ?? "";
+
+    expect(xAxis.data).toEqual(["W30\nJul 24"]);
+    expect(renderedTooltip).toContain("W30");
+    expect(renderedTooltip).toContain("2024 · Jul 26, 2024");
+    expect(renderedTooltip).toContain("2025 · Jul 25, 2025");
+    expect(renderedTooltip).toContain("2026 · Jul 24, 2026");
+    expect(renderedTooltip).toContain("Exact week-ending date shown for each year");
+
+    const compactOption = buildSeasonalEChartsOption(
+      weeklyAsset,
+      weeklySeries.title,
+      undefined,
+      90,
+      undefined,
+      { density: "compact" },
+    );
+    expect((compactOption.xAxis as { data?: string[] }).data).toEqual(["W30\nJul 24"]);
+    expect(compactOption.grid).toMatchObject({ bottom: 42 });
+
+    const html = renderToStaticMarkup(
+      <SeasonalChart
+        asset={weeklyAsset}
+        series={weeklySeries}
+        geographyId="us"
+        onGeographyChange={() => undefined}
+      />,
+    );
+    expect(html).toContain("on Jul 24, 2026 (W30)");
+
+    const monthlyOption = buildSeasonalEChartsOption(asset, series.title);
+    expect((monthlyOption.xAxis as { data?: string[] }).data).toEqual(["Dec"]);
+  });
+
   it("plots period-normalized forecast points while keeping diagnostics in source units", () => {
     const rateAsset = {
       ...asset,

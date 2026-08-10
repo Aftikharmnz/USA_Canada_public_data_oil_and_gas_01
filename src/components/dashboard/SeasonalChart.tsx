@@ -365,7 +365,27 @@ export function buildSeasonalEChartsOption(
   const compact = presentation.density === "compact";
   const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, displayUnit);
   const model = buildSeasonalChartModel(asset, forecast);
-  const labels = model.slots.map((slot) => slotLabel(slot, model.frequency));
+  const weekly = model.frequency.toLowerCase().startsWith("week");
+  const newestPlottedYear = weekly
+    ? Math.max(
+        ...model.series.map((year) => year.year),
+        ...model.forecastSeries.map((year) => year.year),
+      )
+    : null;
+  const newestYearPeriodsBySlot = new Map<number, string>();
+  if (newestPlottedYear !== null && Number.isFinite(newestPlottedYear)) {
+    for (const point of model.series.find((year) => year.year === newestPlottedYear)?.points ?? []) {
+      newestYearPeriodsBySlot.set(point.slot, point.period);
+    }
+    for (const point of model.forecastSeries.find((year) => year.year === newestPlottedYear)?.points ?? []) {
+      newestYearPeriodsBySlot.set(point.slot, point.target_period);
+    }
+  }
+  const labels = model.slots.map((slot) => slotLabel(
+    slot,
+    model.frequency,
+    newestYearPeriodsBySlot.get(slot),
+  ));
   const baseline = model.slots.map((slot) => model.baselineBySlot.get(slot));
   const hasBaseline = baseline.some(Boolean);
   const intervalKey = String(intervalLevel) as PredictionIntervalKey;
@@ -460,11 +480,13 @@ export function buildSeasonalEChartsOption(
     aria: {
       enabled: true,
       decal: { show: true },
-      description: `${seriesTitle}. ${observedDescription}${forecastDescription}`,
+      description: `${seriesTitle}. ${observedDescription}${forecastDescription}${weekly
+        ? " Weekly axis labels retain the ISO week number and add the newest plotted year's exact week-ending date when available; hover details show each year's exact date."
+        : ""}`,
     },
     grid: compact
-      ? { left: 52, right: 14, top: 38, bottom: 34, containLabel: false }
-      : { left: 62, right: 26, top: 44, bottom: 78, containLabel: false },
+      ? { left: 52, right: 14, top: 38, bottom: weekly ? 42 : 34, containLabel: false }
+      : { left: 62, right: 26, top: 44, bottom: weekly ? 86 : 78, containLabel: false },
     legend: {
       type: "scroll",
       data: legendNames,
@@ -494,7 +516,10 @@ export function buildSeasonalEChartsOption(
           const status = point && point.status !== "observed"
             ? ` · ${point.status.replaceAll("_", " ")}`
             : "";
-          return `<div class="echarts-tooltip-row"><span><i style="background:${color}"></i>${year.year}${escapeHtml(status)}</span><b>${escapeHtml(formattedDisplayValue(point?.value ?? null, asset.unit, resolvedDisplayUnit))}</b></div>`;
+          const periodLabel = weekly && point
+            ? `${year.year} · ${formatPeriod(point.period)}`
+            : String(year.year);
+          return `<div class="echarts-tooltip-row"><span><i style="background:${color}"></i>${escapeHtml(`${periodLabel}${status}`)}</span><b>${escapeHtml(formattedDisplayValue(point?.value ?? null, asset.unit, resolvedDisplayUnit))}</b></div>`;
         }).join("");
         const forecastRows = model.forecastSeries.flatMap((forecastYear, forecastIndex) => {
           const point = forecastYear.points.find((item) => item.slot === slot);
@@ -516,7 +541,10 @@ export function buildSeasonalEChartsOption(
         ].map(([label, value]) => `<div class="echarts-tooltip-row"><span>${label}</span><b>${escapeHtml(formattedDisplayValue(value as number, asset.unit, resolvedDisplayUnit))}</b></div>`).join("") : "";
         const baselineFooter = band ? `<small>Historical baseline n=${band.count}</small>` : "";
         const separator = forecastRows || bandRows ? "<hr>" : "";
-        return `<div class="echarts-tooltip"><strong>${escapeHtml(slotLabel(slot, model.frequency))}</strong>${recentRows}${separator}${forecastRows}${forecastRows && bandRows ? "<hr>" : ""}${bandRows}${baselineFooter}</div>`;
+        const weeklyDateNote = weekly
+          ? "<small>Exact week-ending date shown for each year</small>"
+          : "";
+        return `<div class="echarts-tooltip"><strong>${escapeHtml(slotLabel(slot, model.frequency))}</strong>${weeklyDateNote}${recentRows}${separator}${forecastRows}${forecastRows && bandRows ? "<hr>" : ""}${bandRows}${baselineFooter}</div>`;
       },
     },
     xAxis: {
@@ -528,7 +556,8 @@ export function buildSeasonalEChartsOption(
       axisLabel: {
         color: "#71858a",
         fontSize: compact ? 9 : 11,
-        interval: model.frequency.toLowerCase().startsWith("week") ? (compact ? 7 : 3) : 0,
+        lineHeight: compact ? 11 : 13,
+        interval: weekly ? (compact ? 7 : 3) : 0,
       },
     },
     yAxis: {
@@ -561,6 +590,7 @@ export function buildSeasonalEChartsOption(
           filterMode: "none",
           height: 18,
           bottom: 12,
+          showDetail: false,
           borderColor: "#d5dfdb",
           backgroundColor: "#f3f6f4",
           fillerColor: "rgba(11,124,104,0.12)",
@@ -1140,7 +1170,11 @@ export function SeasonalChart({
               const band = point ? model.baselineBySlot.get(point.slot) : undefined;
               return (
                 <p key={year.year}>
-                  <strong>{year.year}:</strong> {point ? `${formattedDisplayValue(point.value, asset.unit, resolvedDisplayUnit)} in ${slotLabel(point.slot, asset.frequency)}` : "no usable observation"}
+                  <strong>{year.year}:</strong> {point
+                    ? `${formattedDisplayValue(point.value, asset.unit, resolvedDisplayUnit)} ${asset.frequency.toLowerCase().startsWith("week")
+                      ? `on ${formatPeriod(point.period)} (${slotLabel(point.slot, asset.frequency)})`
+                      : `in ${slotLabel(point.slot, asset.frequency)}`}`
+                    : "no usable observation"}
                   {band ? `; historical median ${formattedDisplayValue(band.median, asset.unit, resolvedDisplayUnit)} and range ${formattedDisplayValue(band.min, asset.unit, resolvedDisplayUnit)}–${formattedDisplayValue(band.max, asset.unit, resolvedDisplayUnit)}.` : "."}
                 </p>
               );
