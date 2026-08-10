@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   compactUnit,
   convertDisplayValue,
@@ -7,7 +8,10 @@ import {
 } from "../../lib/formatters";
 import { resolveDisplayUnit, type DisplayUnitId } from "../../lib/units";
 import type { DistributionSample, UsaChartAsset, UsaManifestSeries } from "../../types/energyAssets";
+import { ChartDetailsToggle } from "./ChartDetailsToggle";
 import { ChartGeographyControl } from "./ChartGeographyControl";
+import { ChartMicroSummary } from "./ChartMicroSummary";
+import { DisplayUnitControl } from "./DisplayUnitControl";
 import type { RegionSelectionMode } from "./RegionSelectionControl";
 
 interface DistributionPanelProps {
@@ -23,6 +27,18 @@ interface DistributionPanelProps {
   regionLabel?: string;
   /** Display-only conversion; distribution calculations remain in asset.unit. */
   displayUnit?: DisplayUnitId;
+  onDisplayUnitChange?: (unit: DisplayUnitId) => void;
+}
+
+function selectedLocationLabel(
+  series: UsaManifestSeries,
+  geographyId: string,
+  geographyIds?: readonly string[],
+): string {
+  const selectedIds = geographyIds?.length ? geographyIds : [geographyId];
+  return selectedIds
+    .map((id) => series.geographies.find((geography) => geography.geography_id === id)?.label ?? id)
+    .join(" + ");
 }
 
 function Statistic({ label, value }: { label: string; value: string }) {
@@ -136,11 +152,7 @@ function DistributionFacet({
   return (
     <article className="distribution-facet" aria-labelledby={`distribution-${title.replaceAll(" ", "-").toLowerCase()}`}>
       <header>
-        <div>
-          <h3 id={`distribution-${title.replaceAll(" ", "-").toLowerCase()}`}>{title}</h3>
-          <p>{description}</p>
-        </div>
-        <span>{sample.count} observations</span>
+        <h3 id={`distribution-${title.replaceAll(" ", "-").toLowerCase()}`}>{title}</h3>
       </header>
 
       <Histogram
@@ -152,28 +164,34 @@ function DistributionFacet({
         label={title}
       />
 
-      <dl className="facet-stats">
-        <Statistic label="Mean" value={formatStatistic(sample.mean)} />
-        <Statistic label="Median" value={formatStatistic(sample.median)} />
-        <Statistic label="Std. deviation" value={formatStatistic(sample.stddev)} />
-        <Statistic label="IQR" value={formatStatistic(sample.iqr)} />
-        <Statistic label="Skewness" value={formatPlainNumber(sample.skewness, 2)} />
-        <Statistic label="Excess kurtosis" value={formatPlainNumber(sample.excess_kurtosis, 2)} />
-      </dl>
+      <ChartDetailsToggle
+        className="distribution-facet-details"
+        summary={`${sample.count} observations · statistics and fit`}
+      >
+        <p>{description}</p>
+        <dl className="facet-stats">
+          <Statistic label="Mean" value={formatStatistic(sample.mean)} />
+          <Statistic label="Median" value={formatStatistic(sample.median)} />
+          <Statistic label="Std. deviation" value={formatStatistic(sample.stddev)} />
+          <Statistic label="IQR" value={formatStatistic(sample.iqr)} />
+          <Statistic label="Skewness" value={formatPlainNumber(sample.skewness, 2)} />
+          <Statistic label="Excess kurtosis" value={formatPlainNumber(sample.excess_kurtosis, 2)} />
+        </dl>
 
-      <div className="fit-card">
-        <span>Best candidate among tested distributions</span>
-        <strong>{fitSummary(sample)}</strong>
-        {sample.fit?.selection_note ? <small>{sample.fit.selection_note}</small> : null}
-        {sample.fit?.tested_candidates?.length ? (
-          <small>Tested: {sample.fit.tested_candidates.map((candidate) => candidate.name).join(", ")}</small>
+        <div className="fit-card">
+          <span>Best candidate among tested distributions</span>
+          <strong>{fitSummary(sample)}</strong>
+          {sample.fit?.selection_note ? <small>{sample.fit.selection_note}</small> : null}
+          {sample.fit?.tested_candidates?.length ? (
+            <small>Tested: {sample.fit.tested_candidates.map((candidate) => candidate.name).join(", ")}</small>
+          ) : null}
+          {aic !== null ? <small>AIC {formatPlainNumber(aic, 2)}</small> : null}
+        </div>
+
+        {sample.exclusions?.length ? (
+          <p className="chart-footnote">Excluded: {sample.exclusions.join("; ")}</p>
         ) : null}
-        {aic !== null ? <small>AIC {formatPlainNumber(aic, 2)}</small> : null}
-      </div>
-
-      {sample.exclusions?.length ? (
-        <p className="chart-footnote">Excluded: {sample.exclusions.join("; ")}</p>
-      ) : null}
+      </ChartDetailsToggle>
     </article>
   );
 }
@@ -190,60 +208,89 @@ export function DistributionPanel({
   geographyLevelLabel,
   regionLabel,
   displayUnit,
+  onDisplayUnitChange,
 }: DistributionPanelProps) {
+  const [localDisplayUnit, setLocalDisplayUnit] = useState<DisplayUnitId>();
   const allCounts = [
     ...asset.distribution.levels.histogram.map((bin) => bin.count),
     ...asset.distribution.changes.histogram.map((bin) => bin.count),
   ];
   const sharedMaxCount = Math.max(...allCounts, 1);
-  const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, displayUnit);
+  const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, localDisplayUnit ?? displayUnit);
   const percentagePointChanges = asset.unit.toLowerCase() === "percent";
+  const locationLabel = selectedLocationLabel(series, geographyId, geographyIds);
+  const changeDisplayUnit = (unit: DisplayUnitId) => {
+    if (onDisplayUnitChange) onDisplayUnitChange(unit);
+    else setLocalDisplayUnit(unit);
+  };
 
   return (
-    <section className="analysis-panel distribution-panel" aria-labelledby="distribution-title">
-      <div className="analysis-panel-heading">
-        <div>
+    <section className="analysis-panel distribution-panel graph-first-panel" aria-labelledby="distribution-title">
+      <div className="analysis-panel-heading graph-first-heading">
+        <div className="graph-first-title">
           <p className="section-kicker">Distribution diagnostics</p>
-          <h2 id="distribution-title">Levels and changes, viewed together</h2>
-          <p>
-            Both samples stay visible on a shared count scale. Levels show where the market sits;
-            period changes reveal the short-term risk shape.
-          </p>
+          <h2 id="distribution-title">{series.title}</h2>
+          <p className="graph-first-location">{locationLabel} · levels and period changes</p>
         </div>
-        <ChartGeographyControl
-          series={series}
-          geographyId={geographyId}
-          onGeographyChange={onGeographyChange}
-          geographyIds={geographyIds}
-          regionMode={regionMode}
-          onGeographiesChange={onGeographiesChange}
-          onRegionModeChange={onRegionModeChange}
-          geographyLevelLabel={geographyLevelLabel}
-          regionLabel={regionLabel}
-          compact
-          chartLabel="Distribution comparison"
-        />
+        <div className="graph-first-actions">
+          {resolvedDisplayUnit ? (
+            <DisplayUnitControl
+              sourceUnit={asset.unit}
+              value={resolvedDisplayUnit}
+              onChange={changeDisplayUnit}
+              compact
+              micro
+            />
+          ) : null}
+          <ChartDetailsToggle
+            className="distribution-options-details"
+            summary="Chart options and methodology"
+          >
+            <ChartGeographyControl
+              series={series}
+              geographyId={geographyId}
+              onGeographyChange={onGeographyChange}
+              geographyIds={geographyIds}
+              regionMode={regionMode}
+              onGeographiesChange={onGeographiesChange}
+              onRegionModeChange={onRegionModeChange}
+              geographyLevelLabel={geographyLevelLabel}
+              regionLabel={regionLabel}
+              compact
+              chartLabel={`${series.title} distribution comparison`}
+            />
+            <p>
+              Both samples use a shared count scale. Levels show where the market sits; period
+              changes reveal the short-term risk shape. Gaps and nonnumeric periods are excluded
+              rather than treated as zero.
+            </p>
+          </ChartDetailsToggle>
+        </div>
       </div>
 
-      <div className="distribution-facets">
-        <DistributionFacet
-          title="Raw levels"
-          description="The observed series level, including seasonal and structural patterns."
-          sample={asset.distribution.levels}
-          sourceUnit={asset.unit}
-          displayUnit={resolvedDisplayUnit}
-          sharedMaxCount={sharedMaxCount}
-        />
-        <DistributionFacet
-          title="Period changes"
-          description="Consecutive validated period-to-period movements; gaps are excluded."
-          sample={asset.distribution.changes}
-          sourceUnit={asset.unit}
-          displayUnit={resolvedDisplayUnit}
-          percentagePointChanges={percentagePointChanges}
-          sharedMaxCount={sharedMaxCount}
-        />
+      <div className="chart-stage">
+        <ChartMicroSummary asset={asset} series={series} displayUnit={resolvedDisplayUnit ?? undefined} />
+        <div className="distribution-facets">
+          <DistributionFacet
+            title="Raw levels"
+            description="The observed series level, including seasonal and structural patterns."
+            sample={asset.distribution.levels}
+            sourceUnit={asset.unit}
+            displayUnit={resolvedDisplayUnit}
+            sharedMaxCount={sharedMaxCount}
+          />
+          <DistributionFacet
+            title="Period changes"
+            description="Consecutive validated period-to-period movements; gaps are excluded."
+            sample={asset.distribution.changes}
+            sourceUnit={asset.unit}
+            displayUnit={resolvedDisplayUnit}
+            percentagePointChanges={percentagePointChanges}
+            sharedMaxCount={sharedMaxCount}
+          />
+        </div>
       </div>
+
     </section>
   );
 }

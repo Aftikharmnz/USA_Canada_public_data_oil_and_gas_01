@@ -46,4 +46,23 @@ describe("DisplayUnitControl", () => {
     expect(html).toContain("Thousand barrels per day (kb/d, source)");
     expect(html).toContain("Million barrels per day (MMbbl/d)");
   });
+
+  it("uses abbreviated labels in the chart-edge micro treatment", () => {
+    const html = renderToStaticMarkup(
+      <DisplayUnitControl
+        sourceUnit="thousand_barrels_per_day"
+        value="thousand_barrels_per_day"
+        onChange={() => undefined}
+        compact
+        micro
+      />,
+    );
+
+    expect(html).toContain("display-unit-control-micro");
+    expect(html).toContain("<legend>Unit</legend>");
+    expect(html).toContain("bbl/d");
+    expect(html).toContain("kb/d · source");
+    expect(html).toContain("MMbbl/d");
+    expect(html).not.toContain("Thousand barrels per day (kb/d, source)");
+  });
 });

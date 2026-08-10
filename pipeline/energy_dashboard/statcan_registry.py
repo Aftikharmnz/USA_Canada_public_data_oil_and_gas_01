@@ -49,6 +49,7 @@ class RegistryStatCanSeries:
     source_geography_ids: tuple[str, ...]
     source_geography_level_ids: tuple[str, ...]
     unsupported_levels: tuple[tuple[str, str], ...]
+    constant_dimensions: tuple[tuple[str, str], ...] = ()
     geography_resolution: StatCanGeographyResolution = StatCanGeographyResolution()
     display: SeriesDisplayClassification | None = None
     bootstrap_start: str | None = None
@@ -142,6 +143,11 @@ def load_statcan_registry(
             {key for key, _ in expected}
         ):
             raise ValueError("Statistics Canada series must pin semantic filters and unit/scalar fields")
+        constant_dimensions = _load_constant_dimensions(
+            item.get("constant_dimensions", {}),
+            filters,
+            table.required_headers,
+        )
         profile_id = str(item.get("geography_profile_id", ""))
         if profile_id and profile_id not in geography_profiles:
             raise ValueError(f"Unknown Statistics Canada geography profile {profile_id!r}")
@@ -179,7 +185,7 @@ def load_statcan_registry(
                 title=str(item["name"]),
                 description=" ".join(caveats),
                 source_name=provider_names.get("statcan", "Statistics Canada"),
-                source_url=landing_page,
+                source_url=str(item.get("source_url", landing_page)),
                 canonical_unit=str(item["unit"]),
                 frequency=frequency,
                 table=table,
@@ -188,6 +194,7 @@ def load_statcan_registry(
                 source_geography_ids=geography_ids,
                 source_geography_level_ids=levels,
                 unsupported_levels=unsupported,
+                constant_dimensions=constant_dimensions,
                 geography_resolution=resolution,
                 display=display,
                 bootstrap_start=(
@@ -199,7 +206,7 @@ def load_statcan_registry(
         )
     ids = [item.id for item in output]
     if len(ids) != len(set(ids)):
-        raise ValueError("Active Statistics Canada series ids must be unique")
+        raise ValueError("Selected Statistics Canada series ids must be unique")
     return tuple(sorted(output, key=lambda value: value.id))
 
 
@@ -294,6 +301,7 @@ def normalize_statcan_records(
         dimensions: list[tuple[str, str]] = [
             ("coordinate", coordinate),
             ("vector", vector),
+            *series.constant_dimensions,
         ]
         if "Receiving region" in row:
             dimensions.extend(
@@ -303,6 +311,11 @@ def normalize_statcan_records(
                     ("mode_of_transport", _required(row, "Mode of transport", index)),
                     ("source_product", _required(row, "Products", index)),
                 ]
+            )
+        dimension_names = [name for name, _ in dimensions]
+        if len(dimension_names) != len(set(dimension_names)):
+            raise ValueError(
+                f"Statistics Canada semantic dimensions collide for {series.id}"
             )
         output.append(
             Observation(
@@ -476,6 +489,37 @@ def _load_display(value: object) -> SeriesDisplayClassification | None:
         ),
         display_order=int(display.get("display_order", 0)),
     )
+
+
+def _load_constant_dimensions(
+    value: object,
+    row_filters: tuple[tuple[str, str], ...],
+    required_headers: tuple[str, ...],
+) -> tuple[tuple[str, str], ...]:
+    sources = _string_mapping(value, "constant_dimensions")
+    filters = dict(row_filters)
+    output: list[tuple[str, str]] = []
+    for dimension_name, source_field in sources:
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", dimension_name):
+            raise ValueError(
+                f"Invalid Statistics Canada constant dimension name {dimension_name!r}"
+            )
+        if dimension_name in {"coordinate", "vector", "shipping_region", "receiving_region"}:
+            raise ValueError(
+                f"Statistics Canada constant dimension {dimension_name!r} is reserved"
+            )
+        if source_field not in required_headers:
+            raise ValueError(
+                f"Statistics Canada constant dimension source field {source_field!r} "
+                "is absent from table headers"
+            )
+        if source_field not in filters:
+            raise ValueError(
+                f"Statistics Canada constant dimension source field {source_field!r} "
+                "must be pinned by row_filters"
+            )
+        output.append((dimension_name, filters[source_field]))
+    return tuple(output)
 
 
 def _month_bound(value: str | None, name: str) -> str | None:

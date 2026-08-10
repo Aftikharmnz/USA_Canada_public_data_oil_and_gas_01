@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AssetDetails } from "../components/dashboard/AssetDetails";
 import { BalanceWaterfall } from "../components/dashboard/BalanceWaterfall";
 import { CollapsibleToolbar } from "../components/dashboard/CollapsibleToolbar";
+import { CountrySectionNav } from "../components/dashboard/CountrySectionNav";
 import {
   DashboardError,
   DashboardLoading,
@@ -82,7 +83,9 @@ function UsaDashboard({
   const [requested, setRequested] = useState<UsaDashboardSelectionRequest>({
     segment: initialSegment,
   });
-  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  // Graph-first is the default. The exact selection remains visible in the
+  // toolbar summary and the full filter hierarchy is one click away.
+  const [filtersCollapsed, setFiltersCollapsed] = useState(true);
   const [regionMode, setRegionMode] = useState<RegionSelectionMode>("single");
   const [requestedDisplayUnit, setRequestedDisplayUnit] = useState<DisplayUnitId>();
 
@@ -533,6 +536,7 @@ function UsaDashboard({
               series={series}
               activeGeographyId={geography.geography_id}
               displayUnit={displayUnit}
+              onDisplayUnitChange={setRequestedDisplayUnit}
               onGeographyChange={chooseGeography}
             />
           ) : null}
@@ -541,6 +545,7 @@ function UsaDashboard({
               series={series}
               spec={contributionSpec}
               displayUnit={displayUnit}
+              onDisplayUnitChange={setRequestedDisplayUnit}
             />
           ) : null}
           <SeasonalChart
@@ -553,6 +558,7 @@ function UsaDashboard({
             onGeographiesChange={aggregationPolicy ? chooseGeographies : undefined}
             onRegionModeChange={aggregationPolicy ? chooseRegionMode : undefined}
             displayUnit={displayUnit ?? undefined}
+            onDisplayUnitChange={setRequestedDisplayUnit}
             forecast={forecast}
             forecastNotice={forecastNotice}
           />
@@ -561,6 +567,7 @@ function UsaDashboard({
               manifest={manifest}
               familyId={series.classification?.product_family_id}
               displayUnit={displayUnit ?? undefined}
+              onDisplayUnitChange={setRequestedDisplayUnit}
             />
           ) : null}
           <DistributionPanel
@@ -573,6 +580,7 @@ function UsaDashboard({
             onGeographiesChange={aggregationPolicy ? chooseGeographies : undefined}
             onRegionModeChange={aggregationPolicy ? chooseRegionMode : undefined}
             displayUnit={displayUnit ?? undefined}
+            onDisplayUnitChange={setRequestedDisplayUnit}
           />
           <AssetDetails asset={asset} series={series} geography={displayGeography} />
         </div>
@@ -597,6 +605,7 @@ export function UsaPage({ initialSegment = "crude", weeklyOnly = false }: UsaPag
       <h1 className="visually-hidden">
         {weeklyOnly ? "United States EIA weekly petroleum dashboard" : "United States petroleum dashboard"}
       </h1>
+      <CountrySectionNav country="usa" activeView="explorer" />
 
       {state.status === "loading" && !state.data ? <DashboardLoading /> : null}
       {state.status === "error" ? (

@@ -72,7 +72,7 @@ class ProviderBoundaryTests(unittest.TestCase):
         payload = json.loads(output.getvalue())
         self.assertEqual(result, 0)
         self.assertFalse(payload["network_calls"])
-        self.assertEqual(len(payload["series"]), 69)
+        self.assertEqual(len(payload["series"]), 78)
         planned_ids = {item["series_id"] for item in payload["series"]}
         self.assertIn("usa.eia.crude.commercial_stocks.weekly", planned_ids)
         self.assertIn("usa.eia.crude.spr_stocks.weekly", planned_ids)
@@ -87,6 +87,9 @@ class ProviderBoundaryTests(unittest.TestCase):
             "usa.eia.refined.total_petroleum_products.padd_movements.monthly",
             planned_ids,
         )
+        self.assertIn("usa.eia.crude.ending_stocks.monthly", planned_ids)
+        self.assertIn("usa.eia.crude.net_receipts.monthly", planned_ids)
+        self.assertIn("usa.eia.crude.transfers_to_supply.monthly", planned_ids)
 
     def test_canada_cli_dry_run_plans_both_providers_without_credentials(self) -> None:
         output = io.StringIO()
@@ -107,9 +110,9 @@ class ProviderBoundaryTests(unittest.TestCase):
         self.assertEqual(payload["providers"], ["statcan", "cer"])
         self.assertEqual(
             {table["pid"] for table in payload["tables"]},
-            {"25100063", "25100077", "25100081"},
+            {"25100063", "25100075", "25100077", "25100081"},
         )
-        self.assertEqual(len(payload["series"]), 69)
+        self.assertEqual(len(payload["series"]), 81)
         providers = {item["provider"] for item in payload["series"]}
         self.assertEqual(providers, {"statcan", "cer"})
         self.assertTrue(all(not table["credential_required"] for table in payload["tables"]))

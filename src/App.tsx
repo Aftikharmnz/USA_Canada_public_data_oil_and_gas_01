@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CanadaPage } from "./pages/CanadaPage";
 import { RefinedProductsPage } from "./pages/RefinedProductsPage";
 import { ReferencePage } from "./pages/ReferencePage";
+import { RegionalProfilePage } from "./pages/RegionalProfilePage";
 import { UsaPage } from "./pages/UsaPage";
 import { UsaWeeklyPage } from "./pages/UsaWeeklyPage";
 import { appPath, appRouteFromPath, type AppRoute } from "./lib/routes";
@@ -39,9 +40,15 @@ export default function App() {
       ? "USA weekly EIA trading desk."
     : route === "products"
       ? "U.S. refined-products dashboard."
-      : route === "usa"
+      : route === "usa" || route === "usa-profile"
         ? "USA market dashboard."
         : "Canada market dashboard.";
+
+  const activePrimaryRoute = route === "usa-profile"
+    ? "usa"
+    : route === "canada-profile"
+      ? "canada"
+      : route;
 
   return (
     <>
@@ -68,7 +75,7 @@ export default function App() {
               <a
                 key={item.route}
                 href={appPath(item.route)}
-                aria-current={route === item.route ? "page" : undefined}
+                aria-current={activePrimaryRoute === item.route ? "page" : undefined}
                 onClick={(event) => {
                   event.preventDefault();
                   navigate(item.route);
@@ -86,6 +93,10 @@ export default function App() {
                 ? "USA · Weekly"
               : route === "products"
                 ? "USA · Refined"
+                : route === "usa-profile"
+                  ? "USA · Regional profile"
+                : route === "canada-profile"
+                  ? "Canada · Regional profile"
                 : route === "usa"
                   ? "USA · Crude + Refined"
                   : "Canada · Crude + Refined"}
@@ -99,6 +110,10 @@ export default function App() {
           ? <UsaWeeklyPage />
         : route === "products"
           ? <RefinedProductsPage />
+          : route === "usa-profile"
+            ? <RegionalProfilePage country="usa" />
+          : route === "canada-profile"
+            ? <RegionalProfilePage country="canada" />
           : route === "canada"
             ? <CanadaPage />
             : <UsaPage />}

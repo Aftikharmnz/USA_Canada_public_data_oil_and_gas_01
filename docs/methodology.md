@@ -33,6 +33,10 @@ The generated component assets use source-published EIA values only. The registe
 
 `config/aggregation/custom-geography.json` is the authorization boundary. It currently permits selected additive quantities across USA PADDs, Statistics Canada provinces/territories, and CER confidentiality regions for crude runs. It does not permit utilization percentages, mixed geography levels, overlapping PADD/subdistrict or state/special-area nodes, or any unlisted series.
 
+The USA PADD policy includes all nine active monthly crude supply-and-disposition definitions: ending stocks, stock change, imports, exports, refinery/blender net input, product supplied, supply adjustment, net receipts, and transfers to crude supply. These are sums of exact same-period source rows, including signed balance terms. A combined value is always a computed regional view. It never replaces a source-published U.S. observation; net receipts has no source-published U.S. row, so a five-PADD sum is not relabelled as official national data.
+
+The Canada expansion adds nine exact table 25-10-0081 definitions to the same positive policy: all four propane measures plus residual-fuel net production, imports, exports, stock change, and ending stocks. Residual-fuel product supplied is source-published nationally but not provincially aggregatable. Both 25-10-0075 transporter closing-stock definitions remain outside the policy. The custom-aggregation set and daily-rate set are intentionally different: residual ending stocks may be summed across complete mutually exclusive provinces but remain a volume, while residual product supplied may receive a national calendar-day-normalized rate but cannot be regionally combined.
+
 For every source period, the browser aligns all selected component observations and requires 100% coverage. A suppressed, withheld, missing, not-applicable, or unavailable component makes the combined period nonnumeric with the blocking status; it is never treated as zero and no partial sum is shown. Frequency, unit, period semantics, canonical semantic dimensions, observed methodology, asset schema, membership version, and component identity must match. Per-period lineage records every expected component and validation result.
 
 The sum is applied only to canonical period observations. Seasonal bands, recent-year overlays, latest/prior/year-ago deltas, seasonal percentile, level/change distributions, and histograms are recomputed from the combined history. Precomputed component statistics are never added. Statistics Canada `coordinate` and `vector` values differ by geography and remain component lineage identifiers; for a single manifest view they are removed from the semantic-dimension comparison while component geography IDs and checksums remain explicit.
@@ -41,7 +45,7 @@ The sum is applied only to canonical period observations. Seasonal bands, recent
 
 Unit selection changes presentation only. Canonical history and forecast assets remain in their source unit, and aggregation happens before conversion. `src/lib/units.ts` uses exactly \(1\ \text{barrel}=0.158987294928\ \text{m}^3\). Fixed-factor conversions keep volume, ordinary daily-rate, calendar-day-rate, and percent dimensions separate. Percent remains fixed, and a change in a percent series is labelled in percentage points.
 
-Statistics Canada monthly petroleum flows have one explicit period-normalized daily-rate view, authorized only by `config/display/monthly-average-rate.json`. For a registered monthly flow with source volume \(V_t\) in cubic metres and \(d_t\) actual Gregorian calendar days in its `YYYY-MM` period, the canonical in-memory rate is:
+Statistics Canada monthly petroleum flows have one explicit period-normalized daily-rate view, authorized only by `config/display/monthly-average-rate.json`. The positive registry currently contains 70 active monthly flow IDs: the preceding 61 plus nine new propane/residual-fuel flow definitions from the shared table 25-10-0081 cube. Registry eligibility does not imply that the nine new series are already present in the promoted public generation. For a registered monthly flow with source volume \(V_t\) in cubic metres and \(d_t\) actual Gregorian calendar days in its `YYYY-MM` period, the canonical in-memory rate is:
 
 \[
 \operatorname{kb/d}_t = \frac{V_t}{d_t\times 1000\times 0.158987294928}.
@@ -50,6 +54,22 @@ Statistics Canada monthly petroleum flows have one explicit period-normalized da
 The calculation uses 28, 29, 30, or 31 days as applicable, never a fixed average month. After that period-aware normalization, fixed-factor choices can show the same rate as `bbl/d`, `kb/d`, `MMbbl/d`, `m³/d`, or `10³ m³/d`. The browser transforms status-preserving period history first and then recomputes recent years, seasonal bands, latest deltas and percentiles, changes, distributions, histograms, and fitted diagnostics. Missing or suppressed values remain nonnumeric. Month-end/closing inventories are point-in-time levels and are not eligible; percentages and unknown future series also fail closed.
 
 Regional sums and combined forecasts remain in canonical monthly cubic metres through coverage validation, point summation, aligned-residual calibration, and prediction-interval construction. Only final forecast point values and interval endpoints are divided by their own target month's day count for display. Model-selection and backtest error magnitudes remain explicitly in the source monthly-volume domain because the public forecast record does not include every dated evaluation error needed for exact period-specific normalization.
+
+### Regional-profile weekly-to-monthly display
+
+The regional profile can derive a monthly display from a weekly asset only when its stable series ID and strategy are positively authorized by `config/display/weekly-to-monthly.json`. This transformation is an in-memory display view: it does not change canonical observations, manufacture a source-monthly series, or authorize a forecast conversion.
+
+For an ordinary daily rate \(r_w\), the weekly observation covers the inclusive trailing seven-day interval ending on its published week-ending date. The interval is split at calendar-month boundaries, and a completed month \(m\) is:
+
+\[
+r_m = \frac{\sum_w r_w d_{w,m}}{D_m},
+\]
+
+where \(d_{w,m}\) is the number of covered days from week \(w\) falling in month \(m\), and \(D_m\) is the actual number of days in that month. Every day must be covered exactly once. Missing, duplicate, suppressed, withheld, or otherwise nonnumeric contributing coverage blocks the derived month; partial coverage is never renormalized.
+
+Stocks and days supply use the final expected weekly endpoint inside the completed month. Utilization also uses the final weekly reading because percentages must not be averaged. These are labelled last-weekly snapshots, not official month-end values. Calendar completion is evaluated using the validated asset generation timestamp: the latest unfinished month is withheld, and a completed month with no exact final endpoint is published as nonnumeric rather than stale-filled. Derived history retains temporal lineage and recomputes chart statistics; native weekly forecasts and prediction intervals are hidden rather than resampled.
+
+When the selected exact product/geography has both an available source-monthly measure and a weekly measure with the same registered `measure_id`, the profile's Monthly view uses the source-monthly asset and suppresses the weekly-derived duplicate. The Weekly view retains only the source-weekly asset. Different product boundaries—such as monthly crude oil versus weekly commercial crude excluding SPR—remain separate products and are never deduplicated merely because their labels are similar.
 
 ### Regional import composition
 
@@ -99,6 +119,16 @@ grade-specific refinery-input rows are likewise child views of total refinery
 inputs. The cube declares a condensate-and-pentanes-plus refinery-input member
 but publishes no observation rows for it, so the app does not register or infer
 that missing component.
+
+### Statistics Canada refined balances and transporter inventories
+
+Official table views 25-10-0081-01 and 25-10-0081-02 resolve to one Web Data Service PID, `25100081`, with one DOI and one full-table archive. They are sibling presentations of the same supply/disposition cube, not independent datasets. The registry selects exact product/measure coordinates and the refresh downloads the archive once. A row exposed through one view must not be duplicated, reconciled, or added to a row from the other view simply because the public table offers two URLs.
+
+The active expansion adds propane field production, refinery/blender net production, imports, and exports, plus residual-fuel net production, imports, exports, products supplied, ending stocks, and stock change. Those are separate exact leaves. Product parents, component products, ending stocks, and stock change are overlapping or different economic concepts; no hierarchy label authorizes summation. The nine flow definitions are eligible for actual-calendar-day rate display. Residual-fuel ending stocks remain a point-in-time volume.
+
+Table 25-10-0075-01 is methodologically separate. It reports monthly inventories held by domestic transporters. The active definitions preserve the constant semantic coordinates `Mode of transportation = Pipeline` and `Inventories = Closing inventories` for the exact `Crude oil and equivalents` and combined `Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)` buckets. They describe pipeline-transporter custody at the closing observation point; they are not refinery inventory, total commercial stock, working capacity, throughput, receipts, transfers, or movement volume.
+
+Opening inventories are not exposed in the first tranche because every reviewed numeric month duplicates the preceding month's closing inventory. Publishing both would create a shifted duplicate rather than a new market measure. The source-published Canada row remains separate and authoritative; provincial observations are not summed into a replacement national value and are not authorized for custom geography aggregation. Both closing-stock definitions are volume-only and ineligible for monthly-average daily-rate conversion. Missing and suppressed cells remain nonnumeric. Once matching assets are promoted, the ordinary monthly forecast eligibility rules apply, including the fail-closed rule when the latest source period is nonnumeric.
 
 ## Implemented forecast methodology
 

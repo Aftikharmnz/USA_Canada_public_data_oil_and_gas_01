@@ -103,7 +103,53 @@ describe("LatestValueGrid source-period context", () => {
     expect(html).toContain("Latest numeric value shown: Dec 2017.");
     expect(html).toContain("Latest numeric value");
     expect(html).toContain("554,461 m³");
+    expect(html).toContain("Show details");
+    expect(html).toContain('class="chart-details-toggle-content"');
+    expect(html).toContain('hidden=""');
     expect(html).not.toContain("Latest validated observation");
+
+    const collapsedDetails = html.indexOf('class="chart-details-toggle-content"');
+    const visible = html.slice(0, collapsedDetails);
+    expect(html.indexOf("Source period Apr 2026 is suppressed or withheld.")).toBeLessThan(collapsedDetails);
+    expect(visible).toContain("latest 554,461 m³ (Dec 2017)");
+    expect(visible).toContain("change -24,050 m³ vs Nov 2017");
+  });
+
+  it("keeps a same-period preliminary source status in the visible graph-first summary", () => {
+    const preliminaryAsset: UsaChartAsset = {
+      ...asset,
+      freshness: {
+        ...asset.freshness,
+        status: asset.freshness?.status ?? "unknown",
+        latest_period: "2017-12",
+        latest_numeric_period: "2017-12",
+        latest_observation_status: "preliminary",
+      },
+      latest_source: {
+        period: "2017-12",
+        value: asset.latest.value,
+        status: "preliminary",
+      },
+    };
+    const preliminarySeries: UsaManifestSeries = {
+      ...series,
+      freshness: {
+        ...series.freshness,
+        status: series.freshness.status,
+        latest_period: "2017-12",
+        latest_numeric_period: "2017-12",
+        latest_observation_status: "preliminary",
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      <LatestValueGrid asset={preliminaryAsset} series={preliminarySeries} />,
+    );
+    const visible = html.slice(0, html.indexOf('class="chart-details-toggle-content"'));
+
+    expect(visible).toContain("Source Dec 2017");
+    expect(visible).toContain("Preliminary");
+    expect(visible).not.toContain("latest-source-notice");
   });
 
   it("converts every level and absolute delta without changing source-period semantics", () => {

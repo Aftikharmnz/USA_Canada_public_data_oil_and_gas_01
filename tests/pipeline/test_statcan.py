@@ -36,6 +36,12 @@ MOVEMENT_HEADERS = (
     "COORDINATE", "VALUE", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS",
 )
 
+TRANSPORTER_INVENTORY_HEADERS = (
+    "REF_DATE", "GEO", "DGUID", "Inventories", "Mode of transport",
+    "Products", "UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID", "VECTOR",
+    "COORDINATE", "VALUE", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS",
+)
+
 CRUDE_MOVEMENT_PRODUCT = "Crude oil and equivalents"
 
 
@@ -140,6 +146,39 @@ def movement_record(
         "0",
     )
     return dict(zip(MOVEMENT_HEADERS, values, strict=True))
+
+
+def transporter_inventory_record(
+    period: str,
+    *,
+    geography: str,
+    dguid: str,
+    vector: str,
+    coordinate: str,
+    product: str = CRUDE_MOVEMENT_PRODUCT,
+    value: str = "12",
+    status: str = "",
+) -> dict[str, str]:
+    values = (
+        period,
+        geography,
+        dguid,
+        "Closing inventories",
+        "Pipeline",
+        product,
+        "Cubic metres",
+        "72",
+        "units",
+        "0",
+        vector,
+        coordinate,
+        value,
+        status,
+        "",
+        "",
+        "0",
+    )
+    return dict(zip(TRANSPORTER_INVENTORY_HEADERS, values, strict=True))
 
 
 def registry_series(*, geography_ids: tuple[str, ...] = ("ca",)) -> RegistryStatCanSeries:
@@ -274,10 +313,10 @@ class StatCanRegistryTests(unittest.TestCase):
 
     def test_active_registry_has_all_verified_tables_and_carries_classification(self) -> None:
         specs = load_statcan_registry(PROJECT_ROOT / "config/series/canada.json")
-        self.assertEqual(len(specs), 67)
+        self.assertEqual(len(specs), 79)
         self.assertEqual(
             {spec.table.pid for spec in specs},
-            {"25100063", "25100077", "25100081"},
+            {"25100063", "25100075", "25100077", "25100081"},
         )
         self.assertTrue(all(spec.display is not None for spec in specs))
 
@@ -365,6 +404,227 @@ class StatCanRegistryTests(unittest.TestCase):
         self.assertNotIn(
             "can.statcan.crude.refinery_inputs.condensate_pentanes.monthly",
             by_id,
+        )
+
+    def test_active_registry_adds_exact_leaf_and_transporter_inventory_definitions(self) -> None:
+        all_specs = load_statcan_registry(PROJECT_ROOT / "config/series/canada.json")
+        expanded_ids = {
+            "can.statcan.crude.transporter_inventory.closing.monthly",
+            "can.statcan.refined.hgl_rpp.transporter_inventory.closing.monthly",
+            "can.statcan.refined.propane.exports.monthly",
+            "can.statcan.refined.propane.field_production.monthly",
+            "can.statcan.refined.propane.imports.monthly",
+            "can.statcan.refined.propane.net_production.monthly",
+            "can.statcan.refined.residual_fuel_oil.ending_stocks.monthly",
+            "can.statcan.refined.residual_fuel_oil.exports.monthly",
+            "can.statcan.refined.residual_fuel_oil.imports.monthly",
+            "can.statcan.refined.residual_fuel_oil.net_production.monthly",
+            "can.statcan.refined.residual_fuel_oil.product_supplied.monthly",
+            "can.statcan.refined.residual_fuel_oil.stock_change.monthly",
+        }
+        specs = tuple(spec for spec in all_specs if spec.id in expanded_ids)
+        self.assertEqual(len(specs), 12)
+        self.assertEqual(
+            {spec.table.pid for spec in specs},
+            {"25100075", "25100081"},
+        )
+        self.assertEqual(
+            sum(spec.table.pid == "25100081" for spec in specs),
+            10,
+        )
+        self.assertEqual(
+            sum(spec.table.pid == "25100075" for spec in specs),
+            2,
+        )
+
+        by_id = {spec.id: spec for spec in specs}
+        self.assertEqual(set(by_id), expanded_ids)
+        balance_expectations = {
+            "can.statcan.refined.propane.field_production.monthly": (
+                "Propane", "Field production, supply", "propane_field_production"
+            ),
+            "can.statcan.refined.propane.net_production.monthly": (
+                "Propane", "Refinery and blender net production, supply",
+                "refined_provinces_12",
+            ),
+            "can.statcan.refined.propane.imports.monthly": (
+                "Propane", "Imports, supply", "refined_provinces_all"
+            ),
+            "can.statcan.refined.propane.exports.monthly": (
+                "Propane", "Exports, disposition", "refined_provinces_all"
+            ),
+            "can.statcan.refined.residual_fuel_oil.net_production.monthly": (
+                "Residual fuel oil", "Refinery and blender net production, supply",
+                "refined_provinces_12",
+            ),
+            "can.statcan.refined.residual_fuel_oil.imports.monthly": (
+                "Residual fuel oil", "Imports, supply", "refined_provinces_all"
+            ),
+            "can.statcan.refined.residual_fuel_oil.exports.monthly": (
+                "Residual fuel oil", "Exports, disposition", "refined_provinces_all"
+            ),
+            "can.statcan.refined.residual_fuel_oil.product_supplied.monthly": (
+                "Residual fuel oil", "Products supplied, disposition", "national"
+            ),
+            "can.statcan.refined.residual_fuel_oil.ending_stocks.monthly": (
+                "Residual fuel oil", "Ending stocks", "refined_provinces_12"
+            ),
+            "can.statcan.refined.residual_fuel_oil.stock_change.monthly": (
+                "Residual fuel oil", "Stock change, disposition",
+                "refined_provinces_12",
+            ),
+        }
+        for series_id, (product, measure, _profile_id) in balance_expectations.items():
+            self.assertEqual(
+                dict(by_id[series_id].row_filters),
+                {
+                    "Products": product,
+                    "Supply and disposition": measure,
+                    "Unit of measure": "Cubic metres",
+                },
+            )
+            self.assertEqual(by_id[series_id].table.pid, "25100081")
+        propane_field = by_id[
+            "can.statcan.refined.propane.field_production.monthly"
+        ]
+        self.assertEqual(
+            propane_field.source_geography_ids,
+            ("ca", "ca.ab", "ca.bc", "ca.ns", "ca.on", "ca.sk"),
+        )
+        self.assertEqual(
+            propane_field.source_url,
+            "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+        )
+        self.assertEqual(
+            dict(propane_field.row_filters),
+            {
+                "Products": "Propane",
+                "Supply and disposition": "Field production, supply",
+                "Unit of measure": "Cubic metres",
+            },
+        )
+
+        residual_stocks = by_id[
+            "can.statcan.refined.residual_fuel_oil.ending_stocks.monthly"
+        ]
+        self.assertEqual(residual_stocks.source_geography_ids[0], "ca")
+        self.assertEqual(len(residual_stocks.source_geography_ids), 12)
+        self.assertEqual(residual_stocks.display.measure_id, "ending-stocks")
+
+        transporter = by_id[
+            "can.statcan.crude.transporter_inventory.closing.monthly"
+        ]
+        self.assertEqual(transporter.bootstrap_start, "2020-01")
+        self.assertEqual(transporter.table.max_archive_bytes, 2 * 1024 * 1024)
+        self.assertEqual(transporter.table.max_uncompressed_bytes, 16 * 1024 * 1024)
+        self.assertEqual(transporter.table.required_headers, TRANSPORTER_INVENTORY_HEADERS)
+        self.assertEqual(
+            transporter.source_geography_ids,
+            ("ca", "ca.ab", "ca.bc", "ca.mb", "ca.nt", "ca.on", "ca.qc", "ca.sk"),
+        )
+        self.assertEqual(
+            dict(transporter.row_filters),
+            {
+                "Inventories": "Closing inventories",
+                "Mode of transport": "Pipeline",
+                "Products": "Crude oil and equivalents",
+            },
+        )
+        self.assertEqual(
+            dict(transporter.constant_dimensions),
+            {
+                "inventory_position": "Closing inventories",
+                "mode_of_transport": "Pipeline",
+                "source_product": "Crude oil and equivalents",
+            },
+        )
+        refined_transporter = by_id[
+            "can.statcan.refined.hgl_rpp.transporter_inventory.closing.monthly"
+        ]
+        self.assertEqual(
+            dict(refined_transporter.row_filters),
+            {
+                "Inventories": "Closing inventories",
+                "Mode of transport": "Pipeline",
+                "Products": (
+                    "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum "
+                    "Products (RPPs)"
+                ),
+            },
+        )
+        self.assertEqual(refined_transporter.constant_dimensions[0], (
+            "inventory_position", "Closing inventories",
+        ))
+
+    def test_2016_dguid_aliases_and_transporter_dimensions_normalize_exactly(self) -> None:
+        expected_aliases = {
+            "ca": ("Canada", "2016A000011124"),
+            "ca.ab": ("Alberta", "2016A000248"),
+            "ca.bc": ("British Columbia", "2016A000259"),
+            "ca.mb": ("Manitoba", "2016A000246"),
+            "ca.nt": ("Northwest Territories", "2016A000261"),
+            "ca.on": ("Ontario", "2016A000235"),
+            "ca.qc": ("Quebec", "2016A000224"),
+            "ca.sk": ("Saskatchewan", "2016A000247"),
+        }
+        for geography_id, (_, dguid) in expected_aliases.items():
+            self.assertEqual(
+                self.geographies.resolve(dguid)[0],
+                geography_id,
+            )
+
+        active = load_statcan_registry(PROJECT_ROOT / "config/series/canada.json")
+        series = next(
+            spec
+            for spec in active
+            if spec.id == "can.statcan.crude.transporter_inventory.closing.monthly"
+        )
+        rows = tuple(
+            transporter_inventory_record(
+                "2026-05",
+                geography=label,
+                dguid=dguid,
+                vector=f"v{index}",
+                coordinate=f"{index}.1.1",
+            )
+            for index, (_, (label, dguid)) in enumerate(
+                expected_aliases.items(),
+                start=1,
+            )
+        )
+        normalized = normalize_statcan_records(
+            series,
+            rows,
+            self.geographies,
+            retrieved_at=datetime(2026, 8, 10, tzinfo=UTC),
+        )
+        self.assertEqual(len(normalized), 8)
+        national = next(row for row in normalized if row.geography_id == "ca")
+        self.assertEqual(
+            dict(national.dimensions),
+            {
+                "coordinate": "1.1.1",
+                "inventory_position": "Closing inventories",
+                "mode_of_transport": "Pipeline",
+                "source_product": "Crude oil and equivalents",
+                "vector": "v1",
+            },
+        )
+
+    def test_existing_series_observation_keys_keep_only_existing_dimensions(self) -> None:
+        normalized = normalize_statcan_records(
+            registry_series(),
+            (record("2026-05"),),
+            self.geographies,
+            retrieved_at=datetime(2026, 8, 10, tzinfo=UTC),
+        )
+        self.assertEqual(
+            dict(normalized[0].dimensions),
+            {"coordinate": "1.1.1", "vector": "v1"},
+        )
+        self.assertEqual(
+            normalized[0].key,
+            "can.statcan.test.monthly|2026-05|ca|coordinate=1.1.1|vector=v1",
         )
 
     def test_shipping_origin_is_normalized_from_the_source_label(self) -> None:

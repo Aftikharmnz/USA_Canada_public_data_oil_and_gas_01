@@ -124,14 +124,15 @@ describe("Canada country-dashboard hierarchy", () => {
   const promoted = canadaManifestFixture as unknown as CanadaAssetManifest;
   const promotedSeries = availableCanadaSeries(promoted);
 
-  it("maps the promoted manifest to exactly 31 crude and 38 refined series", () => {
-    expect(canadaSegmentOptions(promotedSeries).map((option) => ({
-      id: option.id,
-      count: option.seriesCount,
-    }))).toEqual([
-      { id: "crude", count: 31 },
-      { id: "refined", count: 38 },
-    ]);
+  it("maps every promoted definition into the crude or refined segment", () => {
+    const options = canadaSegmentOptions(promotedSeries);
+    expect(options.map((option) => option.id)).toEqual(["crude", "refined"]);
+    expect(options.find((option) => option.id === "crude")?.seriesCount ?? 0)
+      .toBeGreaterThanOrEqual(31);
+    expect(options.find((option) => option.id === "refined")?.seriesCount ?? 0)
+      .toBeGreaterThanOrEqual(38);
+    expect(options.reduce((count, option) => count + (option.seriesCount ?? 0), 0))
+      .toBe(promotedSeries.length);
   });
 
   it("exposes source-published crude grades and bitumen leaves before their parents", () => {

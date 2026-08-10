@@ -1,12 +1,17 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   buildOriginDestinationModel,
   originDestinationSnapshot,
 } from "../../charts/originDestinationModel";
 import { BARREL_TO_CUBIC_METRES } from "../../lib/units";
-import { originDestinationRankedOption } from "./OriginDestinationPanel";
+import {
+  OriginDestinationPanel,
+  originDestinationRankedOption,
+} from "./OriginDestinationPanel";
 
 const period = "2026-01";
+const previousPeriod = "2025-12";
 const oneKbPerDayMonthlyVolume = 1_000 * BARREL_TO_CUBIC_METRES * 31;
 const model = buildOriginDestinationModel({
   id: "canada.test.pipeline.movements",
@@ -17,13 +22,19 @@ const model = buildOriginDestinationModel({
   modeLabel: "Pipeline",
   origins: [{ id: "ca.ab", label: "Alberta" }],
   destinations: [{ id: "ca.on", label: "Ontario" }],
-  periods: [period],
+  periods: [previousPeriod, period],
   latestPeriod: period,
   routes: [{
     id: "ca.ab-to-ca.on",
     originId: "ca.ab",
     destinationId: "ca.on",
     history: [{
+      period: previousPeriod,
+      year: 2025,
+      slot: 12,
+      value: oneKbPerDayMonthlyVolume / 2,
+      status: "observed",
+    }, {
       period,
       year: 2026,
       slot: 1,
@@ -64,5 +75,59 @@ describe("originDestinationRankedOption monthly-average display", () => {
     expect(kbValue).toBeCloseTo(1, 12);
     expect(barrelValue).toBeCloseTo(1_000, 9);
     expect(barrelValue / kbValue).toBeCloseTo(1_000, 12);
+  });
+
+  it("keeps route coverage and source-boundary warnings visible while collapsing the exact table", () => {
+    const html = renderToStaticMarkup(
+      <OriginDestinationPanel
+        model={model}
+        displayUnit="million_cubic_metres"
+        onDisplayUnitChange={() => undefined}
+        title="Province movements"
+        description="Long route instructions belong in details."
+        sourceDisclosure="This view is pipeline only; unavailable routes are not stale-filled."
+      />,
+    );
+    const hiddenRegionIndex = html.indexOf('class="chart-details-toggle-content"');
+    const visible = html.slice(0, hiddenRegionIndex);
+    const details = html.slice(hiddenRegionIndex);
+
+    expect(visible).toContain("Jan 2026");
+    expect(visible).toContain('aria-label="Movement source period"');
+    expect(visible).toContain('value="2025-12"');
+    expect(visible).toContain("Dec 2025");
+    expect(visible).toContain("Crude oil");
+    expect(visible).toContain("Pipeline");
+    expect(visible).toContain('aria-label="Convert chart values to display unit"');
+    expect(visible).toContain("Gross directions are not netted.");
+    expect(visible).toContain("missing ≠ zero");
+    expect(visible).toContain("pipeline only; overlapping Canada aggregates excluded");
+    expect(visible).not.toContain("1</strong> numeric routes");
+    expect(visible).not.toContain("Long route instructions belong in details.");
+    expect(details).toContain('hidden=""');
+    expect(details).toContain("1</strong> numeric routes");
+    expect(details).toContain("0</strong> declared routes without a numeric value");
+    expect(details).toContain("Long route instructions belong in details.");
+    expect(details).toContain("exact-period route observations");
+    expect(details).toContain("remain distinct from numeric zero");
+    expect(details).toContain("This view is pipeline only");
+    expect(details).not.toContain('aria-label="Movement source period"');
+  });
+
+  it("uses an explicitly selected historical source period", () => {
+    const html = renderToStaticMarkup(
+      <OriginDestinationPanel
+        model={model}
+        initialPeriod={previousPeriod}
+        displayUnit="million_cubic_metres"
+        title="Province movements"
+      />,
+    );
+    const hiddenRegionIndex = html.indexOf('class="chart-details-toggle-content"');
+    const visible = html.slice(0, hiddenRegionIndex);
+
+    expect(visible).toContain('aria-label="Movement source period"');
+    expect(visible).toContain('<option value="2025-12" selected="">Dec 2025</option>');
+    expect(visible).toContain("Crude oil, Pipeline, Dec 2025");
   });
 });

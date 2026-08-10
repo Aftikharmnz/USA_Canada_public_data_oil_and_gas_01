@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-07-28.canada-movements",
+  "registry_version": "2026-08-10.canada-expanded-products-inventories",
   "country_code": "CAN",
   "activation_status": "active",
   "bootstrap_period_start_by_frequency": {"weekly": "2014-01-01", "monthly": "2016-01"},
@@ -56,6 +56,18 @@
       "expected_fields": {"UOM": "Cubic metres", "UOM_ID": "72", "SCALAR_FACTOR": "units", "SCALAR_ID": "0", "DECIMALS": "0"},
       "max_archive_bytes": 8388608,
       "max_uncompressed_bytes": 33554432
+    },
+    {
+      "pid": "25100075",
+      "name": "Inventories of crude oil and petroleum products held by domestic transporters, monthly",
+      "landing_page": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510007501",
+      "wds_url": "https://www150.statcan.gc.ca/t1/wds/rest/getFullTableDownloadCSV/25100075/en",
+      "csv_member": "25100075.csv",
+      "metadata_member": "25100075_MetaData.csv",
+      "required_headers": ["REF_DATE", "GEO", "DGUID", "Inventories", "Mode of transport", "Products", "UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID", "VECTOR", "COORDINATE", "VALUE", "STATUS", "SYMBOL", "TERMINATED", "DECIMALS"],
+      "expected_fields": {"UOM": "Cubic metres", "UOM_ID": "72", "SCALAR_FACTOR": "units", "SCALAR_ID": "0", "DECIMALS": "0"},
+      "max_archive_bytes": 2097152,
+      "max_uncompressed_bytes": 16777216
     }
   ],
   "geography_profiles": {
@@ -85,6 +97,24 @@
         {"level_id": "city", "reason": "Table 25-10-0081-01 does not publish city observations."},
         {"level_id": "census_metropolitan_area", "reason": "Provincial petroleum balances are not allocated to CMAs."},
         {"level_id": "source_region", "reason": "Statistics Canada does not publish a compatible intermediate region for this coordinate."}
+      ]
+    },
+    "propane_field_production": {
+      "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.ns", "ca.on", "ca.sk"],
+      "source_geography_level_ids": ["province_territory", "national"],
+      "unsupported_levels": [
+        {"level_id": "city", "reason": "Table 25-10-0081-02 does not publish propane field production at city or facility level."},
+        {"level_id": "census_metropolitan_area", "reason": "Published propane field production is not allocated to CMAs."},
+        {"level_id": "source_region", "reason": "Statistics Canada does not publish a compatible intermediate region for this coordinate."}
+      ]
+    },
+    "transporter_inventory_regions": {
+      "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.nt", "ca.on", "ca.qc", "ca.sk"],
+      "source_geography_level_ids": ["province_territory", "national"],
+      "unsupported_levels": [
+        {"level_id": "city", "reason": "Table 25-10-0075-01 publishes transporter inventories by province or territory, not by city or terminal."},
+        {"level_id": "census_metropolitan_area", "reason": "Transporter inventories are not allocated to census metropolitan areas."},
+        {"level_id": "source_region", "reason": "No compatible intermediate Canadian region is published for these inventory coordinates."}
       ]
     },
     "ethanol_production": {
@@ -549,6 +579,80 @@
       "row_filters": {"Supply and disposition": "Ending stocks", "Products": "Kerosene-type jet fuel", "Unit of measure": "Cubic metres"},
       "display": {"dashboard_group": "canada_refined_products", "product_family_id": "jet-fuel", "product_family_label": "Jet fuel", "product_id": "kerosene-type-jet-fuel", "product_label": "Kerosene-type jet fuel", "measure_id": "ending-stocks", "measure_label": "Ending stocks", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["kerosene-type-jet-fuel", "petroleum-stocks"], "display_order": 650},
       "caveats": ["Ending stocks are month-end levels and all-suppressed provinces remain unavailable."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.propane.field_production.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "propane_field_production", "name": "Propane field production", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "propane_field_production", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Field production, supply", "Products": "Propane", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "hydrocarbon-gas-liquids", "product_family_label": "Hydrocarbon gas liquids", "product_id": "propane", "product_label": "Propane", "measure_id": "field-production", "measure_label": "Field production", "component_role": "component", "parent_product_id": "natural-gas-liquids", "reference_term_ids": ["propane"], "display_order": 660},
+      "caveats": ["This is the source-published propane field-production leaf. Dimension-declared geographies with no numeric facts remain unavailable rather than zero-filled."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.propane.net_production.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "propane_refinery_net_production", "name": "Propane refinery and blender net production", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_12", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Refinery and blender net production, supply", "Products": "Propane", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "hydrocarbon-gas-liquids", "product_family_label": "Hydrocarbon gas liquids", "product_id": "propane", "product_label": "Propane", "measure_id": "net-production", "measure_label": "Refinery/blender net production", "component_role": "component", "parent_product_id": "natural-gas-liquids", "reference_term_ids": ["propane", "refinery-production"], "display_order": 670},
+      "caveats": ["Net refinery/blender production can be negative and must not be clipped; suppressed provincial values remain unavailable."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.propane.imports.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "propane_imports", "name": "Propane imports", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_all", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Imports, supply", "Products": "Propane", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "hydrocarbon-gas-liquids", "product_family_label": "Hydrocarbon gas liquids", "product_id": "propane", "product_label": "Propane", "measure_id": "imports", "measure_label": "Imports", "component_role": "component", "parent_product_id": "natural-gas-liquids", "reference_term_ids": ["propane", "petroleum-imports"], "display_order": 680},
+      "caveats": ["Provincial imports are source-published balance geographies, not inferred terminal destinations."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.propane.exports.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "propane_exports", "name": "Propane exports", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_all", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Exports, disposition", "Products": "Propane", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "hydrocarbon-gas-liquids", "product_family_label": "Hydrocarbon gas liquids", "product_id": "propane", "product_label": "Propane", "measure_id": "exports", "measure_label": "Exports", "component_role": "component", "parent_product_id": "natural-gas-liquids", "reference_term_ids": ["propane", "petroleum-exports"], "display_order": 690},
+      "caveats": ["Provincial exports are source-published balance geographies and are not reconstructed from the Canada total."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.residual_fuel_oil.net_production.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "residual_fuel_oil_net_production", "name": "Residual fuel oil refinery and blender net production", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_12", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Refinery and blender net production, supply", "Products": "Residual fuel oil", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "fuel-oils", "product_family_label": "Fuel oils", "product_id": "residual-fuel-oil", "product_label": "Residual fuel oil", "measure_id": "net-production", "measure_label": "Refinery/blender net production", "component_role": "component", "parent_product_id": "finished-petroleum-products", "reference_term_ids": ["residual-fuel-oil", "refinery-production"], "display_order": 800},
+      "caveats": ["Net refinery/blender production can be negative and must not be clipped; this leaf overlaps broader refined-product totals."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.residual_fuel_oil.imports.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "residual_fuel_oil_imports", "name": "Residual fuel oil imports", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_all", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Imports, supply", "Products": "Residual fuel oil", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "fuel-oils", "product_family_label": "Fuel oils", "product_id": "residual-fuel-oil", "product_label": "Residual fuel oil", "measure_id": "imports", "measure_label": "Imports", "component_role": "component", "parent_product_id": "finished-petroleum-products", "reference_term_ids": ["residual-fuel-oil", "petroleum-imports"], "display_order": 810},
+      "caveats": ["Provincial imports are source-published balance geographies, not inferred terminal destinations."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.residual_fuel_oil.exports.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "residual_fuel_oil_exports", "name": "Residual fuel oil exports", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_all", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Exports, disposition", "Products": "Residual fuel oil", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "fuel-oils", "product_family_label": "Fuel oils", "product_id": "residual-fuel-oil", "product_label": "Residual fuel oil", "measure_id": "exports", "measure_label": "Exports", "component_role": "component", "parent_product_id": "finished-petroleum-products", "reference_term_ids": ["residual-fuel-oil", "petroleum-exports"], "display_order": 820},
+      "caveats": ["Provincial exports are source-published balance geographies and are not reconstructed from the Canada total."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.residual_fuel_oil.product_supplied.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "residual_fuel_oil_product_supplied", "name": "Residual fuel oil products supplied", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "national", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Products supplied, disposition", "Products": "Residual fuel oil", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "fuel-oils", "product_family_label": "Fuel oils", "product_id": "residual-fuel-oil", "product_label": "Residual fuel oil", "measure_id": "product-supplied", "measure_label": "Products supplied (implied demand)", "component_role": "component", "parent_product_id": "finished-petroleum-products", "reference_term_ids": ["residual-fuel-oil", "statcan-products-supplied"], "display_order": 830},
+      "caveats": ["Products supplied is a balance/disappearance proxy, not measured end-user consumption, and this coordinate is published only for Canada."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.residual_fuel_oil.ending_stocks.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "residual_fuel_oil_stocks", "name": "Residual fuel oil ending stocks", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_12", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Ending stocks", "Products": "Residual fuel oil", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "fuel-oils", "product_family_label": "Fuel oils", "product_id": "residual-fuel-oil", "product_label": "Residual fuel oil", "measure_id": "ending-stocks", "measure_label": "Ending stocks", "component_role": "component", "parent_product_id": "finished-petroleum-products", "reference_term_ids": ["residual-fuel-oil", "petroleum-stocks"], "display_order": 840},
+      "caveats": ["Ending stocks are month-end levels, not monthly flows, and all-suppressed provinces remain unavailable."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.residual_fuel_oil.stock_change.monthly", "provider_id": "statcan", "table_pid": "25100081", "metric_id": "residual_fuel_oil_stock_change", "name": "Residual fuel oil stock change", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "refined_provinces_12", "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102",
+      "row_filters": {"Supply and disposition": "Stock change, disposition", "Products": "Residual fuel oil", "Unit of measure": "Cubic metres"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "fuel-oils", "product_family_label": "Fuel oils", "product_id": "residual-fuel-oil", "product_label": "Residual fuel oil", "measure_id": "stock-change", "measure_label": "Stock change", "component_role": "component", "parent_product_id": "finished-petroleum-products", "reference_term_ids": ["residual-fuel-oil", "statcan-stock-change"], "display_order": 850},
+      "caveats": ["Stock change is a signed monthly flow and is not an ending-inventory level."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.crude.transporter_inventory.closing.monthly", "provider_id": "statcan", "table_pid": "25100075", "metric_id": "crude_equivalents_pipeline_transporter_closing_inventory", "name": "Crude oil and equivalents closing inventory held by pipeline transporters", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "transporter_inventory_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Inventories": "Closing inventories", "Mode of transport": "Pipeline", "Products": "Crude oil and equivalents"},
+      "constant_dimensions": {"inventory_position": "Inventories", "mode_of_transport": "Mode of transport", "source_product": "Products"},
+      "display": {"dashboard_group": "canada_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil", "product_id": "crude-oil-and-equivalents", "product_label": "Crude oil & equivalents", "measure_id": "transporter-closing-inventory", "measure_label": "Pipeline transporter closing inventory", "component_role": "contextual", "parent_product_id": null, "reference_term_ids": ["petroleum-stocks"], "display_order": 690},
+      "caveats": ["This is a month-end stock held by domestic pipeline transporters, not total Canadian commercial inventory, storage capacity, or a movement flow. The broad source product includes crude oil and equivalents."], "activation_status": "active"
+    },
+    {
+      "id": "can.statcan.refined.hgl_rpp.transporter_inventory.closing.monthly", "provider_id": "statcan", "table_pid": "25100075", "metric_id": "hgl_rpp_pipeline_transporter_closing_inventory", "name": "Combined HGL and refined petroleum products closing inventory held by pipeline transporters", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "transporter_inventory_regions", "bootstrap_period_start": "2020-01",
+      "row_filters": {"Inventories": "Closing inventories", "Mode of transport": "Pipeline", "Products": "Hydrocarbon Gas Liquids (HGLs) and Refined Petroleum Products (RPPs)"},
+      "constant_dimensions": {"inventory_position": "Inventories", "mode_of_transport": "Mode of transport", "source_product": "Products"},
+      "display": {"dashboard_group": "canada_refined_products", "product_family_id": "petroleum-inventories", "product_family_label": "Petroleum inventories", "product_id": "hgl-rpp-transporter-inventory", "product_label": "HGL + refined products transporter inventory", "measure_id": "transporter-closing-inventory", "measure_label": "Pipeline transporter closing inventory", "component_role": "contextual", "parent_product_id": null, "reference_term_ids": ["petroleum-stocks"], "display_order": 860},
+      "caveats": ["This is a month-end stock held by domestic pipeline transporters, not total Canadian commercial inventory, storage capacity, or a movement flow. Statistics Canada combines HGLs and refined products, so no gasoline, distillate, jet-fuel, propane, or other component is inferred. Northwest Territories cells can be unavailable and are never zero-filled."], "activation_status": "active"
     },
     {
       "id": "can.statcan.crude.pipeline_movements.to_canada.monthly", "provider_id": "statcan", "table_pid": "25100077", "metric_id": "crude_equivalents_pipeline_movement_to_canada", "name": "Crude oil and equivalents pipeline movements to Canada", "unit": "cubic_metres", "frequency": "monthly", "geography_profile_id": "movement_canadian_regions", "bootstrap_period_start": "2020-01",

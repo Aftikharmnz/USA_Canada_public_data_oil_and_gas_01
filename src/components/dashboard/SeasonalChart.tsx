@@ -37,7 +37,9 @@ import type {
   UsaChartAsset,
   UsaManifestSeries,
 } from "../../types/energyAssets";
+import { ChartDetailsToggle } from "./ChartDetailsToggle";
 import { ChartGeographyControl } from "./ChartGeographyControl";
+import { ChartMicroSummary } from "./ChartMicroSummary";
 import { DisplayUnitControl } from "./DisplayUnitControl";
 import type { RegionSelectionMode } from "./RegionSelectionControl";
 
@@ -59,6 +61,17 @@ interface SeasonalChartProps {
   /** Period-normalized values for plotting only; forecast diagnostics stay in source units. */
   forecastDisplayPoints?: ForecastPoint[];
   forecastNotice?: string;
+}
+
+function selectedLocationLabel(
+  series: UsaManifestSeries,
+  geographyId: string,
+  geographyIds?: readonly string[],
+): string {
+  const selectedIds = geographyIds?.length ? geographyIds : [geographyId];
+  return selectedIds
+    .map((id) => series.geographies.find((geography) => geography.geography_id === id)?.label ?? id)
+    .join(" + ");
 }
 
 const YEAR_COLORS = ["#7d91a0", "#d98537", "#087f6d"];
@@ -347,10 +360,32 @@ export function buildSeasonalEChartsOption(
   forecast?: ForecastAsset,
   intervalLevel: PredictionIntervalLevel = 90,
   displayUnit?: DisplayUnitId,
+  presentation: { density?: "standard" | "compact" } = {},
 ): EChartsOption {
+  const compact = presentation.density === "compact";
   const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, displayUnit);
   const model = buildSeasonalChartModel(asset, forecast);
-  const labels = model.slots.map((slot) => slotLabel(slot, model.frequency));
+  const weekly = model.frequency.toLowerCase().startsWith("week");
+  const newestPlottedYear = weekly
+    ? Math.max(
+        ...model.series.map((year) => year.year),
+        ...model.forecastSeries.map((year) => year.year),
+      )
+    : null;
+  const newestYearPeriodsBySlot = new Map<number, string>();
+  if (newestPlottedYear !== null && Number.isFinite(newestPlottedYear)) {
+    for (const point of model.series.find((year) => year.year === newestPlottedYear)?.points ?? []) {
+      newestYearPeriodsBySlot.set(point.slot, point.period);
+    }
+    for (const point of model.forecastSeries.find((year) => year.year === newestPlottedYear)?.points ?? []) {
+      newestYearPeriodsBySlot.set(point.slot, point.target_period);
+    }
+  }
+  const labels = model.slots.map((slot) => slotLabel(
+    slot,
+    model.frequency,
+    newestYearPeriodsBySlot.get(slot),
+  ));
   const baseline = model.slots.map((slot) => model.baselineBySlot.get(slot));
   const hasBaseline = baseline.some(Boolean);
   const intervalKey = String(intervalLevel) as PredictionIntervalKey;
@@ -364,6 +399,9 @@ export function buildSeasonalEChartsOption(
   const forecastDescription = forecast && model.forecastSeries.length
     ? ` Dashed lines are forecasts from ${formatPeriod(forecast.origin.period)} with a selected ${intervalLevel} percent empirical prediction interval.`
     : "";
+  const observedDescription = hasBaseline
+    ? "Recent calendar years are compared with historical minimum, maximum, interquartile range, median, and mean."
+    : "Recent calendar years are shown on a seasonal axis. Historical seasonal bands are unavailable for this series.";
 
   const forecastChartSeries = model.forecastSeries.flatMap((forecastYear, forecastIndex) => {
     const pointsBySlot = new Map(forecastYear.points.map((point) => [point.slot, point]));
@@ -442,15 +480,21 @@ export function buildSeasonalEChartsOption(
     aria: {
       enabled: true,
       decal: { show: true },
-      description: `${seriesTitle}. Three recent years compared with historical minimum, maximum, interquartile range, median, and mean.${forecastDescription}`,
+      description: `${seriesTitle}. ${observedDescription}${forecastDescription}${weekly
+        ? " Weekly axis labels retain the ISO week number and add the newest plotted year's exact week-ending date when available; hover details show each year's exact date."
+        : ""}`,
     },
-    grid: { left: 62, right: 26, top: 44, bottom: 78, containLabel: false },
+    grid: compact
+      ? { left: 52, right: 14, top: 38, bottom: weekly ? 42 : 34, containLabel: false }
+      : { left: 62, right: 26, top: 44, bottom: weekly ? 86 : 78, containLabel: false },
     legend: {
       type: "scroll",
       data: legendNames,
       top: 0,
       left: 0,
-      textStyle: { color: "#476168", fontSize: 11 },
+      itemWidth: compact ? 14 : undefined,
+      itemHeight: compact ? 7 : undefined,
+      textStyle: { color: "#476168", fontSize: compact ? 9 : 11 },
       selected: { Mean: false },
     },
     tooltip: {
@@ -459,7 +503,7 @@ export function buildSeasonalEChartsOption(
       axisPointer: { type: "line", lineStyle: { color: "#17343a", type: "dashed" } },
       backgroundColor: "rgba(11, 49, 59, 0.97)",
       borderWidth: 0,
-      textStyle: { color: "#e9f1f2", fontSize: 12 },
+      textStyle: { color: "#e9f1f2", fontSize: compact ? 10 : 12 },
       formatter: (params: unknown) => {
         const index = tooltipDataIndex(params);
         if (index === null) return "";
@@ -469,7 +513,13 @@ export function buildSeasonalEChartsOption(
         const recentRows = model.series.map((year, yearIndex) => {
           const point = year.points.find((item) => item.slot === slot);
           const color = YEAR_COLORS[yearIndex % YEAR_COLORS.length];
-          return `<div class="echarts-tooltip-row"><span><i style="background:${color}"></i>${year.year}</span><b>${escapeHtml(formattedDisplayValue(point?.value ?? null, asset.unit, resolvedDisplayUnit))}</b></div>`;
+          const status = point && point.status !== "observed"
+            ? ` · ${point.status.replaceAll("_", " ")}`
+            : "";
+          const periodLabel = weekly && point
+            ? `${year.year} · ${formatPeriod(point.period)}`
+            : String(year.year);
+          return `<div class="echarts-tooltip-row"><span><i style="background:${color}"></i>${escapeHtml(`${periodLabel}${status}`)}</span><b>${escapeHtml(formattedDisplayValue(point?.value ?? null, asset.unit, resolvedDisplayUnit))}</b></div>`;
         }).join("");
         const forecastRows = model.forecastSeries.flatMap((forecastYear, forecastIndex) => {
           const point = forecastYear.points.find((item) => item.slot === slot);
@@ -491,7 +541,10 @@ export function buildSeasonalEChartsOption(
         ].map(([label, value]) => `<div class="echarts-tooltip-row"><span>${label}</span><b>${escapeHtml(formattedDisplayValue(value as number, asset.unit, resolvedDisplayUnit))}</b></div>`).join("") : "";
         const baselineFooter = band ? `<small>Historical baseline n=${band.count}</small>` : "";
         const separator = forecastRows || bandRows ? "<hr>" : "";
-        return `<div class="echarts-tooltip"><strong>${escapeHtml(slotLabel(slot, model.frequency))}</strong>${recentRows}${separator}${forecastRows}${forecastRows && bandRows ? "<hr>" : ""}${bandRows}${baselineFooter}</div>`;
+        const weeklyDateNote = weekly
+          ? "<small>Exact week-ending date shown for each year</small>"
+          : "";
+        return `<div class="echarts-tooltip"><strong>${escapeHtml(slotLabel(slot, model.frequency))}</strong>${weeklyDateNote}${recentRows}${separator}${forecastRows}${forecastRows && bandRows ? "<hr>" : ""}${bandRows}${baselineFooter}</div>`;
       },
     },
     xAxis: {
@@ -502,8 +555,9 @@ export function buildSeasonalEChartsOption(
       axisTick: { show: false },
       axisLabel: {
         color: "#71858a",
-        fontSize: 11,
-        interval: model.frequency.toLowerCase().startsWith("week") ? 3 : 0,
+        fontSize: compact ? 9 : 11,
+        lineHeight: compact ? 11 : 13,
+        interval: weekly ? (compact ? 7 : 3) : 0,
       },
     },
     yAxis: {
@@ -512,29 +566,38 @@ export function buildSeasonalEChartsOption(
       max: numericDisplayValue(model.yMax, asset.unit, resolvedDisplayUnit) ?? model.yMax,
       name: displayUnitLabel(asset.unit, resolvedDisplayUnit),
       nameLocation: "end",
-      nameTextStyle: { color: "#71858a", fontSize: 10, fontWeight: 700 },
+      nameTextStyle: { color: "#71858a", fontSize: compact ? 9 : 10, fontWeight: 700 },
       axisLabel: {
         color: "#71858a",
-        fontSize: 11,
+        fontSize: compact ? 9 : 11,
         formatter: (value: number) => axisDisplayValue(value, resolvedDisplayUnit),
       },
       splitLine: { lineStyle: { color: "#e3eae8" } },
     },
-    dataZoom: [
-      { type: "inside", xAxisIndex: 0, filterMode: "none", zoomOnMouseWheel: "shift", moveOnMouseMove: true },
-      {
-        type: "slider",
+    dataZoom: compact
+      ? [{
+        type: "inside",
         xAxisIndex: 0,
         filterMode: "none",
-        height: 18,
-        bottom: 12,
-        borderColor: "#d5dfdb",
-        backgroundColor: "#f3f6f4",
-        fillerColor: "rgba(11,124,104,0.12)",
-        handleStyle: { color: "#0b7c68", borderColor: "#0b7c68" },
-        textStyle: { color: "#71858a", fontSize: 10 },
-      },
-    ],
+        zoomOnMouseWheel: "shift",
+        moveOnMouseMove: true,
+      }]
+      : [
+        { type: "inside", xAxisIndex: 0, filterMode: "none", zoomOnMouseWheel: "shift", moveOnMouseMove: true },
+        {
+          type: "slider",
+          xAxisIndex: 0,
+          filterMode: "none",
+          height: 18,
+          bottom: 12,
+          showDetail: false,
+          borderColor: "#d5dfdb",
+          backgroundColor: "#f3f6f4",
+          fillerColor: "rgba(11,124,104,0.12)",
+          handleStyle: { color: "#0b7c68", borderColor: "#0b7c68" },
+          textStyle: { color: "#71858a", fontSize: 10 },
+        },
+      ],
     series: [
       {
         name: "__range_base",
@@ -858,9 +921,11 @@ export function SeasonalChart({
 }: SeasonalChartProps) {
   const [intervalLevel, setIntervalLevel] = useState<PredictionIntervalLevel>(90);
   const [viewMode, setViewMode] = useState<SeasonalViewMode>("seasonal");
+  const [localDisplayUnit, setLocalDisplayUnit] = useState<DisplayUnitId>();
   const intervalControlId = useId();
   const viewControlId = useId();
-  const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, displayUnit);
+  const requestedDisplayUnit = localDisplayUnit ?? displayUnit;
+  const resolvedDisplayUnit = resolveDisplayUnit(asset.unit, requestedDisplayUnit);
   const chartForecast = useMemo(
     () => forecast && forecastDisplayPoints
       ? { ...forecast, points: forecastDisplayPoints }
@@ -868,7 +933,7 @@ export function SeasonalChart({
     [forecast, forecastDisplayPoints],
   );
   const forecastDiagnosticsDisplayUnit = forecast
-    ? resolveDisplayUnit(forecast.unit, displayUnit)
+    ? resolveDisplayUnit(forecast.unit, requestedDisplayUnit)
     : null;
   const forecastSourceDomainNotice = forecast && forecast.unit !== asset.unit
     ? `Model selection, directional accuracy, and backtest error metrics remain in the source monthly ${getSourceUnitLabel(forecast.unit)} domain; the public forecast asset does not contain the dated evaluation errors needed to recompute them in a daily-rate scale.`
@@ -914,87 +979,106 @@ export function SeasonalChart({
   const chartAriaLabel = forecast
     ? `${series.title} seasonal chart with observed years, ${forecast.model?.label ?? "statistical"} forecasts, and a selected ${intervalLevel}% prediction interval. Interactive legend, hover details, and horizontal zoom are available.`
     : `${series.title} seasonal chart. Interactive legend, hover details, and horizontal zoom are available.`;
-
-  return (
-    <section className="analysis-panel seasonal-panel" aria-labelledby="seasonal-title">
-      <div className="analysis-panel-heading">
-        <div>
-          <p className="section-kicker">Seasonal history + forecast</p>
-          <h2 id="seasonal-title">Observed values and statistical projection</h2>
-          <p>{baselineDescription}</p>
+  const locationLabel = selectedLocationLabel(series, geographyId, geographyIds);
+  const changeDisplayUnit = (unit: DisplayUnitId) => {
+    if (onDisplayUnitChange) onDisplayUnitChange(unit);
+    else setLocalDisplayUnit(unit);
+  };
+  const chartOptions = (
+    <>
+      <ChartGeographyControl
+        series={series}
+        geographyId={geographyId}
+        onGeographyChange={onGeographyChange}
+        geographyIds={geographyIds}
+        regionMode={regionMode}
+        onGeographiesChange={onGeographiesChange}
+        onRegionModeChange={onRegionModeChange}
+        geographyLevelLabel={geographyLevelLabel}
+        regionLabel={regionLabel}
+        compact
+        chartLabel={`${series.title} seasonal history and forecast`}
+      />
+      <p className="chart-footnote">{baselineDescription}</p>
+      <fieldset className="chart-view-control">
+        <legend>Chart view</legend>
+        <div role="group" aria-label="How this series is drawn">
+          {viewModes.map((mode) => (
+            <label key={mode.id} title={mode.description}>
+              <input
+                type="radio"
+                name={`${viewControlId}-chart-view`}
+                value={mode.id}
+                checked={viewMode === mode.id}
+                onChange={() => setViewMode(mode.id)}
+              />
+              <span>{mode.label}</span>
+            </label>
+          ))}
         </div>
-        <div className="seasonal-heading-controls">
-          <ChartGeographyControl
-            series={series}
-            geographyId={geographyId}
-            onGeographyChange={onGeographyChange}
-            geographyIds={geographyIds}
-            regionMode={regionMode}
-            onGeographiesChange={onGeographiesChange}
-            onRegionModeChange={onRegionModeChange}
-            geographyLevelLabel={geographyLevelLabel}
-            regionLabel={regionLabel}
-            compact
-            chartLabel="Seasonal history and forecast"
-          />
-          {resolvedDisplayUnit && onDisplayUnitChange ? (
-            <DisplayUnitControl
-              sourceUnit={asset.unit}
-              value={resolvedDisplayUnit}
-              onChange={onDisplayUnitChange}
-              compact
-            />
-          ) : null}
-          <fieldset className="chart-view-control">
-            <legend>Chart view</legend>
-            <div role="group" aria-label="How this series is drawn">
-              {viewModes.map((mode) => (
-                <label key={mode.id} title={mode.description}>
+      </fieldset>
+      {forecast && viewMode === "seasonal" ? (
+        <>
+          <fieldset className="forecast-interval-control">
+            <legend>Prediction interval</legend>
+            <div>
+              {INTERVAL_LEVELS.map((level) => (
+                <label key={level}>
                   <input
                     type="radio"
-                    name={`${viewControlId}-chart-view`}
-                    value={mode.id}
-                    checked={viewMode === mode.id}
-                    onChange={() => setViewMode(mode.id)}
+                    name={`${intervalControlId}-prediction-interval`}
+                    value={level}
+                    checked={intervalLevel === level}
+                    onChange={() => setIntervalLevel(level)}
                   />
-                  <span>{mode.label}</span>
+                  <span>{level}%</span>
                 </label>
               ))}
             </div>
+            <output aria-live="polite">Showing {intervalLevel}% prediction interval</output>
           </fieldset>
-          {forecast && viewMode === "seasonal" ? (
-            <fieldset className="forecast-interval-control">
-              <legend>Prediction interval</legend>
-              <div>
-                {INTERVAL_LEVELS.map((level) => (
-                  <label key={level}>
-                    <input
-                      type="radio"
-                      name={`${intervalControlId}-prediction-interval`}
-                      value={level}
-                      checked={intervalLevel === level}
-                      onChange={() => setIntervalLevel(level)}
-                    />
-                    <span>{level}%</span>
-                  </label>
-                ))}
-              </div>
-              <output aria-live="polite">Showing {intervalLevel}% prediction interval</output>
-            </fieldset>
+          <ForecastDiagnostics
+            forecast={forecast}
+            intervalLevel={intervalLevel}
+            displayUnit={forecastDiagnosticsDisplayUnit}
+            sourceDomainNotice={forecastSourceDomainNotice}
+          />
+        </>
+      ) : null}
+    </>
+  );
+
+  return (
+    <section className="analysis-panel seasonal-panel graph-first-panel" aria-labelledby="seasonal-title">
+      <div className="analysis-panel-heading graph-first-heading">
+        <div className="graph-first-title">
+          <p className="section-kicker">Seasonal history + forecast</p>
+          <h2 id="seasonal-title">{series.title}</h2>
+          <p className="graph-first-location">
+            {locationLabel} · {viewModes.find((mode) => mode.id === viewMode)?.label}
+          </p>
+        </div>
+        <div className="seasonal-heading-controls graph-first-actions">
+          {resolvedDisplayUnit ? (
+            <DisplayUnitControl
+              sourceUnit={asset.unit}
+              value={resolvedDisplayUnit}
+              onChange={changeDisplayUnit}
+              compact
+              micro
+            />
           ) : null}
         </div>
       </div>
 
       {viewMode === "seasonal" && forecastNotice ? <p className="forecast-notice" role="status">{forecastNotice}</p> : null}
-      {viewMode === "seasonal" && forecast ? (
-        <ForecastDiagnostics
-          forecast={forecast}
-          intervalLevel={intervalLevel}
-          displayUnit={forecastDiagnosticsDisplayUnit}
-          sourceDomainNotice={forecastSourceDomainNotice}
-        />
-      ) : null}
 
+      <div className="chart-stage">
+        <ChartMicroSummary
+          asset={asset}
+          series={series}
+          displayUnit={resolvedDisplayUnit ?? undefined}
+        />
       {viewMode === "changes" ? (
         changeModel.points.length ? (
           <>
@@ -1003,6 +1087,11 @@ export function SeasonalChart({
               variant="changes"
               ariaLabel={`${series.title}. ${changeLabels.title}. Bars show period changes and the line shows the observed level on a second axis. Interactive hover and horizontal zoom are available.`}
             />
+            <ChartDetailsToggle
+              className="seasonal-methodology-details"
+              summary="Chart options, diagnostics, and methodology"
+            >
+            {chartOptions}
             <p className="chart-footnote">
               {inventoryLevel
                 ? "Bars above zero are stock builds; bars below zero are draws."
@@ -1048,16 +1137,25 @@ export function SeasonalChart({
                 </table>
               </div>
             </details>
+            </ChartDetailsToggle>
           </>
         ) : (
-          <p className="insufficient-message">
-            No two consecutive numeric source periods are available, so no period-over-period
-            change can be computed.
-          </p>
+          <>
+            <p className="insufficient-message">
+              No two consecutive numeric source periods are available, so no period-over-period
+              change can be computed.
+            </p>
+            <ChartDetailsToggle summary="Chart options">{chartOptions}</ChartDetailsToggle>
+          </>
         )
       ) : model.slots.length ? (
         <>
           <EChartsCanvas option={option} ariaLabel={chartAriaLabel} variant="seasonal" />
+          <ChartDetailsToggle
+            className="seasonal-methodology-details"
+            summary="Chart options, diagnostics, and methodology"
+          >
+          {chartOptions}
           <p className="chart-footnote">
             Solid lines are observed values; dashed lines are forecasts. The forecast shading is an empirical prediction interval,
             not certainty or a guarantee. Hover for exact values. Missing observations are not zero-filled.
@@ -1072,7 +1170,11 @@ export function SeasonalChart({
               const band = point ? model.baselineBySlot.get(point.slot) : undefined;
               return (
                 <p key={year.year}>
-                  <strong>{year.year}:</strong> {point ? `${formattedDisplayValue(point.value, asset.unit, resolvedDisplayUnit)} in ${slotLabel(point.slot, asset.frequency)}` : "no usable observation"}
+                  <strong>{year.year}:</strong> {point
+                    ? `${formattedDisplayValue(point.value, asset.unit, resolvedDisplayUnit)} ${asset.frequency.toLowerCase().startsWith("week")
+                      ? `on ${formatPeriod(point.period)} (${slotLabel(point.slot, asset.frequency)})`
+                      : `in ${slotLabel(point.slot, asset.frequency)}`}`
+                    : "no usable observation"}
                   {band ? `; historical median ${formattedDisplayValue(band.median, asset.unit, resolvedDisplayUnit)} and range ${formattedDisplayValue(band.min, asset.unit, resolvedDisplayUnit)}–${formattedDisplayValue(band.max, asset.unit, resolvedDisplayUnit)}.` : "."}
                 </p>
               );
@@ -1113,10 +1215,15 @@ export function SeasonalChart({
               </div>
             </details>
           ) : null}
+          </ChartDetailsToggle>
         </>
       ) : (
-        <p className="insufficient-message">The validated asset does not yet contain chartable observed or forecast values.</p>
+        <>
+          <p className="insufficient-message">The validated asset does not yet contain chartable observed or forecast values.</p>
+          <ChartDetailsToggle summary="Chart options">{chartOptions}</ChartDetailsToggle>
+        </>
       )}
+      </div>
     </section>
   );
 }

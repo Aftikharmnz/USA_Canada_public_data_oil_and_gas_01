@@ -66,6 +66,45 @@ class ValidationTests(unittest.TestCase):
         issues = find_embedded_secrets({"api_key": "replace-me-with-a-real-secret-value"})
         self.assertEqual(issues[0].code, "embedded_secret")
 
+    def test_all_monthly_crude_balance_definitions_authorize_exact_padd_sums(self) -> None:
+        cohort_ids = {
+            "usa.eia.crude.ending_stocks.monthly",
+            "usa.eia.crude.stock_change.monthly",
+            "usa.eia.crude.imports.monthly",
+            "usa.eia.crude.exports.monthly",
+            "usa.eia.crude.refinery_inputs.monthly",
+            "usa.eia.crude.product_supplied.monthly",
+            "usa.eia.crude.supply_adjustment.monthly",
+            "usa.eia.crude.net_receipts.monthly",
+            "usa.eia.crude.transfers_to_supply.monthly",
+        }
+        aggregation = json.loads(
+            (PROJECT_ROOT / "config/aggregation/custom-geography.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        usa_padd_policy = next(
+            policy for policy in aggregation["policies"]
+            if policy["country"] == "usa" and policy["level_id"] == "padd"
+        )
+        self.assertTrue(cohort_ids.issubset(set(usa_padd_policy["series_ids"])))
+        self.assertEqual(usa_padd_policy["rule"], "sum")
+        self.assertEqual(usa_padd_policy["required_coverage"], 1.0)
+
+        registry = json.loads(
+            (PROJECT_ROOT / "config/series/usa.json").read_text(encoding="utf-8")
+        )
+        by_id = {definition["id"]: definition for definition in registry["series"]}
+        self.assertEqual(cohort_ids, cohort_ids.intersection(by_id))
+        for series_id in cohort_ids:
+            definition = by_id[series_id]
+            self.assertEqual(definition["activation_status"], "active")
+            self.assertEqual(definition["aggregation_rule"]["kind"], "sum")
+            self.assertIn(
+                "padd",
+                definition["geography_availability"]["source_geography_level_ids"],
+            )
+
     def test_phase_one_registries_are_universal_and_secret_free(self) -> None:
         allowed_rules = {"sum", "ratio_of_sums", "weighted_average", "not_aggregatable"}
         geography_by_country = {}

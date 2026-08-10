@@ -8,3 +8,4 @@ ADRs capture durable choices and their tradeoffs. Status values are `proposed`, 
 - [0004 — Precomputed chart assets](0004-precomputed-chart-assets.md)
 - [0005 — Registered browser-side regional combinations](0005-registered-browser-region-combinations.md)
 - [0006 — Registered monthly-average rate display](0006-registered-monthly-average-rate-display.md)
+- [0007 — Deterministic sharded canonical generation storage](0007-sharded-canonical-generation-storage.md)

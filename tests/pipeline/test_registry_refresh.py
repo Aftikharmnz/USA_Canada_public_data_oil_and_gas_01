@@ -82,11 +82,11 @@ class RegistryTests(unittest.TestCase):
             "usa.eia.refined.total_petroleum_products.padd_movements.monthly",
             "usa.eia.refinery.utilization.weekly",
         }
-        self.assertEqual(len(active_ids), 69)
+        self.assertEqual(len(active_ids), 78)
         self.assertTrue(core_ids.issubset(active_ids))
 
         classified = [item for item in self.series if item.display is not None]
-        self.assertEqual(len(classified), 66)
+        self.assertEqual(len(classified), 75)
         self.assertTrue(
             all(
                 item.display.dashboard_group in {"refined_products", "usa_crude"}
@@ -98,11 +98,11 @@ class RegistryTests(unittest.TestCase):
             for item in classified
             if item.display.dashboard_group == "refined_products"
         ]
-        crude_weekly = [
+        crude = [
             item for item in classified if item.display.dashboard_group == "usa_crude"
         ]
         self.assertEqual(len(refined), 56)
-        self.assertEqual(len(crude_weekly), 10)
+        self.assertEqual(len(crude), 19)
         self.assertEqual(
             {family: sum(item.display.product_family_id == family for item in refined)
              for family in (
@@ -241,6 +241,129 @@ class RegistryTests(unittest.TestCase):
             total_product_movements.source_geography_ids,
             "An absent official total-products corridor must not be synthesized as zero.",
         )
+
+    def test_active_monthly_crude_balance_cohort_pins_exact_source_contract(self) -> None:
+        cohort_ids = {
+                "usa.eia.crude.ending_stocks.monthly",
+                "usa.eia.crude.stock_change.monthly",
+                "usa.eia.crude.imports.monthly",
+                "usa.eia.crude.exports.monthly",
+                "usa.eia.crude.refinery_inputs.monthly",
+                "usa.eia.crude.product_supplied.monthly",
+                "usa.eia.crude.supply_adjustment.monthly",
+                "usa.eia.crude.net_receipts.monthly",
+                "usa.eia.crude.transfers_to_supply.monthly",
+        }
+        by_id = {item.id: item for item in self.series if item.id in cohort_ids}
+        self.assertEqual(set(by_id), cohort_ids)
+        expected = {
+            "usa.eia.crude.ending_stocks.monthly": (
+                "SAE", "MBBL",
+                {
+                    "MCRSTP11": "R10", "MCRSTP21": "R20", "MCRSTP31": "R30",
+                    "MCRSTP41": "R40", "MCRSTP51": "R50", "MCRSTUS1": "NUS",
+                },
+            ),
+            "usa.eia.crude.stock_change.monthly": (
+                "SCG", "MBBL/D",
+                {
+                    "MCRSCP12": "R10", "MCRSCP22": "R20", "MCRSCP32": "R30",
+                    "MCRSCP42": "R40", "MCRSCP52": "R50", "MCRSCUS2": "NUS",
+                },
+            ),
+            "usa.eia.crude.imports.monthly": (
+                "IM0", "MBBL/D",
+                {
+                    "MCRIMP12": "R10-Z00", "MCRIMP22": "R20-Z00", "MCRIMP32": "R30-Z00",
+                    "MCRIMP42": "R40-Z00", "MCRIMP52": "R50-Z00", "MCRIMUS2": "NUS-Z00",
+                },
+            ),
+            "usa.eia.crude.exports.monthly": (
+                "EEX", "MBBL/D",
+                {
+                    "MCREXP12": "R10-Z00", "MCREXP22": "R20-Z00", "MCREXP32": "R30-Z00",
+                    "MCREXP42": "R40-Z00", "MCREXP52": "R50-Z00", "MCREXUS2": "NUS-Z00",
+                },
+            ),
+            "usa.eia.crude.refinery_inputs.monthly": (
+                "YIR", "MBBL/D",
+                {
+                    "MCRRIP12": "R10", "MCRRIP22": "R20", "MCRRIP32": "R30",
+                    "MCRRIP42": "R40", "MCRRIP52": "R50", "MCRRIUS2": "NUS",
+                },
+            ),
+            "usa.eia.crude.product_supplied.monthly": (
+                "VPP", "MBBL/D",
+                {
+                    "MCRUPP12": "R10", "MCRUPP22": "R20", "MCRUPP32": "R30",
+                    "MCRUPP42": "R40", "MCRUPP52": "R50", "MCRUPUS2": "NUS",
+                },
+            ),
+            "usa.eia.crude.supply_adjustment.monthly": (
+                "VUA", "MBBL/D",
+                {
+                    "MCRUA_R10_2": "R10", "MCRUA_R20_2": "R20", "MCRUA_R30_2": "R30",
+                    "MCRUA_R40_2": "R40", "MCRUA_R50_2": "R50", "MCRUA_NUS_2": "NUS",
+                },
+            ),
+            "usa.eia.crude.net_receipts.monthly": (
+                "VNR", "MBBL/D",
+                {
+                    "MCRNRP12": "R10-Z0P", "MCRNRP22": "R20-Z0P", "MCRNRP32": "R30-Z0P",
+                    "MCRNRP42": "R40-Z0P", "MCRNRP52": "R50-Z0P",
+                },
+            ),
+            "usa.eia.crude.transfers_to_supply.monthly": (
+                "TVP", "MBBL/D",
+                {
+                    "M_EPC0_TVP_R10_MBBLD": "R10", "M_EPC0_TVP_R20_MBBLD": "R20",
+                    "M_EPC0_TVP_R30_MBBLD": "R30", "M_EPC0_TVP_R40_MBBLD": "R40",
+                    "M_EPC0_TVP_R50_MBBLD": "R50", "M_EPC0_TVP_NUS_MBBLD": "NUS",
+                },
+            ),
+        }
+        for series_id, (process, unit, series_geographies) in expected.items():
+            definition = by_id[series_id]
+            facets = dict(definition.query.facets)
+            self.assertEqual(definition.route, "/v2/petroleum/sum/snd/data")
+            self.assertEqual(facets["product"], ("EPC0",))
+            self.assertEqual(facets["process"], (process,))
+            self.assertEqual(set(facets["series"]), set(series_geographies))
+            self.assertEqual(dict(definition.expected_series_geographies), series_geographies)
+            self.assertEqual(definition.expected_unit, unit)
+            self.assertEqual(definition.frequency, Frequency.MONTHLY)
+            self.assertEqual(definition.bootstrap_start, "2014-01")
+            self.assertEqual(definition.dimensions, ("duoarea", "product", "process", "series"))
+            self.assertIsNotNone(definition.display)
+            self.assertEqual(definition.display.product_id, "crude-oil")
+
+        self.assertEqual(
+            by_id["usa.eia.crude.net_receipts.monthly"].source_geography_ids,
+            ("us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5"),
+        )
+        self.assertEqual(self.geographies.resolve("R10-Z0P"), ("us.padd.1", "padd"))
+        self.assertEqual(self.geographies.resolve("R50-Z0P"), ("us.padd.5", "padd"))
+
+        net_receipts = by_id["usa.eia.crude.net_receipts.monthly"]
+        receipt_record = {
+            "period": "2026-05",
+            "duoarea": "R10-Z0P",
+            "product": "EPC0",
+            "process": "VNR",
+            "series": "MCRNRP12",
+            "units": "MBBL/D",
+            "value": "12",
+        }
+        normalized = normalize_eia_records(
+            net_receipts, (receipt_record,), self.geographies, retrieved_at=NOW,
+        )
+        self.assertEqual(normalized[0].geography_id, "us.padd.1")
+        drifted = dict(receipt_record)
+        drifted["duoarea"] = "R20-Z0P"
+        with self.assertRaisesRegex(ValueError, "series/geography pairing drifted"):
+            normalize_eia_records(
+                net_receipts, (drifted,), self.geographies, retrieved_at=NOW,
+            )
 
     def test_normalizer_maps_provider_code_and_rejects_geo_unit_and_facet_drift(self) -> None:
         crude = next(item for item in self.series if item.id.endswith("crude.production.monthly"))

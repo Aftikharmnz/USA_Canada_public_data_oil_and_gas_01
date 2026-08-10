@@ -54,6 +54,7 @@ jobs:
     timeout-minutes: 45
     outputs:
       changed: ${{ steps.refresh.outputs.changed }}
+      run_id: ${{ steps.refresh.outputs.run_id }}
     steps:
       - uses: actions/checkout@v6
 
@@ -113,8 +114,12 @@ jobs:
               )
           )
           changed = result.get("changed") is True
+          run_id = result.get("run_id", "")
+          if changed and (not isinstance(run_id, str) or not run_id):
+              raise SystemExit("Changed EIA refresh did not report a run_id")
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
               output.write(f"changed={'true' if changed else 'false'}\n")
+              output.write(f"run_id={run_id}\n")
           PY
 
       - name: Scan generated EIA changes before commit
@@ -184,6 +189,15 @@ jobs:
         env:
           PYTHONPATH: pipeline
         run: python -m unittest discover -s tests/pipeline -p "test_*.py" -v
+
+      - name: Verify rebased EIA canonical store
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          PYTHONPATH: pipeline
+        run: >-
+          python -m energy_dashboard.cli verify-store
+          --store data/cache/eia
+          --expected-run-id "${{ steps.refresh.outputs.run_id }}"
 
       - name: Verify rebased public generation and scan generated data
         if: steps.refresh.outputs.changed == 'true'

@@ -9,12 +9,16 @@
     <p>Opening Energy Market Monitor…</p>
     <script>
       (function () {
-        var match = window.location.pathname.match(/\/(usa|products|canada|reference)\/?$/i);
+        var normalizedPath = window.location.pathname.replace(/\/index\.html\/?$/i, "/");
+        var match = normalizedPath.match(
+          /\/(usa\/profile|canada\/profile|usa-weekly|products|usa|canada|reference)\/?$/i
+        );
         if (!match) return;
 
-        var basePath = window.location.pathname.slice(0, match.index + 1);
+        var basePath = normalizedPath.slice(0, match.index + 1);
+        var route = match[1].toLowerCase().replace("/", "-");
         try {
-          window.sessionStorage.setItem("energy-market-monitor:route", match[1].toLowerCase());
+          window.sessionStorage.setItem("energy-market-monitor:route", route);
         } catch (_) {
           // Continue to the application root even when storage is unavailable.
         }

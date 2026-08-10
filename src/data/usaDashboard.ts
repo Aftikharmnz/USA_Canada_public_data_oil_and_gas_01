@@ -72,7 +72,7 @@ export interface ResolvedUsaDashboardSelection {
   series?: UsaManifestSeries;
 }
 
-interface SeriesDescriptor {
+export interface UsaSeriesDescriptor {
   segment: UsaEnergySegment;
   familyId: string;
   familyLabel: string;
@@ -98,7 +98,7 @@ export const USA_SEGMENTS: UsaSegmentOption[] = [
   },
 ];
 
-const CORE_SERIES: Record<string, SeriesDescriptor> = {
+const CORE_SERIES: Record<string, UsaSeriesDescriptor> = {
   "usa.eia.crude.production.monthly": {
     segment: "crude",
     familyId: "crude-oil",
@@ -162,7 +162,7 @@ function seriesHasAsset(series: UsaManifestSeries): boolean {
   );
 }
 
-function descriptorForSeries(series: UsaManifestSeries): SeriesDescriptor | undefined {
+function descriptorForSeries(series: UsaManifestSeries): UsaSeriesDescriptor | undefined {
   const classification = series.classification;
   const classifiedSegment: UsaEnergySegment | undefined =
     classification?.dashboard_group === "usa_crude"
@@ -185,6 +185,22 @@ function descriptorForSeries(series: UsaManifestSeries): SeriesDescriptor | unde
     };
   }
   return CORE_SERIES[series.view_id];
+}
+
+/**
+ * Resolve the navigation identity of a USA manifest series, including the
+ * three backwards-compatible core definitions whose generated manifest rows
+ * predate the explicit classification block.
+ *
+ * Other manifest-driven views (for example, a regional profile) must use this
+ * resolver instead of reading `series.classification` directly, or the legacy
+ * crude-production, refinery-utilization, and product-supplied definitions
+ * would silently disappear.
+ */
+export function usaSeriesDescriptor(
+  series: UsaManifestSeries,
+): UsaSeriesDescriptor | undefined {
+  return descriptorForSeries(series);
 }
 
 function levelOrder(levelId: string): number {

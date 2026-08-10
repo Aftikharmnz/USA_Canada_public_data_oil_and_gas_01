@@ -30,11 +30,17 @@ import {
   formatPlainNumber,
   formatValue,
 } from "../../lib/formatters";
-import { monthlyVolumeToAverageRate } from "../../lib/periodAverageRate";
+import {
+  MONTHLY_AVERAGE_RATE_UNIT,
+  monthlyVolumeToAverageRate,
+} from "../../lib/periodAverageRate";
 import {
   convertUnitValue,
   type DisplayUnitId,
 } from "../../lib/units";
+import { ChartDetailsToggle } from "./ChartDetailsToggle";
+import { DisplayUnitControl } from "./DisplayUnitControl";
+import { MovementPeriodControl } from "./MovementPeriodControl";
 
 echarts.use([
   BarChart,
@@ -84,6 +90,7 @@ const STATUS_CODES: Record<OriginDestinationStatus, string> = {
 export interface OriginDestinationPanelProps {
   model: OriginDestinationModel;
   displayUnit: DisplayUnitId;
+  onDisplayUnitChange?: (unit: DisplayUnitId) => void;
   /**
    * Converts registered monthly volume flows to a calendar-normalized daily-rate
    * display. Country adapters remain responsible for authorizing this view.
@@ -315,6 +322,7 @@ function filterExists(
 export function OriginDestinationPanel({
   model,
   displayUnit,
+  onDisplayUnitChange,
   monthlyAverageRate = false,
   initialPeriod,
   initialOriginId,
@@ -409,70 +417,48 @@ export function OriginDestinationPanel({
   const panelTitle = title ?? model.title;
   const panelDescription = description ?? model.description
     ?? "Rows are shipping origins and columns are receiving destinations. Every cell is one exact source-published route.";
+  const originSummary = originId
+    ? model.origins.find((origin) => origin.id === originId)?.label ?? originId
+    : "all origins";
+  const destinationSummary = destinationId
+    ? model.destinations.find((destination) => destination.id === destinationId)?.label ?? destinationId
+    : "all destinations";
+  const sourceScopeSummary = sourceDisclosure?.includes("not the weekly imports")
+    ? "monthly domestic logistics, not weekly imports"
+    : sourceDisclosure?.toLowerCase().includes("pipeline only")
+      ? "pipeline only; overlapping Canada aggregates excluded"
+      : `${model.frequency.toLowerCase()} source routes`;
 
   return (
     <section
-      className="analysis-panel od-panel"
+      className="analysis-panel od-panel graph-first-panel"
       aria-labelledby={headingId}
     >
-      <div className="analysis-panel-heading od-panel-heading">
-        <div>
-          <p className="section-kicker">Origin–destination flows</p>
+      <div className="analysis-panel-heading od-panel-heading graph-first-heading">
+        <div className="graph-first-title">
           <h2 id={headingId}>{panelTitle}</h2>
-          <p>{panelDescription}</p>
         </div>
-        <div className="contribution-period-badge">
-          <span>Displayed source period</span>
-          <strong>{formatPeriod(snapshot.period)}</strong>
+        <div className="graph-first-actions">
+          <MovementPeriodControl
+            periods={model.periods}
+            value={snapshot.period}
+            onChange={setPeriod}
+          />
+          {onDisplayUnitChange ? (
+            <DisplayUnitControl
+              sourceUnit={monthlyAverageRate ? MONTHLY_AVERAGE_RATE_UNIT : model.sourceUnit}
+              value={displayUnit}
+              onChange={onDisplayUnitChange}
+              compact
+              micro
+            />
+          ) : (
+            <span className="graph-first-location">{compactUnit(displayUnit)}</span>
+          )}
         </div>
       </div>
 
-      <div className="od-controls" aria-label="Origin-destination view controls">
-        <label>
-          <span>Source period</span>
-          <select value={snapshot.period} onChange={(event) => setPeriod(event.target.value)}>
-            {[...model.periods].reverse().map((candidate) => (
-              <option key={candidate} value={candidate}>
-                {formatPeriod(candidate)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>From shipping origin</span>
-          <select value={originId} onChange={(event) => setOriginId(event.target.value)}>
-            <option value="">All published origins</option>
-            {model.origins.map((origin) => (
-              <option key={origin.id} value={origin.id}>{origin.label}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>To receiving destination</span>
-          <select
-            value={destinationId}
-            onChange={(event) => setDestinationId(event.target.value)}
-          >
-            <option value="">All published destinations</option>
-            {model.destinations.map((destination) => (
-              <option key={destination.id} value={destination.id}>
-                {destination.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="od-summary" role="status">
-        <span>
-          <strong>{filtered.numericRouteCount}</strong> numeric routes
-        </span>
-        <span>
-          <strong>{filtered.nonnumericRouteCount}</strong> declared routes without a numeric value
-        </span>
-        <span>{model.productLabel} · {model.modeLabel} · {compactUnit(displayUnit)}</span>
-      </div>
-
+      <div className="chart-stage">
       <div className="od-matrix-scroll" tabIndex={0} aria-label="Scrollable origin-destination matrix">
         <table className="od-matrix">
           <caption>
@@ -603,7 +589,6 @@ export function OriginDestinationPanel({
 
       <div className="od-ranked-heading">
         <div>
-          <p className="section-kicker">Ranked exact routes</p>
           <h3>Largest movements in this view</h3>
         </div>
         <small>Gross directions are not netted.</small>
@@ -620,8 +605,45 @@ export function OriginDestinationPanel({
         </p>
       )}
 
-      <details className="accessible-chart-summary od-detail-table">
-        <summary>Exact route values and publication status</summary>
+      <ChartDetailsToggle
+        className="od-detail-table"
+        summary={`${model.productLabel} · ${model.modeLabel} · From ${originSummary} to ${destinationSummary} · gross, not netted · missing ≠ zero · ${sourceScopeSummary}`}
+      >
+        <div className="od-controls od-controls-endpoints" aria-label="Origin-destination endpoint controls">
+          <label>
+            <span>From shipping origin</span>
+            <select value={originId} onChange={(event) => setOriginId(event.target.value)}>
+              <option value="">All published origins</option>
+              {model.origins.map((origin) => (
+                <option key={origin.id} value={origin.id}>{origin.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>To receiving destination</span>
+            <select
+              value={destinationId}
+              onChange={(event) => setDestinationId(event.target.value)}
+            >
+              <option value="">All published destinations</option>
+              {model.destinations.map((destination) => (
+                <option key={destination.id} value={destination.id}>
+                  {destination.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="od-summary" role="status">
+          <span>
+            <strong>{filtered.numericRouteCount}</strong> numeric routes
+          </span>
+          <span>
+            <strong>{filtered.nonnumericRouteCount}</strong> declared routes without a numeric value
+          </span>
+          <span>{model.productLabel} · {model.modeLabel} · {compactUnit(displayUnit)}</span>
+        </div>
+        <p>{panelDescription}</p>
         <div className="forecast-table-wrap">
           <table>
             <caption>
@@ -653,17 +675,17 @@ export function OriginDestinationPanel({
             </tbody>
           </table>
         </div>
-      </details>
-
-      <p className="chart-footnote">
-        Each matrix cell is one directional source observation; opposite directions are not
-        netted, and diagonal cells are same-region movements. Missing, suppressed, unavailable,
-        and unpublished facts remain distinct from numeric zero. {model.sourceNote}
-        {sourceDisclosure ? ` ${sourceDisclosure}` : ""}
-        {monthlyAverageRate
-          ? " The daily-rate view divides each monthly volume by that period's exact calendar-day count; source observations remain unchanged."
-          : ""}
-      </p>
+        <p className="chart-footnote">
+          Each matrix cell is one directional source observation; opposite directions are not
+          netted, and diagonal cells are same-region movements. Missing, suppressed, unavailable,
+          and unpublished facts remain distinct from numeric zero. {model.sourceNote}
+          {sourceDisclosure ? ` ${sourceDisclosure}` : ""}
+          {monthlyAverageRate
+            ? " The daily-rate view divides each monthly volume by that period's exact calendar-day count; source observations remain unchanged."
+            : ""}
+        </p>
+      </ChartDetailsToggle>
+      </div>
     </section>
   );
 }

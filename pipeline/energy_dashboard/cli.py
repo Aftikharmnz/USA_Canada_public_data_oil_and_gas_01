@@ -108,6 +108,12 @@ def build_parser() -> argparse.ArgumentParser:
     promote.add_argument("--destination", type=Path, default=Path("public/data/usa"))
     promote.add_argument("--expected-run-id")
     promote.add_argument("--retain-generations", type=int, default=2)
+    verify_store = subparsers.add_parser(
+        "verify-store",
+        help="Load and verify a canonical store's CURRENT generation without network calls",
+    )
+    verify_store.add_argument("--store", type=Path, required=True)
+    verify_store.add_argument("--expected-run-id")
     rebuild = subparsers.add_parser(
         "rebuild-analytics",
         help="Rebuild observed statistics and forecast assets from CURRENT without network calls",
@@ -121,6 +127,34 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "verify-store":
+        store = SnapshotStore(args.store)
+        run_id = store.current_run_id()
+        if run_id is None:
+            raise ValueError(f"Canonical store has no CURRENT generation: {args.store}")
+        if args.expected_run_id is not None and run_id != args.expected_run_id:
+            raise ValueError(
+                "Canonical CURRENT run id mismatch: "
+                f"expected {args.expected_run_id}, found {run_id}"
+            )
+        snapshot = store.load(run_id)
+        print(
+            json.dumps(
+                {
+                    "verified": True,
+                    "network_calls": 0,
+                    "store": str(args.store),
+                    "current_run_id": run_id,
+                    "observation_count": len(snapshot.observations),
+                    "revision_count": len(snapshot.revisions),
+                    "series_count": len(
+                        {observation.series_id for observation in snapshot.observations}
+                    ),
+                },
+                indent=2,
+            )
+        )
+        return 0
     if args.command == "plan":
         providers = ("eia", "statcan", "cer") if args.provider == "all" else (args.provider,)
         output = {

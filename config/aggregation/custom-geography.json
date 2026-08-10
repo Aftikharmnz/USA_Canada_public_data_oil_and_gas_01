@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "membership_version": "2026-07-22.5",
+  "membership_version": "2026-08-10.1",
   "policies": [
     {
       "country": "usa",
@@ -24,6 +24,15 @@
       "required_coverage": 1.0,
       "series_ids": [
         "usa.eia.crude.production.monthly",
+        "usa.eia.crude.ending_stocks.monthly",
+        "usa.eia.crude.exports.monthly",
+        "usa.eia.crude.imports.monthly",
+        "usa.eia.crude.net_receipts.monthly",
+        "usa.eia.crude.product_supplied.monthly",
+        "usa.eia.crude.refinery_inputs.monthly",
+        "usa.eia.crude.stock_change.monthly",
+        "usa.eia.crude.supply_adjustment.monthly",
+        "usa.eia.crude.transfers_to_supply.monthly",
         "usa.eia.crude.commercial_imports.weekly",
         "usa.eia.crude.commercial_stocks.weekly",
         "usa.eia.crude.refinery_inputs.weekly",
@@ -113,7 +122,16 @@
         "can.statcan.refined.jet.exports.monthly",
         "can.statcan.refined.jet.imports.monthly",
         "can.statcan.refined.jet.net_production.monthly",
-        "can.statcan.refined.jet.stock_change.monthly"
+        "can.statcan.refined.jet.stock_change.monthly",
+        "can.statcan.refined.propane.exports.monthly",
+        "can.statcan.refined.propane.field_production.monthly",
+        "can.statcan.refined.propane.imports.monthly",
+        "can.statcan.refined.propane.net_production.monthly",
+        "can.statcan.refined.residual_fuel_oil.ending_stocks.monthly",
+        "can.statcan.refined.residual_fuel_oil.exports.monthly",
+        "can.statcan.refined.residual_fuel_oil.imports.monthly",
+        "can.statcan.refined.residual_fuel_oil.net_production.monthly",
+        "can.statcan.refined.residual_fuel_oil.stock_change.monthly"
       ]
     },
     {
