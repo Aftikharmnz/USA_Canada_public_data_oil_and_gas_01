@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "methodology_version": "2026-07-20.1",
+  "methodology_version": "2026-08-10.1",
   "country": "canada",
   "source_unit": "cubic_metres",
   "frequency": "monthly",
@@ -67,6 +67,15 @@
     "can.statcan.refined.jet.imports.monthly",
     "can.statcan.refined.jet.net_production.monthly",
     "can.statcan.refined.jet.product_supplied.monthly",
-    "can.statcan.refined.jet.stock_change.monthly"
+    "can.statcan.refined.jet.stock_change.monthly",
+    "can.statcan.refined.propane.exports.monthly",
+    "can.statcan.refined.propane.field_production.monthly",
+    "can.statcan.refined.propane.imports.monthly",
+    "can.statcan.refined.propane.net_production.monthly",
+    "can.statcan.refined.residual_fuel_oil.exports.monthly",
+    "can.statcan.refined.residual_fuel_oil.imports.monthly",
+    "can.statcan.refined.residual_fuel_oil.net_production.monthly",
+    "can.statcan.refined.residual_fuel_oil.product_supplied.monthly",
+    "can.statcan.refined.residual_fuel_oil.stock_change.monthly"
   ]
 }

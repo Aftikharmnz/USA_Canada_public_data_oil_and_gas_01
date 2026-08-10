@@ -188,6 +188,28 @@ function optionSeries(option: ReturnType<typeof buildSeasonalEChartsOption>) {
 }
 
 describe("seasonal forecast chart", () => {
+  it("renders graph-first chrome with one collapsed details disclosure", () => {
+    const html = renderToStaticMarkup(
+      <SeasonalChart
+        asset={asset}
+        series={series}
+        geographyId="us"
+        onGeographyChange={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('class="analysis-panel seasonal-panel graph-first-panel"');
+    expect(html).toContain('<h2 id="seasonal-title">Test stocks</h2>');
+    expect(html).toContain("United States · Seasonal overlay");
+    expect(html).toContain('display-unit-control-micro');
+    expect(html).toContain('class="chart-stage"');
+    expect(html).toContain('class="chart-micro-summary"');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('hidden=""');
+    expect(html.match(/>Show details</g)).toHaveLength(1);
+    expect(html).toMatch(/chart-details-toggle-content[^>]*hidden=""[\s\S]*chart-geography/);
+  });
+
   it("renders only the selected empirical interval and a dashed forecast line", () => {
     const option = buildSeasonalEChartsOption(asset, series.title, forecast, 90);
     const renderedSeries = optionSeries(option);
@@ -302,6 +324,9 @@ describe("seasonal forecast chart", () => {
     expect(html).toContain("echarts-seasonal");
     expect(html).toContain("Forecast unavailable; observed data remain available.");
     expect(html).not.toContain("Prediction interval</legend>");
+    expect(html.indexOf("Forecast unavailable; observed data remain available.")).toBeLessThan(
+      html.indexOf('class="chart-details-toggle-content"'),
+    );
   });
 
   it("converts axes, tooltip values, diagnostics, and forecast bounds for display", () => {
@@ -340,11 +365,86 @@ describe("seasonal forecast chart", () => {
         onDisplayUnitChange={() => undefined}
       />,
     );
-    expect(html).toContain("Display unit");
-    expect(html).toContain("Million barrels");
+    expect(html).toContain("Unit");
+    expect(html).toContain("MMbbl");
+    expect(html).toContain('display-unit-control-micro');
     expect(html).toContain("0.102 MMbbl");
     expect(html).toContain("0.098 MMbbl");
     expect(html).toContain("0.002 MMbbl");
+  });
+
+  it("keeps seasonal bands and recent-year overlays in the compact profile layout", () => {
+    const profileAsset = {
+      ...asset,
+      recent_years: [
+        { year: 2024, points: [{ period: "2024-01", slot: 1, value: 90, status: "observed" }] },
+        { year: 2025, points: [{ period: "2025-01", slot: 1, value: null, status: "suppressed_or_withheld" }] },
+        { year: 2026, points: [{ period: "2026-01", slot: 1, value: 100, status: "observed" }] },
+      ],
+      baseline: {
+        status: "ok",
+        baseline_start_year: 2014,
+        baseline_end_year: 2023,
+        eligible_years: [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
+        eligible_year_count: 10,
+        excluded_years: [],
+        slots: [{
+          slot: 1,
+          min: 80,
+          q1: 85,
+          median: 90,
+          mean: 91,
+          q3: 95,
+          max: 110,
+          count: 10,
+        }],
+      },
+    } as UsaChartAsset;
+    const compactOption = buildSeasonalEChartsOption(
+      profileAsset,
+      series.title,
+      undefined,
+      90,
+      "million_barrels",
+      { density: "compact" },
+    );
+    const names = optionSeries(compactOption).map((item) => item.name);
+    expect(names).toEqual(expect.arrayContaining([
+      "Historical range",
+      "Middle 50%",
+      "Median",
+      "Mean",
+      "2024",
+      "2025",
+      "2026",
+    ]));
+    expect(names).not.toContain("Observed");
+    const range = optionSeries(compactOption).find((item) => item.name === "Historical range");
+    expect(range?.data).toEqual([expect.closeTo(0.03, 8)]);
+    const latestYear = optionSeries(compactOption).find((item) => item.name === "2026");
+    expect(latestYear?.data).toEqual([expect.closeTo(0.1, 8)]);
+    expect(compactOption.grid).toMatchObject({ bottom: 34, top: 38 });
+    expect(compactOption.dataZoom).toHaveLength(1);
+    expect((compactOption.dataZoom as Array<{ type?: string }>)[0]?.type).toBe("inside");
+
+    const standardOption = buildSeasonalEChartsOption(profileAsset, series.title);
+    expect(standardOption.grid).toMatchObject({ bottom: 78, top: 44 });
+    expect(standardOption.dataZoom).toHaveLength(2);
+
+    const tooltip = compactOption.tooltip as { formatter?: (params: unknown) => string };
+    expect(tooltip.formatter?.([{ dataIndex: 0 }])).toContain("suppressed or withheld");
+
+    const noBaseline = buildSeasonalEChartsOption(
+      asset,
+      `${series.title} — United States`,
+      undefined,
+      90,
+      undefined,
+      { density: "compact" },
+    );
+    expect(JSON.stringify(noBaseline.aria)).toContain("Test stocks — United States");
+    expect(JSON.stringify(noBaseline.aria)).toContain("Historical seasonal bands are unavailable");
+    expect(JSON.stringify(noBaseline.aria)).not.toContain("historical minimum");
   });
 
   it("plots period-normalized forecast points while keeping diagnostics in source units", () => {

@@ -81,7 +81,7 @@ The logical observation key is:
 | `source_geography_ids` | Nodes published directly by the provider |
 | `allowed_rollup_geography_ids` | Computable parent nodes after coverage/aggregation validation |
 
-Illustrative registries may use level IDs during discovery when exact node codes are not yet verified. Activation requires resolved node-level availability. All 69 active USA definitions use explicit accepted geography IDs/codes; raw trade aliases such as `NUS-Z00` and `R10-Z00`, weekly production region `R48`, local stock area `YCUOK`, and directed PADD-pair `duoarea` values map to stable project nodes rather than becoming ad hoc geographies.
+Illustrative registries may use level IDs during discovery when exact node codes are not yet verified. Activation requires resolved node-level availability. All 78 active USA definitions use explicit accepted geography IDs/codes; raw trade aliases such as `NUS-Z00` and `R10-Z00`, monthly supply/disposition aliases such as `R10-Z0P`, weekly production region `R48`, local stock area `YCUOK`, and directed PADD-pair `duoarea` values map to stable project nodes rather than becoming ad hoc geographies.
 
 ### `RevisionEvent`
 
@@ -225,13 +225,13 @@ market segment -> geography level -> geography node
 -> product family -> product/activity -> measure -> series asset
 ```
 
-Market segment is `crude` or `refined`. The promoted USA manifest resolves 12 Crude/57 Refined definitions (66 weekly and three monthly) and validates all 69 definitions across 361 observed assets and 361 matching forecast records (722 integrity entries). Canada resolves 31 Crude/38 Refined definitions (69 definitions: 67 Statistics Canada and 2 CER). Promoted Canada run `canada-20260803T170245Z` validates all 69 definitions across 467 observed assets and 467 matching forecast records (934 integrity entries). Refinery activity belongs under Crude for navigation only and retains its original metric, unit, source, and observation identity. USA PADD movements preserve shipping and receiving PADDs as separate endpoints in the selected route geography. Statistics Canada pipeline movements additionally retain the fixed receiving destination or fixed United States shipping origin in semantic dimensions while the selected chart geography supplies the other endpoint.
+Market segment is `crude` or `refined`. The current promoted USA last-known-good manifest resolves 12 Crude/57 Refined definitions (66 weekly and three monthly) and validates its preceding 69-definition cohort across 361 observed assets and 361 matching forecast records (722 integrity entries); the active source registry contains 78 definitions and becomes the public contract only after a complete promotion. The active Canada registry resolves 32 Crude/49 Refined definitions (81 definitions: 79 Statistics Canada and 2 CER). Promoted Canada run `canada-20260803T170245Z` predates that expansion and therefore remains a 31 Crude/38 Refined, 69-definition last-known-good manifest with 467 observed assets and 467 matching forecast records (934 integrity entries). Registry classification is ingestion intent; a promoted manifest and integrity records are publication evidence. Refinery activity belongs under Crude for navigation only and retains its original metric, unit, source, and observation identity. USA PADD movements preserve shipping and receiving PADDs as separate endpoints in the selected route geography. Statistics Canada pipeline movements additionally retain the fixed receiving destination or fixed United States shipping origin in semantic dimensions while the selected chart geography supplies the other endpoint. Statistics Canada transporter inventories preserve inventory-position, transport-mode, and broad-product dimensions and are never treated as movement routes or daily rates.
 
 Geography levels are ordered by registered granularity rank from finest to broadest. The selected exact geography node filters every later option; family, product/activity, and measure choices must be backed by an available asset for that node. Product/activity ordering traverses only registered `parent_product_id` relationships and places leaves before broader parents. Missing parents are not synthesized. A selection change may preserve later IDs only while they remain compatible; otherwise the UI falls back deterministically to the first valid option.
 
 ### Custom geography runtime contract
 
-`config/aggregation/custom-geography.json` authorizes a finite set of same-level additive combinations and records country, level, rule, membership namespace/version, member bounds, complete-coverage requirement, and exact series IDs. A selection of two or more regions is valid only when every selected geography has the same active series asset and the rule explicitly covers that series/level. Phase 4 adds exactly nine PADD-authorized definitions: crude refinery inputs, commercial crude stocks/imports, total petroleum imports, propane stocks/imports, and residual stocks/production/imports. No Phase 4 ratio, net flow, export, product-supplied, or source-region view is implicitly aggregatable.
+`config/aggregation/custom-geography.json` authorizes a finite set of same-level additive combinations and records country, level, rule, membership namespace/version, member bounds, complete-coverage requirement, and exact series IDs. A selection of two or more regions is valid only when every selected geography has the same active series asset and the rule explicitly covers that series/level. Phase 4 adds exactly nine PADD-authorized weekly definitions: crude refinery inputs, commercial crude stocks/imports, total petroleum imports, propane stocks/imports, and residual stocks/production/imports. The monthly crude-balance cohort separately authorizes all nine exact PADD series—ending stocks, stock change, imports, exports, refinery/blender net input, product supplied, supply adjustment, net receipts, and transfers to crude supply—as complete-coverage sums. The Canada expansion adds nine exact 25-10-0081 definitions: all four propane measures plus residual-fuel net production, imports, exports, stock change, and ending stocks. Residual-fuel product supplied and both 25-10-0075 transporter stocks remain excluded. Signed balance terms retain their sign; a computed combination never replaces a source-published national row, and the five-PADD net-receipts sum is not relabelled as official national data. No ratio or unregistered source-region view is implicitly aggregatable.
 
 Generated chart assets publish compact `history` rows with `period`, seasonal `year`/`slot`, numeric-or-null `value`, and source status. The browser aggregates these period rows first, retaining a per-period coverage/lineage record, then recomputes the full chart asset. A computed combination receives a deterministic `computed:<policy>:<members>` geography ID and `origin: computed-rollup`; it is not added to the source manifest. The source checksum is the SHA-256 digest of sorted component checksums. Latest source and latest numeric periods remain distinct.
 
@@ -272,6 +272,8 @@ Every series defines:
 - duration/average/point-in-time semantics.
 
 Weekly week-ending values must not be grouped with ISO week averages without an explicit alignment rule. Month-end stocks and monthly-average flows are not interchangeable merely because both use `YYYY-MM`.
+
+The only browser-side weekly-to-monthly alignment is the positively registered regional-profile display in `config/display/weekly-to-monthly.json`. Rate series use exact calendar-day overlap weighting with complete daily coverage. Stocks, days supply, and utilization use the final expected weekly reading in a completed month. The derived view must carry source checksum, strategy, coverage, contributing-period, overlap-day, and blocking-status lineage; it remains distinct from a source-monthly observation and never authorizes forecast resampling.
 
 ## Value and missing-state semantics
 
@@ -397,7 +399,10 @@ Deployment-blocking checks include:
 - unexpected row-count collapse or historical truncation;
 - secret-pattern scanning of public assets and logs;
 - asset checksums and referential integrity.
-- canonical JSON at or below the 90 MiB publication guard.
+- canonical schema `1.0.0` single-file or `1.1.0` sharded layout integrity;
+- every schema `1.1.0` shard at or below 16 MiB and logical canonical JSON at or below 128 MiB; and
+- the revision ledger at or below its 16 MiB single-file guard; and
+- candidate canonical growth at or below the larger of 10% or 8 MiB versus `CURRENT`.
 
 Plausibility thresholds generate review failures or warnings; they must not silently clip or replace official values.
 

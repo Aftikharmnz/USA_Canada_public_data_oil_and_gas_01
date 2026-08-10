@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0.0",
+  "methodology_version": "2026-08-10.1",
+  "source_frequency": "weekly",
+  "target_frequency": "monthly",
+  "week_period_role": "week_end",
+  "rate_coverage_window": "trailing_7_calendar_days_inclusive",
+  "coverage_requirement": 1.0,
+  "rules": [
+    {
+      "country": "usa",
+      "strategy": "rate_day_weighted",
+      "source_unit": "thousand_barrels_per_day",
+      "source_period_semantics": "weekly_average_rate",
+      "series_ids": [
+        "usa.eia.product_supplied.weekly",
+        "usa.eia.refined.gasoline.finished.production.weekly",
+        "usa.eia.refined.gasoline.conventional.production.weekly",
+        "usa.eia.refined.gasoline.reformulated.production.weekly",
+        "usa.eia.refined.distillate.total.production.weekly",
+        "usa.eia.refined.distillate.sulfur_0_15ppm.production.weekly",
+        "usa.eia.refined.distillate.sulfur_over_15_500ppm.production.weekly",
+        "usa.eia.refined.distillate.sulfur_over_500ppm.production.weekly",
+        "usa.eia.refined.jet.kerosene_type.production.weekly",
+        "usa.eia.refined.gasoline.finished.product_supplied.weekly",
+        "usa.eia.refined.distillate.total.product_supplied.weekly",
+        "usa.eia.refined.jet.kerosene_type.product_supplied.weekly",
+        "usa.eia.refined.gasoline.finished.imports.weekly",
+        "usa.eia.refined.gasoline.blending_components.imports.weekly",
+        "usa.eia.refined.gasoline.cbob.imports.weekly",
+        "usa.eia.refined.gasoline.rbob.imports.weekly",
+        "usa.eia.refined.gasoline.fuel_ethanol.imports.weekly",
+        "usa.eia.refined.distillate.total.imports.weekly",
+        "usa.eia.refined.distillate.sulfur_0_15ppm.imports.weekly",
+        "usa.eia.refined.distillate.sulfur_over_15_500ppm.imports.weekly",
+        "usa.eia.refined.jet.kerosene_type.imports.weekly",
+        "usa.eia.refined.gasoline.fuel_ethanol.exports.weekly",
+        "usa.eia.refined.distillate.total.exports.weekly",
+        "usa.eia.refined.jet.kerosene_type.exports.weekly",
+        "usa.eia.crude.production.weekly",
+        "usa.eia.crude.refinery_inputs.weekly",
+        "usa.eia.crude.commercial_imports.weekly",
+        "usa.eia.crude.exports.weekly",
+        "usa.eia.crude.net_imports.weekly",
+        "usa.eia.petroleum.total_imports.weekly",
+        "usa.eia.petroleum.total_exports.weekly",
+        "usa.eia.petroleum.total_net_imports.weekly",
+        "usa.eia.refined.propane.production.weekly",
+        "usa.eia.refined.propane.imports.weekly",
+        "usa.eia.refined.propane.exports.weekly",
+        "usa.eia.refined.propane.product_supplied.weekly",
+        "usa.eia.refined.residual_fuel_oil.production.weekly",
+        "usa.eia.refined.residual_fuel_oil.imports.weekly",
+        "usa.eia.refined.residual_fuel_oil.exports.weekly",
+        "usa.eia.refined.residual_fuel_oil.product_supplied.weekly"
+      ]
+    },
+    {
+      "country": "usa",
+      "strategy": "final_weekly_snapshot",
+      "source_unit": "thousand_barrels",
+      "source_period_semantics": "end_of_week_stock",
+      "series_ids": [
+        "usa.eia.refined.gasoline.total.stocks.weekly",
+        "usa.eia.refined.gasoline.finished.stocks.weekly",
+        "usa.eia.refined.gasoline.conventional.stocks.weekly",
+        "usa.eia.refined.gasoline.reformulated.stocks.weekly",
+        "usa.eia.refined.gasoline.blending_components.stocks.weekly",
+        "usa.eia.refined.gasoline.cbob.stocks.weekly",
+        "usa.eia.refined.gasoline.rbob.stocks.weekly",
+        "usa.eia.refined.gasoline.fuel_ethanol.stocks.weekly",
+        "usa.eia.refined.distillate.total.stocks.weekly",
+        "usa.eia.refined.distillate.sulfur_0_15ppm.stocks.weekly",
+        "usa.eia.refined.distillate.sulfur_over_15_500ppm.stocks.weekly",
+        "usa.eia.refined.distillate.sulfur_over_500ppm.stocks.weekly",
+        "usa.eia.refined.jet.kerosene_type.stocks.weekly",
+        "usa.eia.crude.commercial_stocks.weekly",
+        "usa.eia.crude.spr_stocks.weekly",
+        "usa.eia.crude.total_stocks_including_spr.weekly",
+        "usa.eia.petroleum.total_stocks_including_spr.weekly",
+        "usa.eia.petroleum.total_stocks_excluding_spr.weekly",
+        "usa.eia.refined.propane.stocks.weekly",
+        "usa.eia.refined.residual_fuel_oil.stocks.weekly"
+      ]
+    },
+    {
+      "country": "usa",
+      "strategy": "final_weekly_snapshot",
+      "source_unit": "days",
+      "source_period_semantics": "end_of_week_days_of_supply",
+      "series_ids": [
+        "usa.eia.crude.days_supply.weekly",
+        "usa.eia.refined.gasoline.total.days_supply.weekly",
+        "usa.eia.refined.distillate.total.days_supply.weekly",
+        "usa.eia.refined.jet.kerosene_type.days_supply.weekly",
+        "usa.eia.refined.propane.days_supply.weekly"
+      ]
+    },
+    {
+      "country": "usa",
+      "strategy": "final_weekly_snapshot",
+      "source_unit": "percent",
+      "source_period_semantics": "week_ending",
+      "series_ids": [
+        "usa.eia.refinery.utilization.weekly"
+      ]
+    },
+    {
+      "country": "canada",
+      "strategy": "rate_day_weighted",
+      "source_unit": "thousand_cubic_metres_per_day",
+      "source_period_semantics": "weekly_average_rate",
+      "series_ids": [
+        "can.cer.refinery.crude_runs.weekly"
+      ]
+    },
+    {
+      "country": "canada",
+      "strategy": "final_weekly_snapshot",
+      "source_unit": "percent",
+      "source_period_semantics": "week_ending",
+      "series_ids": [
+        "can.cer.refinery.utilization.weekly"
+      ]
+    }
+  ]
+}

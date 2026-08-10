@@ -2,40 +2,69 @@ import type { CountryCode } from "../types/catalog";
 
 export const ROUTE_STORAGE_KEY = "energy-market-monitor:route";
 
-const COUNTRY_ROUTES = new Set<CountryCode>(["usa", "canada"]);
-export type AppRoute = CountryCode | "usa-weekly" | "products" | "reference";
+export type AppRoute = CountryCode
+  | "usa-profile"
+  | "canada-profile"
+  | "usa-weekly"
+  | "products"
+  | "reference";
 
-const APP_ROUTES = new Set<AppRoute>(["usa", "usa-weekly", "products", "canada", "reference"]);
+const ROUTE_SEGMENTS: Record<AppRoute, readonly string[]> = {
+  usa: ["usa"],
+  "usa-profile": ["usa", "profile"],
+  "usa-weekly": ["usa-weekly"],
+  products: ["products"],
+  canada: ["canada"],
+  "canada-profile": ["canada", "profile"],
+  reference: ["reference"],
+};
+
+const ROUTE_ENTRIES = (Object.entries(ROUTE_SEGMENTS) as Array<[
+  AppRoute,
+  readonly string[],
+]>).sort((left, right) => right[1].length - left[1].length);
+const APP_ROUTES = new Set<AppRoute>(ROUTE_ENTRIES.map(([route]) => route));
+
+function pathnameSegments(pathname: string): string[] {
+  return pathname
+    .replace(/[?#].*$/, "")
+    .replace(/\/index\.html\/?$/i, "/")
+    .split("/")
+    .filter(Boolean);
+}
+
+function routeEntryFromPath(pathname: string): [AppRoute, readonly string[]] | undefined {
+  const segments = pathnameSegments(pathname);
+  return ROUTE_ENTRIES.find(([, routeSegments]) => (
+    routeSegments.length <= segments.length
+    && routeSegments.every((routeSegment, index) => (
+      segments[segments.length - routeSegments.length + index]?.toLowerCase() === routeSegment
+    ))
+  ));
+}
 
 export function appRouteFromPath(pathname = window.location.pathname): AppRoute | null {
-  const normalizedPath = pathname.replace(/\/index\.html$/i, "/");
-  const segments = normalizedPath.split("/").filter(Boolean);
-  const candidate = segments.at(-1)?.toLowerCase();
-  return candidate && APP_ROUTES.has(candidate as AppRoute)
-    ? (candidate as AppRoute)
-    : null;
+  return routeEntryFromPath(pathname)?.[0] ?? null;
 }
 
 export function countryFromPath(pathname = window.location.pathname): CountryCode | null {
   const route = appRouteFromPath(pathname);
-  return route && COUNTRY_ROUTES.has(route as CountryCode)
-    ? (route as CountryCode)
-    : null;
+  if (route === "usa" || route === "usa-profile") return "usa";
+  if (route === "canada" || route === "canada-profile") return "canada";
+  return null;
 }
 
 function routeBase(pathname = window.location.pathname): string {
-  let cleanPath = pathname.replace(/\/index\.html$/i, "/");
-  const activeRoute = appRouteFromPath(cleanPath);
-
-  if (activeRoute) {
-    cleanPath = cleanPath.replace(new RegExp(`/${activeRoute}/?$`, "i"), "/");
-  }
-
-  return cleanPath.endsWith("/") ? cleanPath : `${cleanPath}/`;
+  const segments = pathnameSegments(pathname);
+  const routeEntry = routeEntryFromPath(pathname);
+  const baseSegments = routeEntry
+    ? segments.slice(0, -routeEntry[1].length)
+    : segments;
+  return baseSegments.length ? `/${baseSegments.join("/")}/` : "/";
 }
 
-export function appPath(route: AppRoute): string {
-  return `${routeBase()}${route}/`.replace(/\/{2,}/g, "/");
+export function appPath(route: AppRoute, pathname = window.location.pathname): string {
+  return `${routeBase(pathname)}${ROUTE_SEGMENTS[route].join("/")}/`.replace(/\/{2,}/g, "/");
 }
 
 export function countryPath(country: CountryCode): string {

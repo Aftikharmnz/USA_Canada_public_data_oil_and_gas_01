@@ -1,10 +1,14 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   buildOriginDestinationModel,
   originDestinationSnapshot,
 } from "../../charts/originDestinationModel";
 import { BARREL_TO_CUBIC_METRES } from "../../lib/units";
-import { originDestinationRankedOption } from "./OriginDestinationPanel";
+import {
+  OriginDestinationPanel,
+  originDestinationRankedOption,
+} from "./OriginDestinationPanel";
 
 const period = "2026-01";
 const oneKbPerDayMonthlyVolume = 1_000 * BARREL_TO_CUBIC_METRES * 31;
@@ -64,5 +68,38 @@ describe("originDestinationRankedOption monthly-average display", () => {
     expect(kbValue).toBeCloseTo(1, 12);
     expect(barrelValue).toBeCloseTo(1_000, 9);
     expect(barrelValue / kbValue).toBeCloseTo(1_000, 12);
+  });
+
+  it("keeps route coverage and source-boundary warnings visible while collapsing the exact table", () => {
+    const html = renderToStaticMarkup(
+      <OriginDestinationPanel
+        model={model}
+        displayUnit="million_cubic_metres"
+        onDisplayUnitChange={() => undefined}
+        title="Province movements"
+        description="Long route instructions belong in details."
+        sourceDisclosure="This view is pipeline only; unavailable routes are not stale-filled."
+      />,
+    );
+    const hiddenRegionIndex = html.indexOf('class="chart-details-toggle-content"');
+    const visible = html.slice(0, hiddenRegionIndex);
+    const details = html.slice(hiddenRegionIndex);
+
+    expect(visible).toContain("Jan 2026");
+    expect(visible).toContain("Crude oil");
+    expect(visible).toContain("Pipeline");
+    expect(visible).toContain('aria-label="Convert chart values to display unit"');
+    expect(visible).toContain("Gross directions are not netted.");
+    expect(visible).toContain("missing ≠ zero");
+    expect(visible).toContain("pipeline only; overlapping Canada aggregates excluded");
+    expect(visible).not.toContain("1</strong> numeric routes");
+    expect(visible).not.toContain("Long route instructions belong in details.");
+    expect(details).toContain('hidden=""');
+    expect(details).toContain("1</strong> numeric routes");
+    expect(details).toContain("0</strong> declared routes without a numeric value");
+    expect(details).toContain("Long route instructions belong in details.");
+    expect(details).toContain("exact-period route observations");
+    expect(details).toContain("remain distinct from numeric zero");
+    expect(details).toContain("This view is pipeline only");
   });
 });

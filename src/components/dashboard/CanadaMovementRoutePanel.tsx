@@ -13,6 +13,7 @@ interface CanadaMovementRoutePanelProps {
   allSeries: readonly UsaManifestSeries[];
   series: UsaManifestSeries;
   displayUnit: DisplayUnitId;
+  onDisplayUnitChange?: (unit: DisplayUnitId) => void;
   monthlyAverageRate?: boolean;
 }
 
@@ -26,6 +27,7 @@ export function CanadaMovementRoutePanel({
   allSeries,
   series,
   displayUnit,
+  onDisplayUnitChange,
   monthlyAverageRate = false,
 }: CanadaMovementRoutePanelProps) {
   const plan = useMemo(
@@ -111,6 +113,7 @@ export function CanadaMovementRoutePanel({
       <OriginDestinationPanel
         model={built.model}
         displayUnit={displayUnit}
+        onDisplayUnitChange={onDisplayUnitChange}
         monthlyAverageRate={monthlyAverageRate}
         title="Where Canadian pipeline movements start and end"
         description="Rows are exact shipping origins and columns are exact receiving destinations. Use the period, From, and To controls to inspect one corridor or the complete source-published matrix."

@@ -18,6 +18,7 @@ interface UsaPaddOriginDestinationPanelProps {
   series: UsaManifestSeries;
   activeGeographyId: string;
   displayUnit: DisplayUnitId;
+  onDisplayUnitChange?: (unit: DisplayUnitId) => void;
   onGeographyChange: (geographyId: string) => void;
 }
 
@@ -25,6 +26,7 @@ export function UsaPaddOriginDestinationPanel({
   series,
   activeGeographyId,
   displayUnit,
+  onDisplayUnitChange,
   onGeographyChange,
 }: UsaPaddOriginDestinationPanelProps) {
   const plan = useMemo(
@@ -79,6 +81,7 @@ export function UsaPaddOriginDestinationPanel({
         <OriginDestinationPanel
           model={built.model}
           displayUnit={displayUnit}
+          onDisplayUnitChange={onDisplayUnitChange}
           highlightedRouteId={activeGeographyId}
           title="Where PADD movements start and end"
           description="Read across from a shipping PADD to a receiving PADD. Use the period, origin, and destination controls to isolate exact corridors."

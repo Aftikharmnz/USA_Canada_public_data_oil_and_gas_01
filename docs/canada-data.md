@@ -12,45 +12,88 @@ Machine-readable series and geography definitions remain authoritative in
 [`config/series/canada.json`](../config/series/canada.json) and
 [`config/geographies/canada.json`](../config/geographies/canada.json).
 
-## Current verified generation
+## Active registry and current verified generation
 
-Promoted run `canada-20260803T170245Z` contains 69 active definitions:
-67 Statistics Canada series and 2 CER series. The country page presents them as
-31 **Crude** and 38 **Refined** choices. Crude includes crude-oil balances,
-grade and bitumen detail, equivalent products, refinery activity, and
-crude/equivalent pipeline movements; placing refinery activity there is
-navigation only and does not alter provider semantics, units, observation
-identity, or aggregation rules.
+The source registry contains 81 active definitions: 79 Statistics Canada and
+2 CER. They classify as 32 **Crude** and 49 **Refined** choices. Twelve of those
+definitions were activated after the current public generation: four propane
+balances, six residual-fuel-oil balances, and two closing inventories held by
+domestic pipeline transporters. A registry entry is eligible for the next
+fail-closed refresh; it is not public evidence until a complete generation,
+manifest, asset set, forecasts, and integrity index have been promoted.
+
+Promoted run `canada-20260803T170245Z` remains the last-known-good public
+generation and contains the preceding 69-definition cohort: 67 Statistics
+Canada series and 2 CER series, presented as 31 **Crude** and 38 **Refined**
+choices. Crude includes crude-oil balances, grade and bitumen detail, equivalent
+products, refinery activity, and crude/equivalent pipeline movements; placing
+refinery activity there is navigation only and does not alter provider
+semantics, units, observation identity, or aggregation rules.
 
 The run contains 61,310 canonical observations, 467 verified observed chart
 assets with 467 matching forecast records (934 integrity entries), and
 29,739,716 bytes (28.36 MiB) of canonical JSON. Public assets occupy 12.78 MiB.
-The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. All
-three Statistics Canada tables reach source month `2026-05`; CER reaches week
-`2026-07-21`. Forecast status is 360 ready, 74 `limited_history`,
+The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. Its
+three promoted Statistics Canada cubes (25-10-0063, 25-10-0077, and the shared
+25-10-0081 cube) reach source month `2026-05`; the reviewed but not yet promoted
+25-10-0075 cube also reaches `2026-05`. CER reaches week `2026-07-21`.
+Forecast status is 360 ready, 74 `limited_history`,
 and 33 unavailable. The previous last-known-good generation is
 `canada-20260731T162758Z`. Retention keeps that generation and the current one.
-Public manifest, asset, integrity, and Pages verification passed.
+Public manifest, asset, integrity, and Pages verification passed. Until the
+first complete 81-definition refresh is promoted, the site correctly continues
+to serve this exact 69-definition last-known-good generation. Any source,
+normalization, storage, analytics, or asset failure during the expanded refresh
+must leave it untouched.
 
 ## Official sources
 
-### Statistics Canada table 25-10-0081-01
+### Statistics Canada table 25-10-0081 sibling views
 
 [Petroleum products by supply and disposition, monthly](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008101)
 is the current refined-products cube. Its current regime begins in January 2019
 and publishes cubic-metre observations for Canada and provinces/territories,
 although availability varies by product, measure, geography, and status.
 
-The dashboard concentrates on trader-relevant balances for finished motor
-gasoline, motor-gasoline blending components, fuel ethanol, distillate fuel oil,
-and kerosene-type jet fuel. Measures include the compatible subset of refinery
-or renewable-fuel production, imports, stock change, refinery/blender inputs,
-exports, products supplied, and ending stocks.
+Official views
+[25-10-0081-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008101)
+and
+[25-10-0081-02](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510008102)
+are sibling presentations of the same Statistics Canada product and share WDS
+PID `25100081`, DOI, full-table archive, headers, and observation coordinates.
+The registry therefore has one table specification and the refresh downloads
+that archive once. The views are not separate datasets, their rows must never
+be added merely because they appear on different landing pages, and a
+coordinate already present through one view is not registered again through
+the other.
+
+The active registry contains 39 definitions from this shared cube. The original
+29 cover trader-relevant balances for finished motor gasoline, motor-gasoline
+blending components, fuel ethanol, distillate fuel oil, and kerosene-type jet
+fuel. Ten newly activated exact leaves add:
+
+- propane field production, refinery/blender net production, imports, and
+  exports; and
+- residual fuel oil refinery/blender net production, imports, exports,
+  products supplied, ending stocks, and stock change.
+
+Propane field production uses only the six source-declared geographies Canada,
+Alberta, British Columbia, Nova Scotia, Ontario, and Saskatchewan. A declared
+geography without numeric facts remains unavailable, not zero. The other new
+coordinates use their exact source-published national or province/territory
+sets. Parent and component product rows overlap; the propane and residual leaves
+are never added back to a broader product total without a separate documented
+reconciliation.
 
 Important interpretation rules:
 
 - Products supplied is accounting disappearance from the primary supply chain,
   not a direct survey of end-user consumption.
+- Propane is the exact Statistics Canada product member; it is not silently
+  broadened to a combined propane/propylene concept.
+- Residual fuel oil is a finished-product leaf. Its net production can be
+  negative, stock change is a signed monthly flow, and ending stocks are a
+  month-end level.
 - Provincial imports identify the province of entry, not necessarily the final
   processing or consumption location.
 - Distillate fuel oil is broader than road diesel.
@@ -62,7 +105,7 @@ Important interpretation rules:
 - Canada totals can contain adjustments or confidential contributions that are
   not reconstructible from the visible provinces. Prefer the source-published
   Canada value.
-- The table's dimension metadata declares `Net inter-regional receipts,
+- The shared cube's dimension metadata declares `Net inter-regional receipts,
   supply`, but the current full-table fact file contains no rows for that
   member. It remains absent: the dashboard does not treat it as zero, derive it
   from table 25-10-0077-01, or insert pipeline movements into a
@@ -130,6 +173,54 @@ provinces. For imports and exports, the source documents a January 2020
 methodology change: pipeline exports are allocated to the province where they
 are loaded and imports to the province of destination, rather than the former
 border-clearance treatment. Analytics must not hide this break.
+
+### Statistics Canada table 25-10-0075-01
+
+[Inventories of crude oil and petroleum products held by domestic
+transporters, monthly](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2510007501)
+publishes monthly point stocks by inventory position, transport mode, broad
+product, and geography. The reviewed cube begins in January 2020 and uses the
+2016 DGUID vintage for Canada, Alberta, British Columbia, Manitoba, Northwest
+Territories, Ontario, Quebec, and Saskatchewan. Those codes are explicit
+aliases on the existing stable geography nodes; the application does not create
+a second 2016 geography hierarchy.
+
+The active registry selects exactly two coordinates:
+
+- closing inventories of **Crude oil and equivalents** held by domestic
+  pipeline transporters; and
+- closing inventories of the combined **Hydrocarbon Gas Liquids (HGLs) and
+  Refined Petroleum Products (RPPs)** bucket held by domestic pipeline
+  transporters.
+
+Every normalized observation retains constant semantic dimensions for
+`inventory_position=Closing inventories`, `mode_of_transport=Pipeline`, and the
+exact source product. These dimensions are registry-derived from pinned row
+filters; they do not alter keys for pre-existing Statistics Canada series. A
+future source mode or product cannot enter either definition automatically.
+
+These values are month-end stocks inside a transporter custody boundary. They
+are not total Canadian commercial inventories, refinery stocks, terminal
+capacity, storage capacity, pipeline throughput, receipts, transfers, or
+origin-destination movement volumes. The HGL/RPP total cannot be allocated to
+propane, gasoline, distillate, jet fuel, or another component. Northwest
+Territories HGL/RPP cells can be `..`; they remain not available rather than
+zero or an inferred provincial value.
+
+The source also publishes opening inventories. Across the reviewed numeric
+history, a month's opening position repeats the previous month's closing
+position. Activating both would expose the same stock state twice with a
+one-period shift and invite double counting. The first tranche therefore
+registers closing inventories only. Opening rows remain source evidence, not a
+second active measure, and may be reconsidered only for a documented
+reconciliation use case.
+
+Neither transporter-inventory series is in the custom-geography aggregation
+registry. The source-published Canada value remains separate and authoritative;
+province rows are exact choices, not authorization to synthesize a national
+stock. Both definitions are also excluded from monthly-average daily-rate
+conversion because dividing a point stock by calendar days has no valid market
+meaning.
 
 ### Statistics Canada table 25-10-0077-01
 
@@ -238,14 +329,20 @@ then applies the selected fixed-factor display scale. It recomputes the seasonal
 distribution diagnostics, and other displayed statistics from those derived
 period values.
 
+The positive registry now contains 70 active Statistics Canada monthly flows.
+Its nine additions are all four propane measures plus residual-fuel-oil net
+production, imports, exports, products supplied, and stock change. Residual-fuel
+ending stocks and both table 25-10-0075-01 transporter closing inventories are
+point stocks and remain excluded.
+
 This is a presentation view, not a replacement source series: canonical data,
 checksums, regional aggregation, forecast fitting, and interval calibration
 stay in monthly cubic metres. Forecast point values and prediction bounds are
 converted only after publication using each target month's own day count.
 Scale-dependent backtest errors stay labelled in source monthly cubic metres.
 Closing inventory and ending stocks are point-in-time levels, so daily-rate
-units are not offered for them. Percentages and unregistered future measures also remain
-ineligible.
+units are not offered for them. Percentages and unregistered future measures
+also remain ineligible.
 
 ### Canada Energy Regulator weekly crude runs
 
@@ -305,10 +402,23 @@ not utilization. Each combined period requires every selected component;
 suppression or absence produces a nonnumeric combined period, never a partial
 sum. Seasonal bands and distributions are recomputed from aligned history.
 
+The expansion adds nine exact table 25-10-0081 definitions to this positive
+registry: all four propane measures plus residual-fuel net production, imports,
+exports, stock change, and ending stocks. Residual-fuel product supplied is
+national-only and remains excluded. This custom-aggregation set differs from
+the nine new daily-rate-eligible flows: ending stocks can be summed across
+complete mutually exclusive provinces but cannot become a rate, while product
+supplied can become a national monthly-average rate but cannot be regionally
+combined. Both table 25-10-0075 transporter stocks remain excluded from custom
+aggregation.
+
 - Statistics Canada monthly product balances generally move from the smallest
   published province/territory observation to the source-published Canada
   total. A suppressed or unavailable coordinate is not offered as if it were a
   zero.
+- Table 25-10-0075-01 transporter inventories expose only the eight registered
+  source geographies and retain the published Canada stock separately. Their
+  provincial availability does not authorize a browser-computed combination.
 - Statistics Canada crude series expose only their actual provincial and
   Atlantic-region coordinates, plus the source-published Canada total.
 - CER weekly refinery series expose the three confidentiality regions. A Canada
@@ -347,7 +457,11 @@ neither is relabelled as provider release time when that timestamp is absent.
 
 ## Automated refresh and recovery
 
-Statistics Canada and CER require no secret. The implemented
+Statistics Canada and CER require no secret. The active dry-run plan contains
+81 definitions and four Statistics Canada PIDs (`25100063`, `25100075`,
+`25100077`, and `25100081`) plus the CER file. Views 25-10-0081-01 and
+25-10-0081-02 share PID `25100081`, so they still produce only one full-table
+download. The implemented
 [`refresh-canada.yml`](../.github/workflows/refresh-canada.yml) workflow polls
 at 10:53 and 14:23 Eastern each weekday. Those independent polling
 opportunities complement bounded retry attempts inside each client. A
@@ -357,7 +471,10 @@ identities, rollup coverage, and chart assets must all validate.
 
 When the source is unchanged, the job leaves the current public generation and
 repository untouched. When validation or retrieval fails, the prior Canada
-generation remains the last-known-good site. Operators can run the same command
+generation remains the last-known-good site. This is also the transition rule
+for the first 81-definition refresh: the current 69-definition promoted run
+remains public unless all new and existing observations, assets, forecasts, and
+integrity entries validate together. Operators can run the same command
 manually; there is no separate browser-side API fetch or manual spreadsheet
 copy step.
 
@@ -387,6 +504,12 @@ distribution calculations applied after selecting a valid geography.
 - No invented 25-10-0081-01 net-inter-regional-receipts observations where the
   table declares the member but publishes no fact rows, and no substitution of
   the 25-10-0077-01 pipeline matrix for that missing balance member.
+- No double-counting of sibling 25-10-0081-01 and 25-10-0081-02 views; both are
+  coordinates from the same WDS PID `25100081` cube.
+- No table 25-10-0075-01 opening-inventory duplicate in the first tranche, no
+  daily-rate conversion of closing stocks, and no relabelling of transporter
+  custody stocks as total commercial inventory, capacity, throughput, or
+  movements.
 - No marine, rail, truck, or all-mode interpretation of the current
   pipeline-only movement data.
 - No individual crude-grade, gasoline, diesel, jet-fuel, or HGL-component

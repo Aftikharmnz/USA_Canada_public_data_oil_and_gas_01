@@ -98,7 +98,7 @@ For imports, `PADD` means district of entry. It must not be labelled destination
 
 The registry configures safe missing-series bootstrap bounds of `2014-01-01` for weekly data and `2014-01` for monthly data. The Phase 3 activation used the dedicated helper to select exactly the 36 new weekly definitions from `2014-01-01`. This supplies a practical multi-year seasonal baseline while keeping generated repository data within GitHub-friendly limits. The established Phase 2 histories remain intact. A from-scratch or targeted backfill must preserve these boundaries unless a reviewed storage migration changes the policy.
 
-Canonical publication fails closed if `canonical.json` would exceed 90 MiB. The size gate is a safety boundary, not a target. Operators must inspect manifest-derived byte/row/asset counts after every material onboarding and must not bypass the gate to make a refresh succeed.
+That phase originally used a 90 MiB single-file guard. New schema `1.1.0` generations instead use the reviewed shard, logical-total, and per-generation growth gates in [ADR 0007](adr/0007-sharded-canonical-generation-storage.md). Every size gate is a safety boundary, not a target; operators must inspect manifest-derived byte/row/asset counts after material onboarding and must not bypass a gate to make a refresh succeed.
 
 Seasonal assets continue to show the latest three years over a historical min-max and interquartile band, with median/mean statistics, explicit sample counts, latest deltas, and level/change distribution diagnostics. Incomplete history returns an explicit insufficient-history state.
 

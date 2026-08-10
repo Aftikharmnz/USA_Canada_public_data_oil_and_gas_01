@@ -158,10 +158,12 @@ month. The complete USA generation is 90,001,839 bytes (85.83 MiB), below the
 90 MiB promotion guard, and the previous last-known-good generation is
 `eia-20260729T175851Z`.
 
-This measured result does not replace the 90 MiB check on every future
-promotion. More movement products—such as 0–15 ppm distillate, finished
-gasoline, jet fuel, or propane/propylene—require a reviewed storage migration
-or an equivalent capacity plan before activation.
+This measured result records the historical single-file check. New
+publications use the shard, logical-total, and growth gates in
+[ADR 0007](adr/0007-sharded-canonical-generation-storage.md). More movement
+products—such as 0–15 ppm distillate, finished gasoline, jet fuel, or
+propane/propylene—still require a source-contract and capacity review before
+activation.
 
 ## Primary sources
 

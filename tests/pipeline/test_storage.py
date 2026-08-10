@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import shutil
 import sys
 import unittest
@@ -16,6 +17,8 @@ from energy_dashboard.contracts import Observation, ObservationStatus
 from energy_dashboard.storage import (
     CanonicalSnapshot,
     SnapshotStore,
+    _json_bytes,
+    _observation_to_json,
     merge_canonical,
     replace_path_with_retry,
 )
@@ -154,10 +157,166 @@ class LastKnownGoodStoreTests(unittest.TestCase):
         directory = self.store_directory()
         store = SnapshotStore(directory)
         store.publish("run-001", CanonicalSnapshot((row("2026-05", "10"),)))
-        canonical = directory / "generations" / "run-001" / "canonical.json"
-        canonical.write_text("[]\n", encoding="utf-8")
-        with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+        shard = next(
+            (directory / "generations" / "run-001" / "canonical").glob("series-*.json")
+        )
+        shard.write_text("[]\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "shard (byte count|checksum) mismatch"):
             store.load_current()
+
+    def test_shards_stay_below_file_budget_and_round_trip(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(directory, max_canonical_shard_bytes=600)
+        expected = CanonicalSnapshot(
+            tuple(row(f"{year}-01", str(year)) for year in range(2023, 2027))
+        )
+        generation = store.publish("run-001", expected)
+        shards = sorted((generation / "canonical").glob("series-*.json"))
+        self.assertGreater(len(shards), 1)
+        self.assertTrue(all(path.stat().st_size <= 600 for path in shards))
+        self.assertFalse((generation / "canonical.json").exists())
+        loaded = store.load_current()
+        assert loaded is not None
+        self.assertEqual(loaded.observations, expected.observations)
+
+    def test_logical_total_boundary_allows_multi_shard_framing_overhead(self) -> None:
+        directory = self.store_directory()
+        expected = CanonicalSnapshot((row("2025-12", "10"), row("2026-01", "11")))
+        logical_bytes = len(_json_bytes([
+            _observation_to_json(item)
+            for item in sorted(expected.observations, key=lambda item: item.key)
+        ]))
+        store = SnapshotStore(directory, max_canonical_bytes=logical_bytes)
+        store.publish("run-001", expected)
+        self.assertEqual(store.load_current(), expected)
+
+    def test_physical_readback_failure_never_moves_current(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(directory)
+        with (
+            patch.object(store, "load", side_effect=ValueError("readback failed")),
+            self.assertRaisesRegex(ValueError, "readback failed"),
+        ):
+            store.publish("run-001", CanonicalSnapshot((row("2026-05", "10"),)))
+        self.assertIsNone(store.current_run_id())
+        self.assertFalse((directory / "generations" / "run-001").exists())
+
+    def test_current_pointer_failure_removes_verified_candidate(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(directory)
+        store.publish("run-001", CanonicalSnapshot((row("2026-05", "10"),)))
+        calls = 0
+
+        def fail_pointer_replace(source: str | Path, destination: str | Path, **kwargs: object) -> None:
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise PermissionError("CURRENT is locked")
+            replace_path_with_retry(source, destination, **kwargs)
+
+        with (
+            patch("energy_dashboard.storage.replace_path_with_retry", side_effect=fail_pointer_replace),
+            self.assertRaisesRegex(PermissionError, "CURRENT is locked"),
+        ):
+            store.publish("run-002", CanonicalSnapshot((row("2026-06", "20"),)))
+
+        self.assertEqual(store.current_run_id(), "run-001")
+        self.assertFalse((directory / "generations" / "run-002").exists())
+        store.publish("run-002", CanonicalSnapshot((row("2026-06", "20"),)))
+        self.assertEqual(store.current_run_id(), "run-002")
+
+    def test_unindexed_extra_shard_fails_closed(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(directory)
+        generation = store.publish("run-001", CanonicalSnapshot((row("2026-05", "10"),)))
+        (generation / "canonical" / "unexpected.txt").write_text("extra\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "shard file set mismatch"):
+            store.load_current()
+
+    def test_shard_over_budget_is_rejected_when_loading(self) -> None:
+        directory = self.store_directory()
+        writer = SnapshotStore(directory)
+        writer.publish("run-001", CanonicalSnapshot((row("2026-05", "10"),)))
+        with self.assertRaisesRegex(ValueError, "file-size budget"):
+            SnapshotStore(directory, max_canonical_shard_bytes=16).load_current()
+
+    def test_mixed_legacy_and_sharded_layout_fails_closed(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(directory)
+        generation = store.publish(
+            "run-001", CanonicalSnapshot((row("2026-05", "10"),))
+        )
+        (generation / "canonical.json").write_text("[]\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "manifest is invalid"):
+            store.load_current()
+
+    def test_generation_growth_gate_preserves_last_known_good(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(
+            directory,
+            max_canonical_growth_ratio=0,
+            min_canonical_growth_bytes=0,
+        )
+        store.publish("run-001", CanonicalSnapshot((row("2026-05", "10"),)))
+        with self.assertRaisesRegex(ValueError, "growth budget"):
+            store.publish(
+                "run-002",
+                CanonicalSnapshot((row("2026-05", "10"), row("2026-06", "11"))),
+            )
+        self.assertEqual(store.current_run_id(), "run-001")
+        self.assertFalse((directory / "generations" / "run-002").exists())
+
+    def test_corrupt_current_cannot_supply_a_growth_allowance(self) -> None:
+        directory = self.store_directory()
+        store = SnapshotStore(directory)
+        generation = store.publish(
+            "run-001", CanonicalSnapshot((row("2026-05", "10"),))
+        )
+        shard = next((generation / "canonical").glob("series-*.json"))
+        shard.write_text("[]\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "shard (byte count|checksum) mismatch"):
+            store.publish("run-002", CanonicalSnapshot((row("2026-06", "11"),)))
+        self.assertEqual(store.current_run_id(), "run-001")
+        self.assertFalse((directory / "generations" / "run-002").exists())
+
+    def test_revision_ledger_file_budget_fails_before_promotion(self) -> None:
+        directory = self.store_directory()
+        revised = merge_canonical(
+            CanonicalSnapshot((row("2026-05", "10", retrieved_at=T0),)),
+            (row("2026-05", "11"),),
+            detected_at=T1,
+        ).snapshot
+        store = SnapshotStore(directory, max_revision_bytes=16)
+        with self.assertRaisesRegex(ValueError, "Revision ledger exceeds"):
+            store.publish("run-too-large", revised)
+        self.assertIsNone(store.current_run_id())
+
+    def test_legacy_single_file_generation_remains_readable(self) -> None:
+        directory = self.store_directory()
+        generation = directory / "generations" / "run-legacy"
+        generation.mkdir(parents=True)
+        expected = row("2026-05", "10")
+        canonical_bytes = _json_bytes([_observation_to_json(expected)])
+        revisions_bytes = _json_bytes([])
+        (generation / "canonical.json").write_bytes(canonical_bytes)
+        (generation / "revisions.json").write_bytes(revisions_bytes)
+        manifest = {
+            "schema_version": "1.0.0",
+            "run_id": "run-legacy",
+            "row_count": 1,
+            "revision_count": 0,
+            "canonical_bytes": len(canonical_bytes),
+            "revisions_bytes": len(revisions_bytes),
+            "canonical_sha256": hashlib.sha256(canonical_bytes).hexdigest(),
+            "revisions_sha256": hashlib.sha256(revisions_bytes).hexdigest(),
+            "metadata": {},
+        }
+        (generation / "manifest.json").write_bytes(_json_bytes(manifest))
+        (directory / "CURRENT").write_text("run-legacy\n", encoding="utf-8")
+
+        loaded = SnapshotStore(directory).load_current()
+        assert loaded is not None
+        self.assertEqual(loaded.observations, (expected,))
 
     def test_repository_safe_canonical_size_budget_fails_before_promotion(self) -> None:
         directory = self.store_directory()

@@ -21,12 +21,17 @@ import {
   formatPeriod,
   formatValue,
 } from "../../lib/formatters";
-import { monthlyVolumeToAverageRate } from "../../lib/periodAverageRate";
+import {
+  MONTHLY_AVERAGE_RATE_UNIT,
+  monthlyVolumeToAverageRate,
+} from "../../lib/periodAverageRate";
 import {
   convertUnitValue,
   type DisplayUnitId,
 } from "../../lib/units";
 import type { UsaManifestSeries } from "../../types/energyAssets";
+import { ChartDetailsToggle } from "./ChartDetailsToggle";
+import { DisplayUnitControl } from "./DisplayUnitControl";
 
 echarts.use([
   BarChart,
@@ -64,6 +69,7 @@ interface RegionalContributionPanelProps {
   series: UsaManifestSeries;
   spec: RegionalContributionSpec;
   displayUnit: DisplayUnitId;
+  onDisplayUnitChange?: (unit: DisplayUnitId) => void;
   monthlyAverageRate?: boolean;
 }
 
@@ -307,6 +313,7 @@ export function RegionalContributionPanel({
   series,
   spec,
   displayUnit,
+  onDisplayUnitChange,
   monthlyAverageRate = false,
 }: RegionalContributionPanelProps) {
   const paths = useMemo(
@@ -346,17 +353,28 @@ export function RegionalContributionPanel({
   );
 
   return (
-    <section className="analysis-panel regional-contribution-panel" aria-labelledby="regional-contribution-title">
-      <div className="analysis-panel-heading">
-        <div>
-          <p className="section-kicker">National import composition</p>
+    <section className="analysis-panel regional-contribution-panel graph-first-panel" aria-labelledby="regional-contribution-title">
+      <div className="analysis-panel-heading graph-first-heading">
+        <div className="graph-first-title">
           <h2 id="regional-contribution-title">{spec.title}</h2>
-          <p>{spec.description}</p>
         </div>
         {model ? (
-          <div className="contribution-period-badge">
-            <span>Latest source period</span>
-            <strong>{formatPeriod(model.latest.period)}</strong>
+          <div className="graph-first-actions">
+            <div className="contribution-period-badge graph-first-location">
+              <span>Latest source period</span>
+              <strong>{formatPeriod(model.latest.period)}</strong>
+            </div>
+            {onDisplayUnitChange ? (
+              <DisplayUnitControl
+                sourceUnit={monthlyAverageRate ? MONTHLY_AVERAGE_RATE_UNIT : model.sourceUnit}
+                value={displayUnit}
+                onChange={onDisplayUnitChange}
+                compact
+                micro
+              />
+            ) : (
+              <span className="graph-first-location">{compactUnit(displayUnit)}</span>
+            )}
           </div>
         ) : null}
       </div>
@@ -377,68 +395,74 @@ export function RegionalContributionPanel({
       ) : null}
 
       {model && option ? (
-        <>
-          <div className="contribution-summary-grid">
-            <div>
-              <span>Official {spec.nationalLabel} total</span>
-              <strong>{formattedDisplayValue(
-                model.latest.nationalValue,
-                model.latest.period,
-                model.sourceUnit,
-                displayUnit,
-                monthlyAverageRate,
-              )}</strong>
-              <small>{statusLabel(model.latest.nationalStatus)}</small>
-            </div>
-            <div>
-              <span>Published component subtotal</span>
-              <strong>{model.latest.numericComponentCount
-                ? formattedDisplayValue(
-                    model.latest.componentSum,
-                    model.latest.period,
-                    model.sourceUnit,
-                    displayUnit,
-                    monthlyAverageRate,
-                  )
-                : "Not available"}</strong>
-            </div>
-            <div>
-              <span>Numeric coverage</span>
-              <strong>
-                {model.latest.numericComponentCount}/{model.latest.expectedComponentCount}
-              </strong>
-            </div>
-            <div>
-              <span>Official total minus components</span>
-              <strong>{model.latest.reconciliationDifference === null
-                ? "Not calculated"
-                : formattedSignedDisplayValue(
-                    model.latest.reconciliationDifference,
-                    model.latest.period,
-                    model.sourceUnit,
-                    displayUnit,
-                    monthlyAverageRate,
-                  )}</strong>
-            </div>
-          </div>
+        <div className="chart-stage">
           {!model.latest.complete ? (
             <p className="contribution-warning" role="status">
               The latest breakdown is incomplete. Missing, suppressed, or unavailable regions remain
               nonnumeric; its stacked composition is withheld and the published subtotal is not
-              presented as a reconstructed national total. Exact known regional values remain in the table.
+              presented as a reconstructed national total. Exact known regional values remain in Details.
             </p>
           ) : model.latest.reconciliationDifference !== 0 ? (
             <p className="contribution-note">
-              The signed difference is a source reconciliation or rounding diagnostic. It is not an
-              invented “Other” region, and no regional value has been adjusted to force equality.
+              Official total minus components is {formattedSignedDisplayValue(
+                model.latest.reconciliationDifference,
+                model.latest.period,
+                model.sourceUnit,
+                displayUnit,
+                monthlyAverageRate,
+              )}. This is a source reconciliation or rounding diagnostic, not an invented “Other”
+              region; no regional value is adjusted to force equality.
             </p>
           ) : null}
           <ContributionCanvas
             option={option}
             ariaLabel={`${series.title}: stacked source-published ${spec.componentLevelLabel} values with a separate official ${spec.nationalLabel} total line.`}
           />
-          <details className="accessible-chart-summary">
-            <summary>Latest regional values and shares</summary>
+          <ChartDetailsToggle summary="Regional values, reconciliation, and source notes">
+            <p>{spec.description}</p>
+            <div className="contribution-summary-grid">
+              <div>
+                <span>Official {spec.nationalLabel} total</span>
+                <strong>{formattedDisplayValue(
+                  model.latest.nationalValue,
+                  model.latest.period,
+                  model.sourceUnit,
+                  displayUnit,
+                  monthlyAverageRate,
+                )}</strong>
+                <small>{statusLabel(model.latest.nationalStatus)}</small>
+              </div>
+              <div>
+                <span>Numeric coverage</span>
+                <strong>
+                  {model.latest.numericComponentCount}/{model.latest.expectedComponentCount}
+                </strong>
+              </div>
+              <div>
+                <span>Published component subtotal</span>
+                <strong>{model.latest.numericComponentCount
+                  ? formattedDisplayValue(
+                      model.latest.componentSum,
+                      model.latest.period,
+                      model.sourceUnit,
+                      displayUnit,
+                      monthlyAverageRate,
+                    )
+                  : "Not available"}</strong>
+              </div>
+              <div>
+                <span>Official total minus components</span>
+                <strong>{model.latest.reconciliationDifference === null
+                  ? "Not calculated"
+                  : formattedSignedDisplayValue(
+                      model.latest.reconciliationDifference,
+                      model.latest.period,
+                      model.sourceUnit,
+                      displayUnit,
+                      monthlyAverageRate,
+                    )}</strong>
+              </div>
+            </div>
             <div className="forecast-table-wrap">
               <table>
                 <caption>
@@ -487,13 +511,16 @@ export function RegionalContributionPanel({
                 </tbody>
               </table>
             </div>
-          </details>
-          <p className="chart-footnote">
-            {spec.geographyDisclosure} The official national observation remains authoritative.
-            Component percentages use that value as the denominator; incomplete components are never
-            rescaled to 100%.
-          </p>
-        </>
+            <p className="chart-footnote">
+              {spec.geographyDisclosure} The official national observation remains authoritative.
+              Component percentages use that value as the denominator; incomplete components are never
+              rescaled to 100%.
+              {monthlyAverageRate
+                ? " The daily-rate view divides each monthly volume by that period's exact calendar-day count; source observations remain unchanged."
+                : ""}
+            </p>
+          </ChartDetailsToggle>
+        </div>
       ) : null}
     </section>
   );

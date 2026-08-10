@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AssetDetails } from "../components/dashboard/AssetDetails";
 import { CanadaMovementRoutePanel } from "../components/dashboard/CanadaMovementRoutePanel";
 import { CollapsibleToolbar } from "../components/dashboard/CollapsibleToolbar";
+import { CountrySectionNav } from "../components/dashboard/CountrySectionNav";
 import {
   DashboardError,
   DashboardLoading,
@@ -116,7 +117,9 @@ function CanadaReferenceLinks({ series }: { series: CanadaManifestSeries }) {
 function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
   const eligibleSeries = useMemo(() => availableCanadaSeries(manifest), [manifest]);
   const [requested, setRequested] = useState<CanadaDashboardSelectionRequest>({});
-  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  // Graph-first is the default. The exact selection remains visible in the
+  // toolbar summary and the full filter hierarchy is one click away.
+  const [filtersCollapsed, setFiltersCollapsed] = useState(true);
   const [regionMode, setRegionMode] = useState<RegionSelectionMode>("single");
   const [requestedDisplayUnit, setRequestedDisplayUnit] = useState<DisplayUnitId>();
   const selection = useMemo(
@@ -660,6 +663,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
               series={series}
               spec={contributionSpec}
               displayUnit={displayUnit}
+              onDisplayUnitChange={setRequestedDisplayUnit}
               monthlyAverageRate={averageRateActive}
             />
           ) : null}
@@ -668,6 +672,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
               allSeries={manifest.series}
               series={series}
               displayUnit={displayUnit}
+              onDisplayUnitChange={setRequestedDisplayUnit}
               monthlyAverageRate={averageRateActive}
             />
           ) : null}
@@ -683,6 +688,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             geographyLevelLabel={movementContext ? `${movementContext.geographyRole} level` : undefined}
             regionLabel={movementContext?.geographyRole}
             displayUnit={displayUnit ?? undefined}
+            onDisplayUnitChange={setRequestedDisplayUnit}
             forecast={displayForecast}
             forecastDisplayPoints={averageRateActive ? monthlyRateView.forecastPoints : undefined}
             forecastNotice={displayForecastNotice}
@@ -699,6 +705,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             geographyLevelLabel={movementContext ? `${movementContext.geographyRole} level` : undefined}
             regionLabel={movementContext?.geographyRole}
             displayUnit={displayUnit ?? undefined}
+            onDisplayUnitChange={setRequestedDisplayUnit}
           />
           <AssetDetails asset={asset} series={series} geography={displayGeography} />
         </div>
@@ -714,6 +721,7 @@ export function CanadaPage() {
   return (
     <main id="main-content" className="page-shell usa-dashboard-shell canada-dashboard-shell">
       <h1 className="visually-hidden">Canada petroleum dashboard</h1>
+      <CountrySectionNav country="canada" activeView="explorer" />
 
       {state.status === "loading" && !state.data ? <DashboardLoading /> : null}
       {state.status === "error" ? (

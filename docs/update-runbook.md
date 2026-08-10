@@ -6,11 +6,11 @@ Automatically detect official releases, merge new and revised history, validate 
 
 ## Implementation state
 
-The credential-safe EIA client, credential-free Statistics Canada/CER clients, strict registry/geography normalization, revision-aware `SnapshotStore`, seasonal/distribution and univariate forecast asset builders, staged refresh orchestrators, `refresh-eia`, `refresh-canada`, and `rebuild-analytics` CLIs, integrity-checked atomic public promotion, and scheduled same-run Pages workflows are implemented. The promoted active plans contain 69 USA definitions (66 weekly and three monthly) and 69 Canada definitions (67 Statistics Canada and 2 CER).
+The credential-safe EIA client, credential-free Statistics Canada/CER clients, strict registry/geography normalization, revision-aware `SnapshotStore`, seasonal/distribution and univariate forecast asset builders, staged refresh orchestrators, `refresh-eia`, `refresh-canada`, and `rebuild-analytics` CLIs, integrity-checked atomic public promotion, and scheduled same-run Pages workflows are implemented. The active source registries now contain 78 USA definitions (66 weekly and 12 monthly) and 81 Canada definitions (79 Statistics Canada and 2 CER). Both current promoted last-known-good manifests still contain their preceding 69-definition cohorts until each expanded registry completes a full validated refresh and atomic promotion.
 
-The complete USA registry is activated and public in promoted run `eia-20260805T163902Z`. It contains 217,582 canonical observations, 361 verified observed chart assets, 361 matching forecast records (722 integrity entries), and 90,001,839 bytes (85.83 MiB) of canonical JSON under the 90 MiB guard. The refresh inserted 74 rows, revised 60, and matched 12,673 unchanged rows. All 66 weekly definitions reach `2026-07-24`, and monthly crude production reaches `2026-05`. Fifteen of 17 crude PADD routes reach `2026-05`; routes 3→5 and 5→3 remain at `2026-04`, so series freshness conservatively remains `2026-04`. All 18 total-products PADD routes reach `2026-05`. The previous last-known-good generation is `eia-20260729T175851Z`. Public workflow run `31026239390` completed successfully and deployed the matching site.
+The current promoted USA last-known-good run is `eia-20260805T163902Z`; it predates the nine active monthly PADD/U.S. crude-balance definitions and therefore contains the preceding 69-definition boundary. It contains 217,582 canonical observations, 361 verified observed chart assets, 361 matching forecast records (722 integrity entries), and 90,001,839 bytes (85.83 MiB) of canonical JSON under the former single-file 90 MiB guard. The refresh inserted 74 rows, revised 60, and matched 12,673 unchanged rows. All 66 weekly definitions reach `2026-07-24`, and monthly crude production reaches `2026-05`. Fifteen of 17 crude PADD routes reach `2026-05`; routes 3→5 and 5→3 remain at `2026-04`, so series freshness conservatively remains `2026-04`. All 18 total-products PADD routes reach `2026-05`. The previous last-known-good generation is `eia-20260729T175851Z`. Public workflow run `31026239390` completed successfully and deployed the matching site. The first 78-definition candidate becomes public only after all observed and forecast assets pass validation; any failure leaves this exact 69-definition generation current.
 
-The current promoted Canada refresh is `canada-20260803T170245Z`. It contains 61,310 canonical observations, 467 verified observed chart assets with 467 matching forecast records (934 integrity entries), 29,739,716 bytes (28.36 MiB) of canonical JSON, and 12.78 MiB of public assets. The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. Statistics Canada balance tables 25-10-0063-01 and 25-10-0081-01 and movement table 25-10-0077-01 reach source month `2026-05`, and CER reaches week `2026-07-21`. The previous last-known-good generation is `canada-20260731T162758Z`; retention keeps the current and previous generations. The Canada publisher preserves source statuses and latest source period separately from latest numeric period, skips a generation when data/status/freshness evidence is unchanged, and leaves the prior generation current on any retrieval or validation failure.
+The current promoted Canada refresh is `canada-20260803T170245Z`. It predates the 12-definition registry expansion and contains 69 definitions (67 Statistics Canada and 2 CER), 61,310 canonical observations, 467 verified observed chart assets with 467 matching forecast records (934 integrity entries), 29,739,716 bytes (28.36 MiB) of canonical JSON, and 12.78 MiB of public assets. The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. Statistics Canada tables 25-10-0063-01, 25-10-0077-01, and the shared 25-10-0081 cube reach source month `2026-05`, and CER reaches week `2026-07-21`. The active 81-definition registry additionally includes two 25-10-0075-01 pipeline-transporter closing-stock definitions and ten exact propane/residual-fuel leaves from that shared 25-10-0081 cube. The previous last-known-good generation is `canada-20260731T162758Z`; retention keeps the current and previous generations. The Canada publisher preserves source statuses and latest source period separately from latest numeric period, skips a generation when data/status/freshness evidence is unchanged, and leaves the prior generation current on any retrieval or validation failure.
 
 The standalone forecast layer uses build ID `observed-2026-07-20.1_forecast-2026-07-20.4` and forecast methodology `2026-07-20.4`. USA run `eia-20260805T163902Z` built 361 matching observed/forecast asset pairs, while Canada refresh `canada-20260803T170245Z` built 467 pairs. The generated country `forecast_summary` is authoritative for the current vintage: USA has 353 ready, 1 limited-history, and 7 unavailable records; Canada has 360 ready, 74 limited-history, and 33 unavailable records with explicit reasons. Forecasts cover exactly 3 source periods and use latest-revised pseudo-out-of-sample diagnostics rather than first-release vintage backtests or machine learning. Ready records export aligned residual samples for strict browser-computed regional intervals. Most records are univariate statistical projections; national weekly distillate and jet stocks additionally compare a registered fundamental net-balance candidate built from the same release's flow series.
 
@@ -22,7 +22,9 @@ The current generation store writes:
 <store-root>/
   CURRENT
   generations/<run-id>/
-    canonical.json
+    canonical/
+      index.json
+      series-<stable-series-hash>-<period-year>.json
     revisions.json
     manifest.json
     public/
@@ -31,11 +33,11 @@ The current generation store writes:
       forecasts/<series>/<geography>/<dimension-hash>.json
 ```
 
-A candidate is written under `<store-root>/.staging/` and promoted only after normalization, analytics, manifest generation, and checksum validation complete. `CURRENT` is replaced atomically. Public directory replacement uses atomic rename where supported and a recoverable Windows fallback when directory rename semantics prevent it; either path preserves a restorable last-known-good copy. A failed run removes its staging directory and leaves the prior generation active.
+A candidate is written under `<store-root>/.staging/` and promoted only after normalization, analytics, manifest generation, and checksum validation complete. New schema `1.1.0` generations use deterministic series/year shards and a checksummed index. Schema `1.0.0` predecessors with one `canonical.json` remain readable, but one generation may never mix the two layouts. `CURRENT` is replaced atomically. Public directory replacement uses atomic rename where supported and a recoverable Windows fallback when directory rename semantics prevent it; either path preserves a restorable last-known-good copy. A failed run removes its staging directory and leaves the prior generation active.
 
 The implementation records a deterministic source payload SHA-256 in refresh/revision metadata. Each forecast also records the matching observed asset checksum and is separately checksummed by the manifest. Complete immutable raw response-body retention is outside this MVP; durable archival remains required for full source replay and for true first-release vintage backtesting.
 
-The USA registry applies bootstrap starts of 2014-01-01 to missing weekly series and 2014-01 to missing monthly series. Canada uses its registered source regimes: Statistics Canada table 25-10-0063-01 begins in 2016, table 25-10-0081-01 begins in 2019, and CER has a configured 2014 lower bound despite older rows in the source file. Canonical generation fails before promotion if `canonical.json` exceeds 90 MiB. Do not disable or raise this guard during an incident; investigate history scope, generated size, or a reviewed storage migration instead.
+The USA registry applies bootstrap starts of 2014-01-01 to missing weekly series and 2014-01 to missing monthly series. Canada uses its registered source regimes: Statistics Canada table 25-10-0063-01 begins in 2016, the shared 25-10-0081 cube begins in its reviewed 2019 regime, table 25-10-0075-01 begins in 2020, and CER has a configured 2014 lower bound despite older rows in the source file. A new generation fails before promotion if any canonical shard or the revision ledger exceeds 16 MiB, logical canonical JSON exceeds 128 MiB, or growth exceeds the larger of 10% or 8 MiB relative to `CURRENT`. The exact final-path candidate is read back before `CURRENT` moves. Do not disable or raise a guard during an incident; investigate history scope, source drift, or a reviewed storage migration instead. See [ADR 0007](adr/0007-sharded-canonical-generation-storage.md).
 
 GitHub Actions schedules are best-effort polling triggers, not exact timers. GitHub notes that scheduled workflows can be delayed or dropped during high load, run only from the default branch, and may be disabled after inactivity in public repositories. Use non-round cron minutes, several release-window attempts, a daily safety run, and manual dispatch.
 
@@ -75,7 +77,7 @@ The reviewable helper below is retained for a scoped recovery or from-scratch on
 .\scripts\bootstrap-phase3.ps1
 ```
 
-The prompted key exists only in the script process and is removed afterward. Non-interactive execution requires `EIA_API_KEY` in the process environment. The helper uses the same generation validation, 90 MiB guard, promotion, and retention path as the all-active command. It is an auditable recovery/onboarding path, not a routine refresh or outstanding activation task.
+The prompted key exists only in the script process and is removed afterward. Non-interactive execution requires `EIA_API_KEY` in the process environment. The helper uses the same sharded-generation size/growth validation, promotion, and retention path as the all-active command. It is an auditable recovery/onboarding path, not a routine refresh or outstanding activation task.
 
 An all-unchanged retrieval returns the current run ID with `changed: false`; it does not create/promote a generation. `--publish-unchanged` is the explicit escape hatch for a deliberate manifest/methodology rebuild. After a changed generation is promoted, `--retain-generations 2` is the default: keep `CURRENT` plus the newest validated predecessor. A value below 1 is rejected.
 
@@ -105,25 +107,36 @@ Promotion also prunes validated predecessor generations according to `--retain-g
 
 After promotion, run the Python tests, `pnpm run check`, and `pnpm run build`. For repository-scoped Pages, build with `VITE_BASE_PATH=/<repository-name>/`.
 
+Verify the tracked canonical `CURRENT` generation directly, without contacting a provider, with:
+
+```powershell
+python -m pipeline.energy_dashboard.cli verify-store --store data/cache/eia
+python -m pipeline.energy_dashboard.cli verify-store --store data/cache/canada
+```
+
+The command follows `CURRENT`, validates the complete referenced generation and its checksums, and prints a small row/series/revision summary. It fails when the pointer is absent, unsafe, missing, or inconsistent, or when any canonical content fails integrity validation. Use `--expected-run-id <run-id>` when an operator must pin the check to one reviewed generation.
+
 ## Local Canada refresh and promotion
 
-Statistics Canada and CER require no API credential. Inspect the registered three-table/one-file plan without a network call:
+Statistics Canada and CER require no API credential. Inspect the registered four-Statistics-Canada-PID/one-CER-file plan without a network call:
 
 ```text
 python -m pipeline.energy_dashboard.cli refresh-canada --dry-run
 ```
 
-Refresh all 69 active Canada definitions, write the immutable generation store, verify the generated assets, and atomically promote the browser data with:
+Refresh all 81 active Canada definitions, write the immutable generation store, verify the generated assets, and atomically promote the browser data with:
 
 ```text
 python -m pipeline.energy_dashboard.cli refresh-canada --store data/cache/canada --promote-to public/data/canada --retain-generations 2
 ```
 
-The command downloads each registered Statistics Canada full-table archive once and the registered CER weekly CSV, validates identity/headers/units/coordinates, and reconciles exact keys. The CER Canada crude-runs asset is built only from complete same-week coverage of Ontario, Quebec & Eastern Canada, and Western Canada; CER utilization remains regional. The command never infers a city, refinery, province, capacity, confidential cell, or national utilization value.
+The command downloads each registered Statistics Canada full-table archive once and the registered CER weekly CSV, validates identity/headers/units/coordinates, and reconciles exact keys. Views 25-10-0081-01 and 25-10-0081-02 share WDS PID `25100081`, so they resolve to one archive rather than two fetches. Table 25-10-0075-01 retains exact closing-inventory, pipeline-mode, broad-product, and geography dimensions; its 2016 DGUIDs are aliases to the registered stable nodes. The CER Canada crude-runs asset is built only from complete same-week coverage of Ontario, Quebec & Eastern Canada, and Western Canada; CER utilization remains regional. The command never infers a city, refinery, province, capacity, confidential cell, or national utilization value.
 
 `--period-start`, `--period-end`, and repeatable `--series-id` values support reviewed scoped work. Use `--expected-monthly-period <YYYY-MM>` and `--expected-weekly-period <YYYY-MM-DD>` independently because Statistics Canada and CER have different frequencies. Without reviewed expected periods, scheduled freshness is `unknown`; latest source period, latest numeric period, retrieval/check time, and last success remain separately visible. A provider release timestamp can legitimately be unavailable.
 
 An unchanged retrieval returns the current run ID with `changed: false` and does not create or promote a generation. `--publish-unchanged` is reserved for a deliberate derived-asset or manifest rebuild. On failure, do not hand-edit `data/cache/canada` or `public/data/canada`; inspect the redacted error, source metadata/status, registered coordinate, and last-known-good manifest, then rerun the same validated command after the issue is resolved.
+
+During the registry/public transition, a dry run must report 81 active definitions even though the currently promoted manifest still reports 69. The first expanded live refresh must either publish one complete 81-definition generation with matching observed/forecast integrity records or publish nothing. Any provider, coordinate, schema, unit, status, storage, analytics, or asset-validation failure leaves `canada-20260803T170245Z` as the public last-known-good generation.
 
 ## Provider-free analytics and forecast rebuild
 
@@ -175,7 +188,7 @@ The implemented workflow is [`.github/workflows/refresh-data.yml`](../.github/wo
 
 The workflow shares the `pages` concurrency group with the ordinary Pages deploy workflow and never cancels an in-progress deployment. Scheduled runs are best-effort; the timezone setting handles Eastern daylight-saving transitions, but GitHub can still delay/drop schedules or disable them after repository inactivity.
 
-For every live poll, the workflow runs Python tests, refreshes/promotes all 69 active definitions with retention 2, and reads the CLI's `changed` result. `changed: false` exits successfully with no commit, frontend build, or deploy. On `changed: true`, the refresh has already rebuilt observed analytics and all matching forecasts with the current combined build ID. Before creating any commit, the workflow scans the complete generated EIA cache/public trees for forbidden credential markers and the exact runtime secret. It then creates a local commit containing only `data/cache/eia` and `public/data/usa`, rebases it onto the latest branch head, reruns the Python contracts, verifies both sets of public paths/assets/checksums and the 90 MiB canonical guard, repeats the credential scan, and runs the locked pnpm install/check/build from that rebased revision. Only that exact tested revision is pushed before `dist` is uploaded and the primary `/usa/`, `/canada/`, and `/reference/` pages, the secondary `/usa-weekly/` verified-weekly workspace, and the backwards-compatible `/products/` USA-Refined entry are deployed in the same workflow.
+For every live poll, the workflow runs Python tests, refreshes/promotes all 78 active definitions with retention 2, and reads the CLI's `changed` result. `changed: false` exits successfully with no commit, frontend build, or deploy. On `changed: true`, the refresh has already rebuilt observed analytics and all matching forecasts with the current combined build ID. Before creating any commit, the workflow scans the complete generated EIA cache/public trees for forbidden credential markers and the exact runtime secret. It then creates a local commit containing only `data/cache/eia` and `public/data/usa`, rebases it onto the latest branch head, reruns the Python contracts, loads and verifies the rebased cache's exact `CURRENT` generation, verifies all public paths/assets/checksums and the canonical guard, repeats the credential scan, and runs the locked pnpm install/check/build from that rebased revision. Only that exact tested revision is pushed before `dist` is uploaded and the primary `/usa/`, `/canada/`, and `/reference/` pages, the secondary `/usa-weekly/` verified-weekly workspace, and the backwards-compatible `/products/` USA-Refined entry are deployed in the same workflow.
 
 Same-run deployment is required because a workflow's `GITHUB_TOKEN` push intentionally does not trigger another workflow. A failure before the guarded push leaves repository and Pages unchanged. If the branch advances again after the rebase, the ordinary non-force push fails closed before artifact upload; a later poll can recreate and revalidate the data commit. If push succeeds but Pages deployment fails, the prior Pages artifact stays live; rerun manual dispatch with `publish_unchanged: true` to force a rebuild/deployment even when EIA has not changed again.
 
@@ -198,7 +211,7 @@ The implemented Canada workflow is [`.github/workflows/refresh-canada.yml`](../.
 | Primary Statistics Canada/CER poll | Monday-Friday 10:53 |
 | Later retry/safety poll | Monday-Friday 14:23 |
 
-The two independent polling opportunities complement bounded retry attempts inside the clients and avoid a job sleeping for hours. The workflow requires no provider secret. It runs all Python contracts, refreshes/promotes all 69 active definitions with retention 2, rebuilds the observed and forecast layers together when data/status/freshness evidence changes, and reads the CLI's `changed` result. `changed: false` exits successfully without a commit, frontend build, or deployment. On `changed: true`, it first scans the complete generated Canada cache/public trees for credential-like material, then creates a local commit containing only `data/cache/canada` and `public/data/canada` and rebases onto the latest branch head. It reruns the Python contracts, verifies the provider set plus every observed/forecast checksum/path, repeats the credential scan, and installs/checks/builds the frontend from the rebased revision. Only that exact tested revision is pushed before the complete Pages artifact is uploaded and deployed under the shared non-cancelling `pages` concurrency group.
+The two independent polling opportunities complement bounded retry attempts inside the clients and avoid a job sleeping for hours. The workflow requires no provider secret. It runs all Python contracts, refreshes/promotes all 81 active definitions with retention 2, rebuilds the observed and forecast layers together when data/status/freshness evidence changes, and reads the CLI's `changed` result. `changed: false` exits successfully without a commit, frontend build, or deployment. On `changed: true`, it first scans the complete generated Canada cache/public trees for credential-like material, then creates a local commit containing only `data/cache/canada` and `public/data/canada` and rebases onto the latest branch head. It reruns the Python contracts, loads and verifies the rebased cache's exact `CURRENT` generation, verifies the provider set plus every observed/forecast checksum/path, repeats the credential scan, and installs/checks/builds the frontend from the rebased revision. Only that exact tested revision is pushed before the complete Pages artifact is uploaded and deployed under the shared non-cancelling `pages` concurrency group.
 
 Canada manual inputs are `dry_run`, optional `period_start`/`period_end`, optional `expected_monthly_period`, optional `expected_weekly_period`, and `publish_unchanged`. Normally leave expected periods blank until an operator has reviewed the applicable release calendar/source state. Without them, freshness remains `unknown`; this does not erase latest source/numeric periods or last-success evidence. The workflow must not invent a source release timestamp when Statistics Canada or CER does not provide one.
 
@@ -221,10 +234,10 @@ As with the EIA workflow, a failure before the guarded push leaves the repositor
 
 ### Statistics Canada
 
-- The implemented workflow polls both registered PIDs twice each weekday. Each refresh resolves the official WDS full-table URL, downloads the complete manageable archive, verifies checksum/identity/headers, and reconciles all registered keys.
+- The implemented workflow polls the four registered PIDs (`25100063`, `25100075`, `25100077`, and `25100081`) twice each weekday. Each refresh resolves the official WDS full-table URL, downloads each complete manageable archive once, verifies checksum/identity/headers, and reconciles all registered keys. The two public 25-10-0081 views share PID `25100081` and therefore do not trigger duplicate downloads.
 - Treat a changed cube with no relevant coordinate change as a successful no-op.
 - Preserve table correction notes and symbol/status metadata. The latest source month may be newer than the latest numeric month when a current cell is suppressed or unavailable; show both instead of making the older value look current.
-- The current verified latest source month is `2026-04`. Do not infer a release timestamp from retrieval time when the source row does not provide one.
+- The current promoted 25-10-0063, 25-10-0077, and shared 25-10-0081 assets reach source month `2026-05`; the reviewed 25-10-0075 cube also reached `2026-05` but is not a public asset until the first complete 81-definition promotion. Do not infer a release timestamp from retrieval time when the source row does not provide one.
 
 ### CER
 
@@ -321,7 +334,7 @@ The public status shows latest observation period, provider release/update time 
 - Keep the last-known-good generation and public assets.
 - Confirm that the 2014-01-01 USA weekly history boundary was applied and that duplicate dimensions/geographies were not introduced.
 - Inspect manifest byte/row/asset counts and compare them with the preceding generation.
-- Do not raise the 90 MiB guard as an incident workaround. Propose a reviewed partitioning/object-storage migration if valid history no longer fits.
+- Do not raise the 16 MiB shard, 128 MiB logical-generation, or 10%/8 MiB growth gates as an incident workaround. Propose a reviewed secondary partition or object-storage migration if valid history no longer fits.
 
 ## Manual dispatch inputs
 
@@ -342,8 +355,8 @@ Use the provider workflow inputs documented under **Automated GitHub refresh and
 - Latest expected periods match source pages.
 - No series remains `due`, `late`, `error`, or `unknown` unexpectedly. The current initial/scheduled `unknown` state is expected until release-calendar/expected-period derivation is implemented.
 - Registry metadata fingerprints still match.
-- The USA manifest contains all 69 active definitions (66 weekly, three monthly), all 361 observed and 361 forecast references resolve as 722 integrity entries, the 28 Phase 4 additions reconcile to their 77 exact source-series keys, and the two movement definitions resolve to their 17 crude plus 18 total-products route assets.
-- The Canada manifest contains all 69 active definitions (67 Statistics Canada and 2 CER), and all 467 observed plus 467 forecast references resolve as 934 integrity entries; future count changes require an approved registry or source-coordinate change.
+- The USA registry contains 78 active definitions (66 weekly, 12 monthly). Until the first expanded promotion, the public last-known-good manifest remains the preceding 69-definition set with 361 observed plus 361 forecast references (722 integrity entries); after promotion, require all 78 definitions and recompute the exact asset count from the generated manifest rather than carrying forward 361.
+- The Canada registry contains 81 active definitions (79 Statistics Canada and 2 CER) across four Statistics Canada PIDs plus the CER file. Until the first expanded promotion, the public last-known-good manifest remains the preceding 69-definition set with 467 observed plus 467 forecast references (934 integrity entries); after promotion, require all 81 definitions and recompute the exact asset count from the generated manifest rather than carrying forward 467.
 - The USA forecast summary accounts for every observed asset in the promoted manifest, and every `forecast_path` checksum/byte count resolves; the current promoted evidence is 353 ready, 1 limited-history, and 7 unavailable.
 - The Canada forecast summary accounts for all 467 observed assets: 360 ready, 74 limited-history, and 33 unavailable records; unavailable records retain a reason instead of points.
 - Forecast origin/checksum/identity matches its observed asset; exactly 3 weekly or monthly horizons are consecutive; each ready point contains ordered 80%/90%/95% prediction intervals backed by at least 40 calibration errors per horizon.

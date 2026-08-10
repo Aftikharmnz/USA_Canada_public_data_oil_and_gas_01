@@ -11,12 +11,15 @@ interface DisplayUnitControlProps {
   value: DisplayUnitId;
   onChange: (unit: DisplayUnitId) => void;
   compact?: boolean;
+  /** Short chart-edge treatment using trader abbreviations rather than long labels. */
+  micro?: boolean;
   /** Prevalidated derived display choices that are not fixed-factor unit conversions. */
   additionalOptions?: readonly DisplayUnitOption[];
   helpText?: string;
 }
 
-function optionLabel(option: DisplayUnitOption): string {
+function optionLabel(option: DisplayUnitOption, micro: boolean): string {
+  if (micro) return `${option.compactLabel}${option.isSourceUnit ? " · source" : ""}`;
   const qualifiers = [option.compactLabel, option.isSourceUnit ? "source" : null]
     .filter((value): value is string => Boolean(value));
   return `${option.longLabel} (${qualifiers.join(", ")})`;
@@ -27,6 +30,7 @@ export function DisplayUnitControl({
   value,
   onChange,
   compact = false,
+  micro = false,
   additionalOptions = [],
   helpText,
 }: DisplayUnitControlProps) {
@@ -38,11 +42,11 @@ export function DisplayUnitControl({
   const fixed = options.length === 1;
 
   return (
-    <fieldset className={`display-unit-control ${compact ? "display-unit-control-compact" : ""}`}>
-      <legend>Display unit</legend>
+    <fieldset className={`display-unit-control ${compact ? "display-unit-control-compact" : ""} ${micro ? "display-unit-control-micro" : ""}`}>
+      <legend>{micro ? "Unit" : "Display unit"}</legend>
       {fixed ? (
         <div className="display-unit-fixed" aria-label={`${options[0]!.longLabel} is fixed`}>
-          {options[0]!.longLabel} (fixed)
+          {micro ? options[0]!.compactLabel : `${options[0]!.longLabel} (fixed)`}
         </div>
       ) : (
         <select
@@ -54,7 +58,7 @@ export function DisplayUnitControl({
         >
           {options.map((option) => (
             <option key={option.id} value={option.id}>
-              {optionLabel(option)}
+              {optionLabel(option, micro)}
             </option>
           ))}
         </select>

@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-07-28.padd-movements",
+  "registry_version": "2026-08-10.monthly-crude-balance-active",
   "country_code": "USA",
-  "activation_status": "mixed_phase_4",
+  "activation_status": "active_phase_6_monthly_crude_balance",
   "bootstrap_period_start_by_frequency": {
     "weekly": "2014-01-01",
     "monthly": "2014-01"
@@ -6073,6 +6073,496 @@
       ],
       "activation_status": "active",
       "introduced_in_phase": 4
+    },
+    {
+      "id": "usa.eia.crude.ending_stocks.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_ending_stocks",
+      "name": "Crude oil ending stocks",
+      "unit": "thousand_barrels",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly",
+          "data_fields": ["value"],
+          "facet_filters": {
+            "product": ["EPC0"],
+            "process": ["SAE"],
+            "series": ["MCRSTP11", "MCRSTP21", "MCRSTP31", "MCRSTP41", "MCRSTP51", "MCRSTUS1"]
+          },
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "SAE"},
+          "expected_series_geographies": {
+            "MCRSTP11": "R10", "MCRSTP21": "R20", "MCRSTP31": "R30",
+            "MCRSTP41": "R40", "MCRSTP51": "R50", "MCRSTUS1": "NUS"
+          },
+          "expected_unit": "MBBL"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "end_of_month_stock",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [],
+        "activation_requires_exact_node_resolution": true,
+        "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly crude-stock balance is not published by city."},
+          {"level_id": "county", "reason": "This monthly crude-stock balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly crude-stock balance is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude-stock balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "ending-stocks", "measure_label": "Ending stocks",
+        "component_role": "headline-total", "parent_product_id": null, "reference_term_ids": ["petroleum-stocks"], "display_order": 110
+      },
+      "caveats": [
+        "This is the source-defined Petroleum Supply Monthly crude-oil stock boundary; do not silently relabel it as the weekly commercial-crude-excluding-SPR series.",
+        "Use the source-published U.S. value for the national view; do not replace it with a displayed PADD sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.stock_change.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_stock_change",
+      "name": "Crude oil stock change",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["SCG"], "series": ["MCRSCP12", "MCRSCP22", "MCRSCP32", "MCRSCP42", "MCRSCP52", "MCRSCUS2"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "SCG"},
+          "expected_series_geographies": {
+            "MCRSCP12": "R10", "MCRSCP22": "R20", "MCRSCP32": "R30",
+            "MCRSCP42": "R40", "MCRSCP52": "R50", "MCRSCUS2": "NUS"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true,
+        "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly crude stock-change balance is not published by city."},
+          {"level_id": "county", "reason": "This monthly crude stock-change balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly crude stock-change balance is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude stock-change balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "stock-change", "measure_label": "Stock change",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": ["petroleum-stocks"], "display_order": 120
+      },
+      "caveats": [
+        "Positive values are stock builds and negative values are stock draws under the EIA supply-and-disposition sign convention.",
+        "This is a source-published balance term; do not recompute it from rounded ending-stock observations. Registered same-level PADD combinations require complete exact-period coverage."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.imports.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_imports",
+      "name": "Crude oil imports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["IM0"], "series": ["MCRIMP12", "MCRIMP22", "MCRIMP32", "MCRIMP42", "MCRIMP52", "MCRIMUS2"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "IM0"},
+          "expected_series_geographies": {
+            "MCRIMP12": "R10-Z00", "MCRIMP22": "R20-Z00", "MCRIMP32": "R30-Z00",
+            "MCRIMP42": "R40-Z00", "MCRIMP52": "R50-Z00", "MCRIMUS2": "NUS-Z00"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "PADD imports are not published as city observations in this monthly balance."},
+          {"level_id": "county", "reason": "PADD imports are not published by county in this monthly balance."},
+          {"level_id": "state_or_area", "reason": "PADD imports represent district of entry and must not be allocated to states or destinations."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude-import balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "imports", "measure_label": "Imports",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": ["petroleum-imports"], "display_order": 130
+      },
+      "caveats": [
+        "PADD imports are recorded by district of entry, not final destination, consuming region, or producing origin.",
+        "Use the source-published U.S. value for the national view; any regional composition must align exact periods and preserve missing components."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.exports.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_exports",
+      "name": "Crude oil exports",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["EEX"], "series": ["MCREXP12", "MCREXP22", "MCREXP32", "MCREXP42", "MCREXP52", "MCREXUS2"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "EEX"},
+          "expected_series_geographies": {
+            "MCREXP12": "R10-Z00", "MCREXP22": "R20-Z00", "MCREXP32": "R30-Z00",
+            "MCREXP42": "R40-Z00", "MCREXP52": "R50-Z00", "MCREXUS2": "NUS-Z00"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly crude-export balance is not published by city."},
+          {"level_id": "county", "reason": "This monthly crude-export balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly crude-export balance is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude-export balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "exports", "measure_label": "Exports",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": ["petroleum-exports"], "display_order": 140
+      },
+      "caveats": [
+        "PADD export rows are source-published regional trade observations; they do not identify producing origin, cargo path, or final foreign destination.",
+        "Use the source-published U.S. value for the national view rather than replacing it with a rounded regional sum."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.refinery_inputs.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_refinery_blender_net_input",
+      "name": "Crude oil refinery and blender net input",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["YIR"], "series": ["MCRRIP12", "MCRRIP22", "MCRRIP32", "MCRRIP42", "MCRRIP52", "MCRRIUS2"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "YIR"},
+          "expected_series_geographies": {
+            "MCRRIP12": "R10", "MCRRIP22": "R20", "MCRRIP32": "R30",
+            "MCRRIP42": "R40", "MCRRIP52": "R50", "MCRRIUS2": "NUS"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly crude-input balance is not published by refinery or city."},
+          {"level_id": "county", "reason": "This monthly crude-input balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly crude-input balance is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude-input balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "refinery-net-inputs", "measure_label": "Refinery and blender net input",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": ["refinery-crude-inputs"], "display_order": 150
+      },
+      "caveats": [
+        "This is crude oil input into refineries and blenders, not field production, operable capacity, or utilization.",
+        "Use the source-published U.S. value for the national view; do not infer refinery-level throughput."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.product_supplied.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_product_supplied",
+      "name": "Crude oil product supplied (implied demand)",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["VPP"], "series": ["MCRUPP12", "MCRUPP22", "MCRUPP32", "MCRUPP42", "MCRUPP52", "MCRUPUS2"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "VPP"},
+          "expected_series_geographies": {
+            "MCRUPP12": "R10", "MCRUPP22": "R20", "MCRUPP32": "R30",
+            "MCRUPP42": "R40", "MCRUPP52": "R50", "MCRUPUS2": "NUS"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly crude implied-demand balance is not published by city."},
+          {"level_id": "county", "reason": "This monthly crude implied-demand balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly crude implied-demand balance is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude implied-demand balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "product-supplied", "measure_label": "Product supplied (implied demand)",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": ["product-supplied-implied-demand"], "display_order": 160
+      },
+      "caveats": [
+        "Product supplied is an accounting-based implied-demand measure, not measured end-user crude consumption.",
+        "Registered same-level PADD combinations require complete exact-period coverage; a computed combination remains distinct from the authoritative source-published U.S. value."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.supply_adjustment.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_supply_adjustment",
+      "name": "Crude oil supply adjustment",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["VUA"], "series": ["MCRUA_R10_2", "MCRUA_R20_2", "MCRUA_R30_2", "MCRUA_R40_2", "MCRUA_R50_2", "MCRUA_NUS_2"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "VUA"},
+          "expected_series_geographies": {
+            "MCRUA_R10_2": "R10", "MCRUA_R20_2": "R20", "MCRUA_R30_2": "R30",
+            "MCRUA_R40_2": "R40", "MCRUA_R50_2": "R50", "MCRUA_NUS_2": "NUS"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly crude supply adjustment is not published by city."},
+          {"level_id": "county", "reason": "This monthly crude supply adjustment is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly crude supply adjustment is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude supply adjustment is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "supply-adjustment", "measure_label": "Supply adjustment",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": [], "display_order": 170
+      },
+      "caveats": [
+        "The supply adjustment is EIA's signed balancing term; it is not physical production, trade, refinery input, or an unexplained zero.",
+        "A registered PADD combination adds the exact signed components with complete coverage; it remains a computed view and never replaces the source-published U.S. adjustment."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.net_receipts.monthly",
+      "provider_id": "eia",
+      "metric_id": "crude_oil_net_receipts_between_padds",
+      "name": "Crude oil net receipts from other PADDs",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {"product": ["EPC0"], "process": ["VNR"], "series": ["MCRNRP12", "MCRNRP22", "MCRNRP32", "MCRNRP42", "MCRNRP52"]},
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "VNR"},
+          "expected_series_geographies": {
+            "MCRNRP12": "R10-Z0P", "MCRNRP22": "R20-Z0P", "MCRNRP32": "R30-Z0P",
+            "MCRNRP42": "R40-Z0P", "MCRNRP52": "R50-Z0P"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": false,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly PADD net-receipts balance is not published by city."},
+          {"level_id": "county", "reason": "This monthly PADD net-receipts balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "PADD net receipts must not be allocated to states or producing areas."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly crude net-receipts balance is not published by PADD subdistrict."},
+          {"level_id": "national", "reason": "EIA publishes this signed balance for individual PADDs; there is no registered source-published U.S. net-receipts row."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "net-receipts", "measure_label": "Net receipts from other PADDs",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": ["inter-padd-movements"], "display_order": 180
+      },
+      "caveats": [
+        "Net receipts are signed receipts less shipments across pipeline, tanker, barge, and rail movements with other PADDs; they are not the gross origin-to-destination route matrix.",
+        "There is no source-published U.S. row for this balance term. A registered multi-PADD sum is labelled computed, requires complete coverage, and is never presented as an official national flow; a missing route is not zero."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
+    },
+    {
+      "id": "usa.eia.crude.transfers_to_supply.monthly",
+      "provider_id": "eia",
+      "metric_id": "transfers_to_crude_oil_supply",
+      "name": "Transfers to crude oil supply",
+      "unit": "thousand_barrels_per_day",
+      "frequency": "monthly",
+      "aggregation_rule": {"kind": "sum"},
+      "default_geography_level_id": "padd",
+      "source": {
+        "dataset": "Petroleum Supply Monthly — crude oil supply and disposition",
+        "route_template": "/v2/petroleum/sum/snd/data",
+        "landing_page": "https://www.eia.gov/opendata/browser/petroleum/sum/snd",
+        "credential_environment_variable": "EIA_API_KEY",
+        "metadata_verified_at": "2026-08-10",
+        "api_query": {
+          "frequency": "monthly", "data_fields": ["value"],
+          "facet_filters": {
+            "product": ["EPC0"], "process": ["TVP"],
+            "series": ["M_EPC0_TVP_R10_MBBLD", "M_EPC0_TVP_R20_MBBLD", "M_EPC0_TVP_R30_MBBLD", "M_EPC0_TVP_R40_MBBLD", "M_EPC0_TVP_R50_MBBLD", "M_EPC0_TVP_NUS_MBBLD"]
+          },
+          "identity_fields": ["period", "duoarea", "product", "process", "series", "units"],
+          "expected_facets": {"product": "EPC0", "process": "TVP"},
+          "expected_series_geographies": {
+            "M_EPC0_TVP_R10_MBBLD": "R10", "M_EPC0_TVP_R20_MBBLD": "R20", "M_EPC0_TVP_R30_MBBLD": "R30",
+            "M_EPC0_TVP_R40_MBBLD": "R40", "M_EPC0_TVP_R50_MBBLD": "R50", "M_EPC0_TVP_NUS_MBBLD": "NUS"
+          },
+          "expected_unit": "MBBL/D"
+        }
+      },
+      "dimensions": ["duoarea", "product", "process", "series"],
+      "period_semantics": "calendar_month_average_rate",
+      "geography_availability": {
+        "universal_control": true, "source_geography_level_ids": ["padd", "national"],
+        "source_geography_ids": ["us.padd.1", "us.padd.2", "us.padd.3", "us.padd.4", "us.padd.5", "us"],
+        "allowed_rollup_geography_level_ids": [], "activation_requires_exact_node_resolution": true, "prefer_provider_published_total": true,
+        "unsupported_levels": [
+          {"level_id": "city", "reason": "This monthly transfers-to-crude-supply balance is not published by city."},
+          {"level_id": "county", "reason": "This monthly transfers-to-crude-supply balance is not published by county."},
+          {"level_id": "state_or_area", "reason": "This exact monthly transfers-to-crude-supply balance is published by PADD and for the United States, not by state."},
+          {"level_id": "padd_subdistrict", "reason": "This exact monthly transfers-to-crude-supply balance is not published by PADD subdistrict."}
+        ]
+      },
+      "release": {"rule": "eia_monthly_petroleum_release", "freshness_grace_hours": 48},
+      "display": {
+        "dashboard_group": "usa_crude", "product_family_id": "crude-oil", "product_family_label": "Crude oil",
+        "product_id": "crude-oil", "product_label": "Crude oil", "measure_id": "transfers-to-supply", "measure_label": "Transfers to crude supply",
+        "component_role": "balance-term", "parent_product_id": null, "reference_term_ids": [], "display_order": 190
+      },
+      "caveats": [
+        "This EIA balance term records transfers into crude oil supply; it is not imports, field production, inter-PADD net receipts, or the gross route matrix.",
+        "The registered source series begins in 2022, so limited history must remain visible and must not be backfilled with zeros."
+      ],
+      "activation_status": "active",
+      "introduced_in_phase": 6
     },
     {
       "id": "usa.eia.crude.padd_movements.monthly",

@@ -24,6 +24,8 @@ import {
   type DisplayUnitId,
 } from "../../lib/units";
 import type { UsaAssetManifest, UsaChartAsset } from "../../types/energyAssets";
+import { ChartDetailsToggle } from "./ChartDetailsToggle";
+import { DisplayUnitControl } from "./DisplayUnitControl";
 
 echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
@@ -37,6 +39,7 @@ interface BalanceWaterfallProps {
   familyId: string | undefined;
   /** Display-only conversion applied to both weekly volumes and paired daily rates. */
   displayUnit?: DisplayUnitId;
+  onDisplayUnitChange?: (unit: DisplayUnitId) => void;
 }
 
 interface LoadedAssets {
@@ -190,7 +193,12 @@ function WaterfallCanvas({ option, ariaLabel }: { option: EChartsOption; ariaLab
   return <div ref={setContainer} className="echarts-balance" role="img" aria-label={ariaLabel} />;
 }
 
-export function BalanceWaterfall({ manifest, familyId, displayUnit }: BalanceWaterfallProps) {
+export function BalanceWaterfall({
+  manifest,
+  familyId,
+  displayUnit,
+  onDisplayUnitChange,
+}: BalanceWaterfallProps) {
   const registration = balanceFamilyRegistration(familyId);
   const [assets, setAssets] = useState<LoadedAssets | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -254,34 +262,29 @@ export function BalanceWaterfall({ manifest, familyId, displayUnit }: BalanceWat
   if (!registration) return null;
 
   return (
-    <section className="analysis-panel balance-panel" aria-labelledby="balance-title">
-      <div className="analysis-panel-heading">
-        <div>
-          <p className="section-kicker">National weekly balance</p>
+    <section className="analysis-panel balance-panel graph-first-panel" aria-labelledby="balance-title">
+      <div className="analysis-panel-heading graph-first-heading">
+        <div className="graph-first-title">
           <h2 id="balance-title">{registration.familyLabel}: supply, disposition, and stock change</h2>
-          <p>
-            Computed from the registered U.S. series through the barrel-accounting identity.
-            The unaccounted bar is the honest residual — blending adjustments, movements
-            outside the registered series, and rounding — not an error to hide.
-          </p>
         </div>
-        <fieldset className="balance-window-control">
-          <legend>Averaging window</legend>
-          <div>
-            {[1, 4].map((weeks) => (
-              <label key={weeks}>
-                <input
-                  type="radio"
-                  name="balance-window"
-                  value={weeks}
-                  checked={windowWeeks === weeks}
-                  onChange={() => setWindowWeeks(weeks as 1 | 4)}
-                />
-                <span>{weeks === 1 ? "Latest week" : "4-week average"}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div className="graph-first-actions">
+          {model ? (
+            <span className="graph-first-location">Week ending {formatPeriod(model.week)}</span>
+          ) : null}
+          {onDisplayUnitChange ? (
+            <DisplayUnitControl
+              sourceUnit="thousand_barrels"
+              value={volumeDisplayUnit}
+              onChange={onDisplayUnitChange}
+              compact
+              micro
+            />
+          ) : (
+            <span className="graph-first-location">
+              {getUnitFormattingMetadata(volumeDisplayUnit)?.compactLabel ?? volumeDisplayUnit}
+            </span>
+          )}
+        </div>
       </div>
 
       {error ? <p className="forecast-notice" role="status">{error}</p> : null}
@@ -294,19 +297,41 @@ export function BalanceWaterfall({ manifest, familyId, displayUnit }: BalanceWat
       ) : null}
 
       {model ? (
-        <>
-          <p className="balance-context">
-            Week ending {formatPeriod(model.week)}
-            {model.windowWeeks > 1 ? ` (average of ${model.windowWeeks} weeks)` : ""} ·
-            ending stocks {formatDisplayValue(model.stocksLevel, "thousand_barrels", volumeDisplayUnit)} ·
-            actual change {formatSignedDisplayValue(model.actualChange, "thousand_barrels", volumeDisplayUnit)} vs implied {formatSignedDisplayValue(model.impliedChange, "thousand_barrels", volumeDisplayUnit)}
+        <div className="chart-stage">
+          <p className="balance-context graph-first-location">
+            Stocks {formatDisplayValue(model.stocksLevel, "thousand_barrels", volumeDisplayUnit)} ·
+            actual Δ {formatSignedDisplayValue(model.actualChange, "thousand_barrels", volumeDisplayUnit)} ·
+            implied Δ {formatSignedDisplayValue(model.impliedChange, "thousand_barrels", volumeDisplayUnit)}
           </p>
           <WaterfallCanvas
             option={waterfallOption(model, volumeDisplayUnit, rateDisplayUnit)}
             ariaLabel={`${registration.familyLabel} weekly balance waterfall: production and imports add supply, exports and product supplied remove it, and the residual between implied and actual stock change is labelled unaccounted.`}
           />
-          <details className="accessible-chart-summary">
-            <summary>Balance table for week ending {formatPeriod(model.week)}</summary>
+          <ChartDetailsToggle
+            summary={`${model.windowWeeks === 1 ? "Latest week" : "4-week average"} · national U.S. only · product supplied is implied demand · unaccounted is an explicit residual`}
+          >
+            <fieldset className="balance-window-control">
+              <legend>Averaging window</legend>
+              <div>
+                {[1, 4].map((weeks) => (
+                  <label key={weeks}>
+                    <input
+                      type="radio"
+                      name="balance-window"
+                      value={weeks}
+                      checked={windowWeeks === weeks}
+                      onChange={() => setWindowWeeks(weeks as 1 | 4)}
+                    />
+                    <span>{weeks === 1 ? "Latest week" : "4-week average"}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <p>
+              Computed from the registered U.S. series through the barrel-accounting identity.
+              The unaccounted bar is the honest residual — blending adjustments, movements
+              outside the registered series, and rounding — not an error to hide.
+            </p>
             <div className="forecast-table-wrap">
               <table>
                 <caption>
@@ -345,14 +370,14 @@ export function BalanceWaterfall({ manifest, familyId, displayUnit }: BalanceWat
                 </tbody>
               </table>
             </div>
-          </details>
-          <p className="chart-footnote">
-            Product supplied is an accounting proxy for implied demand, not measured consumption.
-            Total distillate is broader than road diesel. This identity closes only at the national
-            level; district balances would omit unregistered inter-district movements. Gasoline is
-            not offered because weekly motor-gasoline exports are inactive (June 2023 definition break).
-          </p>
-        </>
+            <p className="chart-footnote">
+              Product supplied is an accounting proxy for implied demand, not measured consumption.
+              Total distillate is broader than road diesel. This identity closes only at the national
+              level; district balances would omit unregistered inter-district movements. Gasoline is
+              not offered because weekly motor-gasoline exports are inactive (June 2023 definition break).
+            </p>
+          </ChartDetailsToggle>
+        </div>
       ) : null}
     </section>
   );
