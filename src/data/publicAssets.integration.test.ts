@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
+import usaSeriesRegistry from "../../config/series/usa.json";
 import { parseCanadaChartAsset, parseCanadaManifest } from "./canadaAssets";
 import { customAggregationPolicy } from "./customAggregation";
 import { forecastMismatchReason, parseForecastAsset } from "./forecastAssets";
@@ -26,6 +27,25 @@ import {
 
 const publicRoot = new URL("../../public/data/usa/", import.meta.url);
 const canadaPublicRoot = new URL("../../public/data/canada/", import.meta.url);
+const reviewedUsaPublicSeriesCounts = [69, 78] as const;
+const reviewedCanadaPublicSeriesCounts = [69, 81] as const;
+const usaMonthlyCrudeBalanceSeriesIds = new Set([
+  "usa.eia.crude.ending_stocks.monthly",
+  "usa.eia.crude.stock_change.monthly",
+  "usa.eia.crude.imports.monthly",
+  "usa.eia.crude.exports.monthly",
+  "usa.eia.crude.refinery_inputs.monthly",
+  "usa.eia.crude.product_supplied.monthly",
+  "usa.eia.crude.supply_adjustment.monthly",
+  "usa.eia.crude.net_receipts.monthly",
+  "usa.eia.crude.transfers_to_supply.monthly",
+]);
+const activeUsaRegistrySeriesIds = usaSeriesRegistry.series
+  .filter((series) => series.activation_status === "active")
+  .map((series) => series.id)
+  .sort();
+const reviewedUsaLastKnownGoodSeriesIds = activeUsaRegistrySeriesIds
+  .filter((seriesId) => !usaMonthlyCrudeBalanceSeriesIds.has(seriesId));
 
 async function readJson(url: URL): Promise<unknown> {
   return JSON.parse(await readFile(url, "utf8")) as unknown;
@@ -34,11 +54,16 @@ async function readJson(url: URL): Promise<unknown> {
 describe("promoted USA data", () => {
   it("matches the frontend contract for every manifest asset", async () => {
     const manifest = parseUsaManifest(await readJson(new URL("manifest.json", publicRoot)));
-    // The checked-in public generation can temporarily trail a newly activated
-    // registry until the fail-closed provider refresh commits its replacement.
-    // Exact registry counts are enforced by pipeline contract tests; this test
-    // validates every asset in whichever promoted generation is present.
-    expect(manifest.series.length).toBeGreaterThanOrEqual(69);
+    // The checked-in public generation may be the reviewed 69-series LKG or
+    // the complete 78-series registry promotion, never a partial transition.
+    expect(reviewedUsaPublicSeriesCounts).toContain(manifest.series.length);
+    expect(activeUsaRegistrySeriesIds).toHaveLength(78);
+    expect(reviewedUsaLastKnownGoodSeriesIds).toHaveLength(69);
+    expect(manifest.series.map((series) => series.view_id).sort()).toEqual(
+      manifest.series.length === 78
+        ? activeUsaRegistrySeriesIds
+        : reviewedUsaLastKnownGoodSeriesIds,
+    );
     const available = manifest.series.flatMap((series) =>
       series.geographies
         .filter((geography) => geography.status === "available" && geography.asset_path)
@@ -154,7 +179,9 @@ describe("promoted Canada data", () => {
     const manifest = parseCanadaManifest(
       await readJson(new URL("manifest.json", canadaPublicRoot)),
     );
-    expect(manifest.series.length).toBeGreaterThanOrEqual(69);
+    // Canada has the same fail-closed transition contract: the reviewed
+    // 69-series LKG or the complete 81-series promotion, never a partial set.
+    expect(reviewedCanadaPublicSeriesCounts).toContain(manifest.series.length);
 
     const providerCounts = manifest.series.reduce<Record<string, number>>(
       (counts, series) => {
@@ -267,12 +294,11 @@ describe("promoted Canada data", () => {
 
 describe("promoted regional import contribution views", () => {
   it.each([
-    { country: "usa" as const, root: publicRoot, expectedSeries: 13 },
-    { country: "canada" as const, root: canadaPublicRoot, expectedSeries: 6 },
+    { country: "usa" as const, root: publicRoot },
+    { country: "canada" as const, root: canadaPublicRoot },
   ])("validates every eligible $country import decomposition", async ({
     country,
     root,
-    expectedSeries,
   }) => {
     const rawManifest = await readJson(new URL("manifest.json", root));
     const manifest = country === "usa"
@@ -282,7 +308,9 @@ describe("promoted regional import contribution views", () => {
       const spec = regionalContributionSpec(country, series);
       return spec ? [{ series, spec }] : [];
     });
-    expect(eligible).toHaveLength(expectedSeries);
+    // Eligibility is defined by the promoted manifest and aggregation policy;
+    // it grows automatically when a complete reviewed cohort is promoted.
+    expect(eligible.length).toBeGreaterThan(0);
 
     for (const { series, spec } of eligible) {
       expect(spec.components.every(

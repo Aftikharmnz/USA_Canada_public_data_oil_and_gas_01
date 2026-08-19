@@ -14,23 +14,59 @@ from energy_dashboard.forecasting import PUBLIC_ASSET_BUILD_ID
 from energy_dashboard.promotion import verify_public_generation
 
 
+REVIEWED_CANADA_LKG_RUN_ID = "canada-20260803T170245Z"
+REVIEWED_CANADA_LKG_SERIES_COUNT = 69
+FULL_CANADA_ACTIVE_SERIES_COUNT = 81
+
+
 class PromotedForecastAssetTests(unittest.TestCase):
     def test_every_promoted_observed_asset_has_a_matching_forecast_record(self) -> None:
-        expected = {
-            "usa": None,
-            "canada": {
-                "assets": 467,
-                "ok": 360,
-                "limited_history": 74,
-                "latest_source_non_numeric": 27,
-                "insufficient_history": 6,
-            },
+        canada_registry = json.loads(
+            (PROJECT_ROOT / "config" / "series" / "canada.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        active_canada_series_ids = {
+            series["id"]
+            for series in canada_registry["series"]
+            if series.get("activation_status") == "active"
         }
-        for country, expectation in expected.items():
+        self.assertEqual(
+            len(active_canada_series_ids), FULL_CANADA_ACTIVE_SERIES_COUNT
+        )
+
+        for country in ("usa", "canada"):
             with self.subTest(country=country):
                 root = PROJECT_ROOT / "public" / "data" / country
                 manifest = verify_public_generation(root)
                 self.assertEqual(manifest["asset_build_id"], PUBLIC_ASSET_BUILD_ID)
+                if country == "canada":
+                    public_series_ids = {
+                        series["series_id"] for series in manifest["series"]
+                    }
+                    public_series_count = len(manifest["series"])
+                    self.assertIn(
+                        public_series_count,
+                        {
+                            REVIEWED_CANADA_LKG_SERIES_COUNT,
+                            FULL_CANADA_ACTIVE_SERIES_COUNT,
+                        },
+                        "Canada public data must be either the reviewed 69-series "
+                        "last-known-good generation or the complete 81-series registry",
+                    )
+                    self.assertEqual(len(public_series_ids), public_series_count)
+                    if public_series_count == REVIEWED_CANADA_LKG_SERIES_COUNT:
+                        self.assertEqual(
+                            manifest["run_id"], REVIEWED_CANADA_LKG_RUN_ID
+                        )
+                        self.assertLessEqual(
+                            public_series_ids, active_canada_series_ids
+                        )
+                    else:
+                        self.assertEqual(
+                            public_series_ids, active_canada_series_ids
+                        )
+
                 statuses: Counter[str] = Counter()
                 asset_count = 0
                 for series in manifest["series"]:
@@ -86,33 +122,26 @@ class PromotedForecastAssetTests(unittest.TestCase):
                         else:
                             self.assertEqual(forecast["points"], [])
                             self.assertTrue(forecast.get("reason"))
-                if expectation is None:
-                    expected_asset_count = sum(
-                        1
-                        for series in manifest["series"]
-                        for geography in series["geographies"]
-                        if geography["status"] == "available"
-                    )
-                    summary = manifest["forecast_summary"]
-                    self.assertEqual(statuses["ok"], int(summary["ready"]))
-                    self.assertEqual(
-                        statuses["limited_history"], int(summary["limited_history"])
-                    )
-                    unavailable = sum(
-                        count
-                        for status, count in statuses.items()
-                        if status not in {"ok", "limited_history"}
-                    )
-                    self.assertEqual(unavailable, int(summary["unavailable"]))
-                    expected_statuses = None
-                else:
-                    expected_asset_count = expectation["assets"]
-                    expected_statuses = {
-                        key: value for key, value in expectation.items() if key != "assets"
-                    }
+                expected_asset_count = sum(
+                    1
+                    for series in manifest["series"]
+                    for geography in series["geographies"]
+                    if geography["status"] == "available"
+                )
+                summary = manifest["forecast_summary"]
+                self.assertEqual(statuses["ok"], int(summary["ready"]))
+                self.assertEqual(
+                    statuses["limited_history"], int(summary["limited_history"])
+                )
+                unavailable = sum(
+                    count
+                    for status, count in statuses.items()
+                    if status not in {"ok", "limited_history"}
+                )
+                self.assertEqual(unavailable, int(summary["unavailable"]))
                 self.assertEqual(asset_count, expected_asset_count)
-                if expected_statuses is not None:
-                    self.assertEqual(dict(statuses), expected_statuses)
+                self.assertEqual(sum(statuses.values()), expected_asset_count)
+                self.assertEqual(len(manifest["integrity"]), expected_asset_count * 2)
 
 
 if __name__ == "__main__":
