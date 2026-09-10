@@ -27,6 +27,8 @@ class RegistryCanadaSeries:
     unsupported_levels: tuple[tuple[str, str], ...]
     display: SeriesDisplayClassification | None = None
     bootstrap_start: str | None = None
+    dataset_id: str = "refinery_crude_runs_weekly"
+    source_filters: tuple[tuple[str, str], ...] = ()
 
 
 def load_cer_registry(
@@ -84,6 +86,15 @@ def load_cer_registry(
             for value in _list(profile.get("unsupported_levels", []), "unsupported_levels")
         )
         frequency = Frequency(str(item["frequency"]))
+        dataset_id = str(item.get("dataset_id", "refinery_crude_runs_weekly"))
+        if dataset_id not in {"refinery_crude_runs_weekly", "ngl_exports_monthly", "trans_northern_throughput"}:
+            raise ValueError(f"Unreviewed CER dataset {dataset_id!r}")
+        expected_frequency = Frequency.WEEKLY if dataset_id == "refinery_crude_runs_weekly" else Frequency.MONTHLY
+        if frequency is not expected_frequency:
+            raise ValueError(f"CER dataset frequency mismatch for {dataset_id}")
+        filters = _mapping(item.get("source_filters", {}), "CER source_filters")
+        if any(not isinstance(key, str) or not isinstance(value, str) for key, value in filters.items()):
+            raise ValueError("CER source filters must contain exact text coordinates")
         caveats = tuple(str(value) for value in _list(item.get("caveats", []), "caveats"))
         output.append(
             RegistryCanadaSeries(
@@ -95,6 +106,8 @@ def load_cer_registry(
                 source_url=str(item["source_url"]),
                 canonical_unit=str(item["unit"]),
                 frequency=frequency,
+                dataset_id=dataset_id,
+                source_filters=tuple(sorted(filters.items())),
                 source_geography_ids=ids,
                 source_geography_level_ids=levels,
                 unsupported_levels=unsupported,

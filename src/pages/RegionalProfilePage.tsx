@@ -22,6 +22,7 @@ import {
   type RegionalProfileSeriesAvailability,
 } from "../data/regionalProfile";
 import { usaSeriesDescriptor, type UsaEnergySegment } from "../data/usaDashboard";
+import { canadaCerContext } from "../data/canadaDashboard";
 import { useCanadaManifest } from "../hooks/useCanadaAssets";
 import { useUsaManifest } from "../hooks/useUsaAssets";
 import { formatDateTime } from "../lib/formatters";
@@ -255,6 +256,9 @@ function ProfileDashboard({
   const unavailableProductMeasures = frequencyProductMeasures.filter(
     (measure) => measure.availability === "unavailable",
   );
+  const cerContext = country === "canada" && profile.productMeasures[0]
+    ? canadaCerContext(profile.productMeasures[0].series, geography?.levelId)
+    : undefined;
   const frequencyRefineryContext = regionalProfileMeasuresForFrequency(
     profile.refineryContext,
     frequency,
@@ -361,7 +365,7 @@ function ProfileDashboard({
           </select>
         </label>
         <label>
-          <span>Official region</span>
+          <span>{cerContext?.geographyLabel ?? "Official region"}</span>
           <select value={geography?.geographyId ?? ""} onChange={(event) => {
             setGeographyId(event.target.value);
           }}>
@@ -429,11 +433,12 @@ function ProfileDashboard({
         <section className="profile-section" aria-labelledby="profile-balance-title">
           <div className="profile-section-heading">
             <div>
-              <p className="section-kicker">Product balance</p>
+              <p className="section-kicker">{cerContext?.profileLabel ?? "Product balance"}</p>
               <h2 id="profile-balance-title">{profile.product.label} · {geography?.label}</h2>
             </div>
           </div>
-          {segment === "refined" && availableProductMeasures.length ? (
+          {cerContext ? <p className="profile-section-disclosure" role="note">{cerContext.boundaryMessage}</p> : null}
+          {segment === "refined" && !cerContext && availableProductMeasures.length ? (
             <RegionalSupplyDemandPanel
               key={`${country}:${profile.product.selectionId}:${geography?.geographyId}:${frequency}`}
               country={country}
@@ -523,7 +528,7 @@ function ProfileDashboard({
         </section>
       ) : null}
 
-      {selectedRegion ? (
+      {selectedRegion && !cerContext ? (
         <section className="profile-section" aria-labelledby="profile-logistics-title">
           <div className="profile-section-heading">
             <div>

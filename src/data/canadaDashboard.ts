@@ -97,6 +97,7 @@ const CANADA_SEGMENTS: CanadaSegmentOption[] = [
 // the registered levels instead of being silently discarded.
 const CANADA_GEOGRAPHY_LEVEL_RANK: Record<string, number> = {
   city: 10,
+  pipeline_key_point: 15,
   census_metropolitan_area: 20,
   province_territory: 30,
   source_region: 40,
@@ -139,6 +140,13 @@ function humanizeGroupId(groupId: string): string {
 }
 
 export function canadaDatasetFacet(series: CanadaManifestSeries): CanadaFacetOption {
+  const cerContext = canadaCerContext(series);
+  if (cerContext) {
+    return {
+      id: facetId("dataset", series.classification!.product_family_id),
+      label: `${cerContext.profileLabel} · Canada Energy Regulator`,
+    };
+  }
   const groupId = series.classification?.dashboard_group;
   if (groupId) {
     const label = groupId === "canada_refined_products"
@@ -157,6 +165,34 @@ export function canadaDatasetFacet(series: CanadaManifestSeries): CanadaFacetOpt
     id: facetId("dataset", series.source.name, series.category),
     label: `${series.category} · ${series.source.name}`,
   };
+}
+
+/** CER trade and operating-point observations retain a separate source boundary.
+ * Their province/point identifies the reporting scope, not a supply-demand balance. */
+export function canadaCerContext(series: CanadaManifestSeries, geographyLevelId?: string): {
+  geographyLabel: string;
+  profileLabel: string;
+  boundaryMessage: string;
+} | undefined {
+  const family = series.classification?.product_family_id;
+  if (series.source.name !== "Canada Energy Regulator") return undefined;
+  if (family === "cer-ngl-trade") {
+    return {
+      geographyLabel: (geographyLevelId ?? series.geographies[0]?.level_id) === "province_territory"
+        ? "Export province (CER)"
+        : "Export geography (CER)",
+      profileLabel: "CER export routes",
+      boundaryMessage: "The province is where the export occurs, not the province of production. Destination is the first reported destination, not necessarily the final market. Total exports overlap destination rows; do not add them together or reconcile them to Statistics Canada balances.",
+    };
+  }
+  if (family === "cer-pipeline-logistics") {
+    return {
+      geographyLabel: "Pipeline reporting point",
+      profileLabel: "Pipeline throughput",
+      boundaryMessage: "Trans-Northern reports broad refined-petroleum-product throughput at pipeline reporting points, not province totals or gasoline-specific flows. Monthly observations are released through a quarterly-updated file. Reporting points may overlap; capacity and utilization are not reported or derived here.",
+    };
+  }
+  return undefined;
 }
 
 /**

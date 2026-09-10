@@ -6,15 +6,26 @@ Automatically detect official releases, merge new and revised history, validate 
 
 ## Implementation state
 
-The credential-safe EIA client, credential-free Statistics Canada/CER clients, strict registry/geography normalization, revision-aware `SnapshotStore`, seasonal/distribution and univariate forecast asset builders, staged refresh orchestrators, `refresh-eia`, `refresh-canada`, and `rebuild-analytics` CLIs, integrity-checked atomic public promotion, and scheduled same-run Pages workflows are implemented. The active source registries now contain 78 USA definitions (66 weekly and 12 monthly) and 81 Canada definitions (79 Statistics Canada and 2 CER). Both current promoted last-known-good manifests still contain their preceding 69-definition cohorts until each expanded registry completes a full validated refresh and atomic promotion.
+The credential-safe EIA client and credential-free Statistics Canada/CER
+clients feed revision-aware, immutable generations. The registry contains
+78 USA definitions (66 weekly and 12 monthly) and 96 Canada definitions
+(79 Statistics Canada and 17 CER). The Canada enrichment adds 14 NGL export
+views and Trans-Northern throughput through the existing all-active refresh;
+it does not require a second workflow or a new secret.
 
-The current promoted USA last-known-good run is `eia-20260805T163902Z`; it predates the nine active monthly PADD/U.S. crude-balance definitions and therefore contains the preceding 69-definition boundary. It contains 217,582 canonical observations, 361 verified observed chart assets, 361 matching forecast records (722 integrity entries), and 90,001,839 bytes (85.83 MiB) of canonical JSON under the former single-file 90 MiB guard. The refresh inserted 74 rows, revised 60, and matched 12,673 unchanged rows. All 66 weekly definitions reach `2026-07-24`, and monthly crude production reaches `2026-05`. Fifteen of 17 crude PADD routes reach `2026-05`; routes 3→5 and 5→3 remain at `2026-04`, so series freshness conservatively remains `2026-04`. All 18 total-products PADD routes reach `2026-05`. The previous last-known-good generation is `eia-20260729T175851Z`. Public workflow run `31026239390` completed successfully and deployed the matching site. The first 78-definition candidate becomes public only after all observed and forecast assets pass validation; any failure leaves this exact 69-definition generation current.
+Read [README](../README.md) for the dated verified publication snapshot and
+the public country manifests/`CURRENT` pointers for subsequent generations.
+Both observed assets and separate forecast records are checksummed before
+promotion. Forecasts remain exactly three source periods; source observations,
+release timestamps and forecast evaluation boundaries are not changed by
+onboarding a new provider file. The generated `forecast_summary` is authoritative.
 
-The current promoted Canada refresh is `canada-20260803T170245Z`. It predates the 12-definition registry expansion and contains 69 definitions (67 Statistics Canada and 2 CER), 61,310 canonical observations, 467 verified observed chart assets with 467 matching forecast records (934 integrity entries), 29,739,716 bytes (28.36 MiB) of canonical JSON, and 12.78 MiB of public assets. The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. Statistics Canada tables 25-10-0063-01, 25-10-0077-01, and the shared 25-10-0081 cube reach source month `2026-05`, and CER reaches week `2026-07-21`. The active 81-definition registry additionally includes two 25-10-0075-01 pipeline-transporter closing-stock definitions and ten exact propane/residual-fuel leaves from that shared 25-10-0081 cube. The previous last-known-good generation is `canada-20260731T162758Z`; retention keeps the current and previous generations. The Canada publisher preserves source statuses and latest source period separately from latest numeric period, skips a generation when data/status/freshness evidence is unchanged, and leaves the prior generation current on any retrieval or validation failure.
-
-The standalone forecast layer uses build ID `observed-2026-07-20.1_forecast-2026-07-20.4` and forecast methodology `2026-07-20.4`. USA run `eia-20260805T163902Z` built 361 matching observed/forecast asset pairs, while Canada refresh `canada-20260803T170245Z` built 467 pairs. The generated country `forecast_summary` is authoritative for the current vintage: USA has 353 ready, 1 limited-history, and 7 unavailable records; Canada has 360 ready, 74 limited-history, and 33 unavailable records with explicit reasons. Forecasts cover exactly 3 source periods and use latest-revised pseudo-out-of-sample diagnostics rather than first-release vintage backtests or machine learning. Ready records export aligned residual samples for strict browser-computed regional intervals. Most records are univariate statistical projections; national weekly distillate and jet stocks additionally compare a registered fundamental net-balance candidate built from the same release's flow series.
-
-The repository is published at `Aftikharmnz/USA_Canada_public_data_oil_and_gas_01`, and the verified Pages site is https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/. CI and Pages deployment pass. The replacement `EIA_API_KEY` GitHub secret is configured, and automated EIA refresh has already captured provider updates. Canada itself needs no secret. The existing `python -m pipeline.energy_dashboard.cli plan` command remains an informational Phase 1 planner, not a live refresh.
+The existing GitHub Pages site is
+https://aftikharmnz.github.io/USA_Canada_public_data_oil_and_gas_01/.
+USA uses the configured replacement `EIA_API_KEY` secret; Canada needs none.
+The old `plan` CLI is an informational Phase 1 planner. Use the provider
+`refresh-... --dry-run` commands for the active registry plan.
+See [CER data](cer-data.md) for the new monthly download contracts.
 
 The current generation store writes:
 
@@ -118,19 +129,19 @@ The command follows `CURRENT`, validates the complete referenced generation and 
 
 ## Local Canada refresh and promotion
 
-Statistics Canada and CER require no API credential. Inspect the registered four-Statistics-Canada-PID/one-CER-file plan without a network call:
+Statistics Canada and CER require no API credential. Inspect the registered four-Statistics-Canada-PID/three-CER-file plan without a network call:
 
 ```text
 python -m pipeline.energy_dashboard.cli refresh-canada --dry-run
 ```
 
-Refresh all 81 active Canada definitions, write the immutable generation store, verify the generated assets, and atomically promote the browser data with:
+Refresh all 96 active Canada definitions, write the immutable generation store, verify the generated assets, and atomically promote the browser data with:
 
 ```text
 python -m pipeline.energy_dashboard.cli refresh-canada --store data/cache/canada --promote-to public/data/canada --retain-generations 2
 ```
 
-The command downloads each registered Statistics Canada full-table archive once and the registered CER weekly CSV, validates identity/headers/units/coordinates, and reconciles exact keys. Views 25-10-0081-01 and 25-10-0081-02 share WDS PID `25100081`, so they resolve to one archive rather than two fetches. Table 25-10-0075-01 retains exact closing-inventory, pipeline-mode, broad-product, and geography dimensions; its 2016 DGUIDs are aliases to the registered stable nodes. The CER Canada crude-runs asset is built only from complete same-week coverage of Ontario, Quebec & Eastern Canada, and Western Canada; CER utilization remains regional. The command never infers a city, refinery, province, capacity, confidential cell, or national utilization value.
+The command downloads each registered Statistics Canada full-table archive once, plus the CER weekly refinery, monthly NGL export, and Trans-Northern CSVs. The NGL download serves all 14 product/destination definitions without duplicate requests. Dataset-specific dispatch means a monthly-only CER selection never downloads the weekly refinery file. All adapters validate identity, headers, units and coordinates, then reconcile exact keys. Views 25-10-0081-01 and 25-10-0081-02 share one WDS PID. CER national crude runs require complete same-week three-region coverage; utilization remains regional. NGL export origins are not producing provinces, and Trans-Northern points are not province or Canada totals. No new CER custom aggregation or monthly-volume-to-rate display is authorized. NGL history begins 2016-01, Trans-Northern 2014-01. See [CER contracts](cer-data.md).
 
 `--period-start`, `--period-end`, and repeatable `--series-id` values support reviewed scoped work. Use `--expected-monthly-period <YYYY-MM>` and `--expected-weekly-period <YYYY-MM-DD>` independently because Statistics Canada and CER have different frequencies. Without reviewed expected periods, scheduled freshness is `unknown`; latest source period, latest numeric period, retrieval/check time, and last success remain separately visible. A provider release timestamp can legitimately be unavailable.
 

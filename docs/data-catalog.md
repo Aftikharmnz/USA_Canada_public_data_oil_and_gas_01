@@ -2,19 +2,24 @@
 
 ## Status and activation rule
 
-The USA registry has 78 definitions with `activation_status: active`: the 69
-definitions in the last promoted generation plus nine monthly PADD/U.S. crude
-supply-and-disposition definitions. The active set is 66 weekly plus 12 monthly
-definitions. The two movement definitions add 17 exact crude route keys and 18
-exact total-petroleum-products route keys. Gross refinery input and operable
-capacity remain `verified_supporting_phase_2`, and two generic route candidates
-remain illustrative.
+The USA registry contains 78 active definitions: 66 weekly and 12 monthly,
+including both PADD movement views and the nine monthly crude
+supply/disposition definitions. Gross refinery input and operable capacity
+remain supporting definitions rather than independent public choices.
 
-Promoted run `eia-20260805T163902Z` is still the last-known-good public generation and predates the nine-definition monthly balance cohort. It contains the previous 69-definition active set, 217,582 canonical observations, 361 verified observed chart assets, and 361 matching forecast records (722 integrity entries). Canonical JSON is 90,001,839 bytes (85.83 MiB). The refresh inserted 74 rows, revised 60, and matched 12,673 unchanged rows; forecast status is 353 ready, 1 `limited_history`, and 7 unavailable. All 66 weekly definitions reach `2026-07-24`, and monthly crude production reaches `2026-05`. Fifteen of 17 crude PADD routes reach `2026-05`; routes 3→5 and 5→3 remain at `2026-04`, so series freshness is conservatively `2026-04`. All 18 total-products routes reach `2026-05`. Workflow run `31026239390` successfully deployed the matching site. The nine new active definitions become public only after a complete refresh and atomic promotion; registry activation is ingestion eligibility, while the generated manifest and asset verification prove publication.
+Canada contains 96 active definitions: 79 Statistics Canada definitions across
+WDS PIDs `25100063`, `25100075`, `25100077`, and `25100081`, and 17 CER
+definitions. CER supplies the existing two weekly refinery series, 14 monthly
+propane/butane export views, and Trans-Northern monthly throughput.
+Canada is classified as 32 Crude and 64 Refined choices. The two official
+25-10-0081 views are coordinates in one shared downloaded cube, not additive
+datasets. See [CER source contracts](cer-data.md) and [Canada data](canada-data.md).
 
-The Canada registry has 81 active definitions: 79 Statistics Canada definitions across WDS PIDs `25100063`, `25100075`, `25100077`, and `25100081`, plus 2 CER weekly definitions. They classify as 32 Crude and 49 Refined choices. The 12-definition expansion adds 10 exact propane/residual-fuel leaves from the shared `25100081` cube and 2 pipeline-transporter closing-stock definitions from `25100075`. Official views 25-10-0081-01 and 25-10-0081-02 share that one PID and are not separate additive datasets.
-
-Promoted run `canada-20260803T170245Z` remains the last-known-good public generation and predates the expansion. It contains the preceding 69-definition cohort (67 Statistics Canada and 2 CER), classified as 31 Crude and 38 Refined, with 61,310 canonical observations, 467 verified observed chart assets and 467 matching forecast records (934 integrity entries), and 29,739,716 bytes (28.36 MiB) of canonical JSON; public assets occupy 12.78 MiB. Its refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. Its three Statistics Canada tables reach source month `2026-05`, and CER reaches week `2026-07-21`. Forecast status is 360 ready, 74 `limited_history`, and 33 unavailable. The previous promoted generation is `canada-20260731T162758Z`; retention keeps the current and previous generations. Registry activation alone means a definition is eligible for ingestion; the promoted manifests and integrity verification prove publication. Until a complete 81-definition refresh passes, the 69-definition public generation remains authoritative.
+[README](../README.md) records a dated verified publication snapshot.
+The public country manifests and canonical `CURRENT` pointers determine the
+available vintage. An active registry entry authorizes ingestion, not an
+unverified claim of deployment; failed expanded refreshes preserve the last
+complete, verified generation.
 
 Activation requires:
 

@@ -14,37 +14,22 @@ Machine-readable series and geography definitions remain authoritative in
 
 ## Active registry and current verified generation
 
-The source registry contains 81 active definitions: 79 Statistics Canada and
-2 CER. They classify as 32 **Crude** and 49 **Refined** choices. Twelve of those
-definitions were activated after the current public generation: four propane
-balances, six residual-fuel-oil balances, and two closing inventories held by
-domestic pipeline transporters. A registry entry is eligible for the next
-fail-closed refresh; it is not public evidence until a complete generation,
-manifest, asset set, forecasts, and integrity index have been promoted.
+The registry contains **96 active definitions: 79 Statistics Canada and 17 CER**,
+classified as 32 Crude and 64 Refined choices. The CER enrichment adds 14 monthly
+propane/butane export views and one Trans-Northern throughput definition to the
+previous complete 81-definition boundary. See [CER data](cer-data.md) for exact
+source filters, export geography, units, missing-data rules and automation.
 
-Promoted run `canada-20260803T170245Z` remains the last-known-good public
-generation and contains the preceding 69-definition cohort: 67 Statistics
-Canada series and 2 CER series, presented as 31 **Crude** and 38 **Refined**
-choices. Crude includes crude-oil balances, grade and bitumen detail, equivalent
-products, refinery activity, and crude/equivalent pipeline movements; placing
-refinery activity there is navigation only and does not alter provider
-semantics, units, observation identity, or aggregation rules.
+The public manifest and canonical `CURRENT` pointer identify the promoted
+generation; [README](../README.md) records the latest verified snapshot.
+Registry activation is not evidence of deployment. The prior generation remains
+deployable until the complete candidate, observed assets, forecasts, integrity
+index and unchanged storage guards all pass.
 
-The run contains 61,310 canonical observations, 467 verified observed chart
-assets with 467 matching forecast records (934 integrity entries), and
-29,739,716 bytes (28.36 MiB) of canonical JSON. Public assets occupy 12.78 MiB.
-The refresh inserted 35 rows, revised 0, and matched 56,335 unchanged rows. Its
-three promoted Statistics Canada cubes (25-10-0063, 25-10-0077, and the shared
-25-10-0081 cube) reach source month `2026-05`; the reviewed but not yet promoted
-25-10-0075 cube also reaches `2026-05`. CER reaches week `2026-07-21`.
-Forecast status is 360 ready, 74 `limited_history`,
-and 33 unavailable. The previous last-known-good generation is
-`canada-20260731T162758Z`. Retention keeps that generation and the current one.
-Public manifest, asset, integrity, and Pages verification passed. Until the
-first complete 81-definition refresh is promoted, the site correctly continues
-to serve this exact 69-definition last-known-good generation. Any source,
-normalization, storage, analytics, or asset failure during the expanded refresh
-must leave it untouched.
+The existing Statistics Canada expansion includes four propane measures, six
+residual-fuel-oil measures and two pipeline-transporter closing inventories.
+Refinery activity under Crude is navigation only; it does not change the source
+meaning, observation identity, units or aggregation authorization.
 
 ## Official sources
 
@@ -373,6 +358,13 @@ retains component lineage.
 
 ## Country-page selection and geography behavior
 
+The CER enrichment adds a distinct **Pipeline reporting point** level without
+province/national parent edges, and labels NGL origins **Export province (CER)**.
+These are logistics/export reporting scopes, not missing provincial balance
+terms. The new CER views are source-published only, with no custom sums. NGL
+exports remain monthly volumes; Trans-Northern is a native daily rate.
+See [CER data](cer-data.md) for source boundaries and late/missing-value handling.
+
 Every chart keeps the Geography control visible. The Canada page narrows the
 manifest in this order:
 
@@ -458,8 +450,9 @@ neither is relabelled as provider release time when that timestamp is absent.
 ## Automated refresh and recovery
 
 Statistics Canada and CER require no secret. The active dry-run plan contains
-81 definitions and four Statistics Canada PIDs (`25100063`, `25100075`,
-`25100077`, and `25100081`) plus the CER file. Views 25-10-0081-01 and
+96 definitions and four Statistics Canada PIDs (`25100063`, `25100075`,
+`25100077`, and `25100081`) plus three CER files (weekly refinery,
+monthly NGL exports, and monthly Trans-Northern throughput). Views 25-10-0081-01 and
 25-10-0081-02 share PID `25100081`, so they still produce only one full-table
 download. The implemented
 [`refresh-canada.yml`](../.github/workflows/refresh-canada.yml) workflow polls
@@ -472,7 +465,7 @@ identities, rollup coverage, and chart assets must all validate.
 When the source is unchanged, the job leaves the current public generation and
 repository untouched. When validation or retrieval fails, the prior Canada
 generation remains the last-known-good site. This is also the transition rule
-for the first 81-definition refresh: the current 69-definition promoted run
+for the first 96-definition refresh: the preceding 81-definition promoted run
 remains public unless all new and existing observations, assets, forecasts, and
 integrity entries validate together. Operators can run the same command
 manually; there is no separate browser-side API fetch or manual spreadsheet

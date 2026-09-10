@@ -112,7 +112,11 @@ class ProviderBoundaryTests(unittest.TestCase):
             {table["pid"] for table in payload["tables"]},
             {"25100063", "25100075", "25100077", "25100081"},
         )
-        self.assertEqual(len(payload["series"]), 81)
+        self.assertEqual(len(payload["series"]), 96)
+        self.assertEqual(
+            {item["dataset_id"] for item in payload["series"] if item["provider"] == "cer"},
+            {"refinery_crude_runs_weekly", "ngl_exports_monthly", "trans_northern_throughput"},
+        )
         providers = {item["provider"] for item in payload["series"]}
         self.assertEqual(providers, {"statcan", "cer"})
         self.assertTrue(all(not table["credential_required"] for table in payload["tables"]))

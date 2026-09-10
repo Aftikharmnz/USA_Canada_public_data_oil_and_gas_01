@@ -9,7 +9,7 @@ The country dashboards have two local views:
 
 USA, Canada, and Reference remain the only primary navigation pages. The profile is a country-local side page, not a third data source or a replacement for the explorer.
 
-Profiles are manifest-backed, so registry activation and public availability are deliberately separate. Verified on 2026-09-10 UTC, the promoted manifests contain all 78 USA and 81 Canada definitions. The public manifest, not this dated inventory, remains the authority for available chart coordinates.
+Profiles are manifest-backed, so registry activation and public availability are deliberately separate. Verified on 2026-09-10 UTC, the promoted manifests contain all 78 USA and 96 Canada definitions. The public manifest, not this dated inventory, remains the authority for available chart coordinates.
 
 ## Selection order
 
@@ -24,6 +24,15 @@ The profile follows the same source-boundary order as the main dashboards:
 The USA defaults to PADD because it is the finest geography supporting a useful multi-measure profile for many products. Finer official nodes remain selectable: PADD 1 subdistricts for selected stock series, Cushing for commercial crude stocks, and state/producing-area nodes for monthly crude production. These finer profiles deliberately contain fewer cards. Canada defaults to province/territory. CER confidentiality regions remain separate official nodes and are never mapped to provinces.
 
 ## Page sections
+
+CER's new Refined families are separate source views: **CER export routes**
+shows propane/butane exports by the exact province of exportation and first
+destination, while **Pipeline throughput** shows Trans-Northern reporting
+points. These profiles deliberately omit the generic supply/demand comparison
+and unrelated broad provincial movement panel. They cannot close a Statistics
+Canada product balance. Both retain seasonal cards, hover values, units and
+expanded views; the CER export source totals overlap destination detail.
+See [CER data](cer-data.md).
 
 ### Product balance
 

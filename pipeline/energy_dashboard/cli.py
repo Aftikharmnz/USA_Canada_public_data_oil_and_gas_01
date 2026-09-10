@@ -13,6 +13,8 @@ from .cer import (
     normalize_cer_records,
     roll_up_cer_national_runs,
 )
+from .cer_ngl import CERNGLClient, normalize_cer_ngl_records
+from .cer_pipeline import TransNorthernClient, normalize_trans_northern_records
 from .eia import EIAClient
 from .promotion import promote_current_public_generation
 from .rebuild import rebuild_current_analytics
@@ -273,6 +275,8 @@ def main(argv: list[str] | None = None) -> int:
                     {
                         "series_id": spec.id,
                         "provider": "cer",
+                        "dataset_id": spec.dataset_id,
+                        "source_filters": dict(spec.source_filters),
                         "frequency": spec.frequency.value,
                         "source_geography_ids": list(spec.source_geography_ids),
                         "bootstrap_period_start": spec.bootstrap_start,
@@ -295,8 +299,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         generated_at = datetime.now(UTC)
+        store = SnapshotStore(args.store)
         additional: list[AdditionalCanadaBatch] = []
-        if cer_specs:
+        if any(spec.dataset_id == "refinery_crude_runs_weekly" for spec in cer_specs):
             cer_by_id = {spec.id: spec for spec in all_cer}
             runs_id = "can.cer.refinery.crude_runs.weekly"
             utilization_id = "can.cer.refinery.utilization.weekly"
@@ -368,8 +373,57 @@ def main(argv: list[str] | None = None) -> int:
                         },
                     )
                 )
+        ngl_specs = tuple(spec for spec in cer_specs if spec.dataset_id == "ngl_exports_monthly")
+        if ngl_specs:
+            # One source download serves every product/destination view. Total
+            # rows remain source facts, never sums of destination or mode rows.
+            fetched_ngl = CERNGLClient().fetch()
+            previous_ngl_snapshot = store.load_current()
+            ngl_rows = normalize_cer_ngl_records(
+                fetched_ngl.records,
+                specs=ngl_specs,
+                origin_geography_ids={
+                    "Alberta": "ca.ab", "British Columbia": "ca.bc",
+                    "Manitoba": "ca.mb", "New Brunswick": "ca.nb",
+                    "Newfoundland and Labrador": "ca.nl", "Northwest Territories": "ca.nt",
+                    "Nova Scotia": "ca.ns", "Ontario": "ca.on",
+                    "Prince Edward Island": "ca.pe", "Québec": "ca.qc",
+                    "Saskatchewan": "ca.sk", "Yukon": "ca.yt", "Total": "ca",
+                },
+                retrieved_at=generated_at,
+                previous_observations=(
+                    previous_ngl_snapshot.observations if previous_ngl_snapshot else ()
+                ),
+            )
+            for spec in ngl_specs:
+                rows = tuple(row for row in ngl_rows if row.series_id == spec.id)
+                additional.append(AdditionalCanadaBatch(
+                    spec=spec, observations=rows, payload_hash=fetched_ngl.payload_sha256,
+                    source_summary={
+                        "series_id": spec.id, "dataset_id": spec.dataset_id,
+                        "source_url": fetched_ngl.source_url, "rows": len(rows),
+                        "payload_sha256": fetched_ngl.payload_sha256,
+                        "request_count": fetched_ngl.request_count,
+                    },
+                ))
+        for spec in cer_specs:
+            if spec.dataset_id != "trans_northern_throughput":
+                continue
+            fetched_pipeline = TransNorthernClient().fetch()
+            rows = normalize_trans_northern_records(
+                fetched_pipeline.records, spec=spec, retrieved_at=generated_at,
+                source_updated_at=fetched_pipeline.source_updated_at,
+            )
+            additional.append(AdditionalCanadaBatch(
+                spec=spec, observations=rows, payload_hash=fetched_pipeline.payload_sha256,
+                source_summary={
+                    "series_id": spec.id, "dataset_id": spec.dataset_id,
+                    "source_url": fetched_pipeline.source_url, "rows": len(rows),
+                    "payload_sha256": fetched_pipeline.payload_sha256,
+                    "request_count": fetched_pipeline.request_count,
+                },
+            ))
         run_id = args.run_id or generated_at.strftime("canada-%Y%m%dT%H%M%SZ")
-        store = SnapshotStore(args.store)
         result = run_statcan_refresh(
             statcan_specs,
             geographies,

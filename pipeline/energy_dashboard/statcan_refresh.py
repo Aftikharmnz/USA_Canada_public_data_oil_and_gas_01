@@ -173,6 +173,8 @@ def run_statcan_refresh(
         for row in rows:
             if row.series_id != spec.id:
                 raise ValueError(f"Additional Canada batch contains another series for {spec.id}")
+            if row.provider_id != "cer" or row.unit != spec.canonical_unit:
+                raise ValueError(f"Additional Canada batch has incompatible provider or unit for {spec.id}")
             if row.geography_id not in spec.source_geography_ids:
                 raise ValueError(
                     f"Additional Canada row escaped registered geography set for {spec.id}"
@@ -260,6 +262,17 @@ def run_statcan_refresh(
         latest_numeric = max(
             (row for row in rows if row.value is not None), key=lambda row: row.period
         )
+        # A provider's file-update timestamp is separate from both observation
+        # release time and our retrieval clock. Include historical revisions:
+        # the newest source metadata need not belong to the newest source month.
+        source_updates = [row.source_updated_at for row in rows if row.source_updated_at is not None]
+        if any(value.tzinfo is None or value.utcoffset() is None for value in source_updates):
+            raise ValueError(f"Canada source update metadata must be timezone-aware for {series_id}")
+        source_updated_at = (
+            max(value.astimezone(UTC) for value in source_updates).isoformat()
+            if source_updates
+            else prior.get("source_updated_at")
+        )
         freshness = {
             "status": (
                 str(prior.get("status", "unknown"))
@@ -281,7 +294,7 @@ def run_statcan_refresh(
                 else prior.get("last_success_at")
             ),
             "source_release_at": prior.get("source_release_at"),
-            "source_updated_at": prior.get("source_updated_at"),
+            "source_updated_at": source_updated_at,
             "expected_next_release_at": prior.get("expected_next_release_at"),
         }
         asset = build_chart_asset(
@@ -417,6 +430,13 @@ def run_statcan_refresh(
                     "checked_at": generated_at.astimezone(UTC).isoformat(),
                     "retrieved_at": min(str(item["retrieved_at"]) for item in fresh),
                     "source_release_at": None,
+                    # Do not claim a series-wide file update when any of its
+                    # published geographies lacks that provider metadata.
+                    "source_updated_at": (
+                        min(str(item["source_updated_at"]) for item in fresh)
+                        if all(item.get("source_updated_at") is not None for item in fresh)
+                        else None
+                    ),
                     "expected_next_release_at": None,
                     "last_success_at": min(str(item["last_success_at"]) for item in fresh),
                 },

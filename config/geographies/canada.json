@@ -1,17 +1,21 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-08-10.canada-2016-dguid-aliases",
+  "registry_version": "2026-09-10.cer-pipeline-reporting-points",
   "country_code": "CAN",
   "activation_status": "active",
   "rank_semantics": "Lower granularity_rank is finer; rank orders the UI only and never authorizes aggregation.",
   "levels": [
     {"id": "city", "label": "City / official local area", "granularity_rank": 10},
+    {"id": "pipeline_key_point", "label": "Pipeline reporting point", "granularity_rank": 15},
     {"id": "census_metropolitan_area", "label": "Census metropolitan area", "granularity_rank": 20},
     {"id": "province_territory", "label": "Province / territory", "granularity_rank": 30},
     {"id": "source_region", "label": "Source-defined region", "granularity_rank": 40},
     {"id": "national", "label": "Canada", "granularity_rank": 100}
   ],
   "nodes": [
+    {"id": "ca.cer.trans_northern.montreal_west", "name": "Trans-Northern — Montreal-West", "level_id": "pipeline_key_point", "country_code": "CAN", "parent_ids": [], "provider_codes": {"cer_pipeline_point": "Montreal-West"}},
+    {"id": "ca.cer.trans_northern.nanticoke_east", "name": "Trans-Northern — Nanticoke-East", "level_id": "pipeline_key_point", "country_code": "CAN", "parent_ids": [], "provider_codes": {"cer_pipeline_point": "Nanticoke-East"}},
+    {"id": "ca.cer.trans_northern.system", "name": "Trans-Northern — system", "level_id": "pipeline_key_point", "country_code": "CAN", "parent_ids": [], "provider_codes": {"cer_pipeline_point": "system"}},
     {"id": "ca", "name": "Canada", "level_id": "national", "country_code": "CAN", "parent_ids": [], "provider_codes": {"iso_3166_1_alpha_2": "CA", "statcan_label": "Canada", "statcan_dguid": "2021A000011124"}, "provider_code_aliases": {"statcan_dguid": ["2016A000011124"]}},
     {"id": "ca.statcan.atlantic", "name": "Atlantic provinces", "level_id": "source_region", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"statcan_label": "Atlantic provinces", "statcan_dguid": "2021A00011"}},
     {"id": "ca.cer.western", "name": "Western Canada", "level_id": "source_region", "country_code": "CAN", "parent_ids": ["ca"], "provider_codes": {"cer_label": "Western Canada"}},

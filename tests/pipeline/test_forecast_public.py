@@ -16,7 +16,7 @@ from energy_dashboard.promotion import verify_public_generation
 
 REVIEWED_CANADA_LKG_RUN_ID = "canada-20260803T170245Z"
 REVIEWED_CANADA_LKG_SERIES_COUNT = 69
-FULL_CANADA_ACTIVE_SERIES_COUNT = 81
+FULL_CANADA_ACTIVE_SERIES_COUNT = 96
 
 
 class PromotedForecastAssetTests(unittest.TestCase):
@@ -34,6 +34,12 @@ class PromotedForecastAssetTests(unittest.TestCase):
         self.assertEqual(
             len(active_canada_series_ids), FULL_CANADA_ACTIVE_SERIES_COUNT
         )
+        pre_cer_expansion_ids = {
+            series["id"] for series in canada_registry["series"]
+            if series.get("activation_status") == "active"
+            and series.get("dataset_id") not in {"ngl_exports_monthly", "trans_northern_throughput"}
+        }
+        self.assertEqual(len(pre_cer_expansion_ids), 81)
 
         for country in ("usa", "canada"):
             with self.subTest(country=country):
@@ -49,10 +55,11 @@ class PromotedForecastAssetTests(unittest.TestCase):
                         public_series_count,
                         {
                             REVIEWED_CANADA_LKG_SERIES_COUNT,
+                            81,
                             FULL_CANADA_ACTIVE_SERIES_COUNT,
                         },
                         "Canada public data must be either the reviewed 69-series "
-                        "last-known-good generation or the complete 81-series registry",
+                        "last-known-good generation, reviewed 81-series boundary, or complete 96-series registry",
                     )
                     self.assertEqual(len(public_series_ids), public_series_count)
                     if public_series_count == REVIEWED_CANADA_LKG_SERIES_COUNT:
@@ -62,6 +69,8 @@ class PromotedForecastAssetTests(unittest.TestCase):
                         self.assertLessEqual(
                             public_series_ids, active_canada_series_ids
                         )
+                    elif public_series_count == 81:
+                        self.assertEqual(public_series_ids, pre_cer_expansion_ids)
                     else:
                         self.assertEqual(
                             public_series_ids, active_canada_series_ids

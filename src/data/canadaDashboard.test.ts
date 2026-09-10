@@ -7,6 +7,7 @@ import type {
 } from "../types/energyAssets";
 import {
   availableCanadaSeries,
+  canadaCerContext,
   canadaDatasetFacet,
   canadaDatasetOptions,
   canadaGeographyLevelOptions,
@@ -85,6 +86,29 @@ describe("Canada dataset grouping", () => {
     expect(canadaDatasetFacet(unknown).label).toBe(
       "Canada Special Balances · Statistics Canada",
     );
+  });
+
+  it("keeps CER export routes and pipeline throughput out of the Statistics Canada balance dataset", () => {
+    const trade = series("cer-export", "Canada Energy Regulator", "Trade", "canada_refined_products");
+    trade.classification!.product_family_id = "cer-ngl-trade";
+    const pipeline = series("cer-throughput", "Canada Energy Regulator", "Logistics", "canada_refined_products");
+    pipeline.classification!.product_family_id = "cer-pipeline-logistics";
+    const statcan = series("statcan-export", "Statistics Canada", "Trade", "canada_refined_products");
+    const options = canadaDatasetOptions([statcan, trade, pipeline]);
+    expect(options.map((option) => option.label)).toEqual([
+      "Refined product balances · Statistics Canada",
+      "CER export routes · Canada Energy Regulator",
+      "Pipeline throughput · Canada Energy Regulator",
+    ]);
+    expect(new Set(options.map((option) => option.id)).size).toBe(3);
+    expect(canadaMarketSegmentFacet(trade).id).toBe("refined");
+    expect(canadaMarketSegmentFacet(pipeline).id).toBe("refined");
+    expect(canadaCerContext(trade, "province_territory")?.geographyLabel).toBe("Export province (CER)");
+    expect(canadaCerContext(trade, "national")?.geographyLabel).toBe("Export geography (CER)");
+    expect(canadaCerContext(trade)?.boundaryMessage).toContain("not the province of production");
+    expect(canadaCerContext(pipeline)?.geographyLabel).toBe("Pipeline reporting point");
+    expect(canadaCerContext(pipeline)?.boundaryMessage).toContain("not province totals or gasoline-specific flows");
+    expect(canadaCerContext(statcan)).toBeUndefined();
   });
 });
 
@@ -229,6 +253,8 @@ describe("Canada country-dashboard hierarchy", () => {
       "national",
     ]);
     expect(canadaGeographyLevelOptions(promotedSeries, "refined").map((level) => level.id)).toEqual([
+      ...(promotedSeries.some((item) => item.geographies.some((geography) => geography.level_id === "pipeline_key_point"))
+        ? ["pipeline_key_point"] : []),
       "province_territory",
       "national",
     ]);
@@ -242,17 +268,25 @@ describe("Canada country-dashboard hierarchy", () => {
       ?.geographies.find((geography) => geography.label === "Ontario");
 
     expect(province?.geographyId).toBe("ca.on");
-    expect(province?.sourceNames).toEqual(["Statistics Canada"]);
+    expect(province?.sourceNames).toContain("Statistics Canada");
     expect(cerRegion?.geographyId).toBe("ca.cer.ontario");
     expect(cerRegion?.sourceNames).toEqual(["Canada Energy Regulator"]);
   });
 
   it("defaults to the finest geography and then the first compatible family and product", () => {
     const selection = resolveCanadaDashboardSelection(promotedSeries, { segmentId: "refined" });
-    expect(selection.geographyLevelId).toBe("province_territory");
-    expect(selection.geographyId).toBe("ca.ab");
-    expect(selection.families[0]?.label).toBe("Gasoline");
-    expect(selection.products[0]?.productId).toBe("finished-motor-gasoline");
+    const pipelineAvailable = promotedSeries.some((item) => item.geographies.some(
+      (geography) => geography.level_id === "pipeline_key_point" && geography.status === "available",
+    ));
+    if (pipelineAvailable) {
+      expect(selection.geographyLevelId).toBe("pipeline_key_point");
+      expect(selection.products[0]?.productId).toBe("trans-northern-refined-products");
+    } else {
+      expect(selection.geographyLevelId).toBe("province_territory");
+      expect(selection.geographyId).toBe("ca.ab");
+      expect(selection.families[0]?.label).toBe("Gasoline");
+      expect(selection.products[0]?.productId).toBe("finished-motor-gasoline");
+    }
     expect(selection.series?.geographies.some(
       (geography) => geography.geography_id === selection.geographyId,
     )).toBe(true);

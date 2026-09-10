@@ -43,6 +43,14 @@ const expandedCanadaSeriesIds = new Set([
   "can.statcan.crude.transporter_inventory.closing.monthly",
   "can.statcan.refined.hgl_rpp.transporter_inventory.closing.monthly",
 ]);
+const cerExpansionSeriesIds = new Set([
+  ...["propane", "butane"].flatMap((product) => (
+    ["total", "padd1", "padd2", "padd3", "padd4", "padd5", "other"].map(
+      (destination) => `can.cer.ngl.${product}.exports.${destination}.monthly`,
+    )
+  )),
+  "can.cer.pipeline.trans_northern.throughput.monthly",
+]);
 const activeCanadaSeries: UsaManifestSeries[] = canadaSeriesRegistry.series
   .filter((series) => series.activation_status === "active")
   .map((series) => ({
@@ -58,7 +66,10 @@ const activeCanadaSeries: UsaManifestSeries[] = canadaSeriesRegistry.series
     geographies: [],
     unsupported_levels: [],
   }));
-const reviewedCanadaLkgSeries = activeCanadaSeries.filter(
+const reviewedCanada81Series = activeCanadaSeries.filter(
+  (series) => !cerExpansionSeriesIds.has(series.series_id),
+);
+const reviewedCanadaLkgSeries = reviewedCanada81Series.filter(
   (series) => !expandedCanadaSeriesIds.has(series.series_id),
 );
 
@@ -111,8 +122,10 @@ describe("promoted display-unit availability", () => {
     const manifest = parseCanadaManifest(
       JSON.parse(await readFile(canadaManifestUrl, "utf8")) as unknown,
     );
-    expect([69, 81]).toContain(manifest.series.length);
-    const expected = manifest.series.length === 81 ? activeCanadaSeries : reviewedCanadaLkgSeries;
+    expect([69, 81, 96]).toContain(manifest.series.length);
+    const expected = manifest.series.length === 96
+      ? activeCanadaSeries
+      : manifest.series.length === 81 ? reviewedCanada81Series : reviewedCanadaLkgSeries;
     expect(manifest.series.map((series) => series.series_id).sort()).toEqual(
       expected.map((series) => series.series_id).sort(),
     );
@@ -121,7 +134,8 @@ describe("promoted display-unit availability", () => {
 
   it.each([
     { cohort: "reviewed 69-series LKG", series: reviewedCanadaLkgSeries, total: 69, flows: 61, stocks: 6 },
-    { cohort: "complete 81-series expansion", series: activeCanadaSeries, total: 81, flows: 70, stocks: 9 },
+    { cohort: "reviewed 81-series LKG", series: reviewedCanada81Series, total: 81, flows: 70, stocks: 9 },
+    { cohort: "complete 96-series CER expansion", series: activeCanadaSeries, total: 96, flows: 70, stocks: 9 },
   ])("validates $cohort units before provider data is promoted", ({ series, total, flows, stocks }) => {
     expect(series).toHaveLength(total);
     const { eligible, inventories } = verifyCanadaUnitAvailability(series);
@@ -152,11 +166,28 @@ describe("promoted display-unit availability", () => {
     };
     expect(monthlyAverageRateOptions(futureFlow)).toEqual([]);
     expect(activeCanadaSeries.filter((series) => series.source.name === "Canada Energy Regulator"))
-      .toHaveLength(2);
+      .toHaveLength(17);
     for (const series of activeCanadaSeries.filter(
       (item) => item.source.name === "Canada Energy Regulator",
     )) {
       expect(monthlyAverageRateOptions(series), series.series_id).toEqual([]);
+    }
+  });
+
+  it("keeps CER NGL monthly export volumes in volume units and point throughput in rate units", () => {
+    const added = activeCanadaSeries.filter((series) => cerExpansionSeriesIds.has(series.series_id));
+    expect(new Set(added.map((series) => series.series_id))).toEqual(cerExpansionSeriesIds);
+    for (const series of added) {
+      expect(monthlyAverageRateOptions(series), series.series_id).toEqual([]);
+      if (series.classification?.product_family_id === "cer-ngl-trade") {
+        expect(series.unit).toBe("cubic_metres");
+        expect(getDisplayUnitOptions(series.unit).every((unit) => unit.dimension === "volume")).toBe(true);
+        expect(getDisplayUnitOptions(series.unit).some((unit) => unit.id === "barrels_per_day")).toBe(false);
+      } else {
+        expect(series.series_id).toBe("can.cer.pipeline.trans_northern.throughput.monthly");
+        expect(series.unit).toBe("thousand_cubic_metres_per_day");
+        expect(getDisplayUnitOptions(series.unit).map((unit) => unit.id)).toEqual(ordinaryRateUnits);
+      }
     }
   });
 });

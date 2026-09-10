@@ -94,7 +94,7 @@ describe("petroleum reference glossary", () => {
       expect(entry.geography.length).toBeGreaterThan(0);
       expect(entry.aggregationWarning.length).toBeGreaterThan(30);
       expect(entry.source.url).toMatch(
-        /^https:\/\/(?:www\.eia\.gov|www150\.statcan\.gc\.ca|www\.cer-rec\.gc\.ca|otexts\.com)\//,
+        /^https:\/\/(?:www\.eia\.gov|www150\.statcan\.gc\.ca|www\.cer-rec\.gc\.ca|apps\.cer-rec\.gc\.ca|otexts\.com)\//,
       );
     }
   });

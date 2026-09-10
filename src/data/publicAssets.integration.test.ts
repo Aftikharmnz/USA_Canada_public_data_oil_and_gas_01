@@ -37,7 +37,29 @@ const canadaManifest = parseCanadaManifest(JSON.parse(
   readFileSync(new URL("manifest.json", canadaPublicRoot), "utf8"),
 ) as unknown);
 const reviewedUsaPublicSeriesCounts = [69, 78] as const;
-const reviewedCanadaPublicSeriesCounts = [69, 81] as const;
+const reviewedCanadaPublicSeriesCounts = [69, 81, 96] as const;
+const cerExpansionSeriesIds = new Set([
+  ...["propane", "butane"].flatMap((product) => (
+    ["total", "padd1", "padd2", "padd3", "padd4", "padd5", "other"].map(
+      (destination) => `can.cer.ngl.${product}.exports.${destination}.monthly`,
+    )
+  )),
+  "can.cer.pipeline.trans_northern.throughput.monthly",
+]);
+const canada81ExpansionSeriesIds = new Set([
+  "can.statcan.refined.propane.field_production.monthly",
+  "can.statcan.refined.propane.net_production.monthly",
+  "can.statcan.refined.propane.imports.monthly",
+  "can.statcan.refined.propane.exports.monthly",
+  "can.statcan.refined.residual_fuel_oil.net_production.monthly",
+  "can.statcan.refined.residual_fuel_oil.imports.monthly",
+  "can.statcan.refined.residual_fuel_oil.exports.monthly",
+  "can.statcan.refined.residual_fuel_oil.product_supplied.monthly",
+  "can.statcan.refined.residual_fuel_oil.ending_stocks.monthly",
+  "can.statcan.refined.residual_fuel_oil.stock_change.monthly",
+  "can.statcan.crude.transporter_inventory.closing.monthly",
+  "can.statcan.refined.hgl_rpp.transporter_inventory.closing.monthly",
+]);
 const usaMonthlyCrudeBalanceSeriesIds = new Set([
   "usa.eia.crude.ending_stocks.monthly",
   "usa.eia.crude.stock_change.monthly",
@@ -218,8 +240,16 @@ describe("promoted Canada data", () => {
   it("matches the reviewed manifest cohort and provider boundary", () => {
     const manifest = canadaManifest;
     // Canada has the same fail-closed transition contract: the reviewed
-    // 69-series LKG or the complete 81-series promotion, never a partial set.
+    // Complete reviewed 69/81-series LKGs or the 96-series CER promotion,
+    // never an arbitrary count with missing or substituted series identities.
     expect(reviewedCanadaPublicSeriesCounts).toContain(manifest.series.length);
+    const expected = canadaSeriesRegistry.series.filter((series) => (
+      series.activation_status === "active"
+      && (manifest.series.length === 96 || !cerExpansionSeriesIds.has(series.id))
+      && (manifest.series.length !== 69 || !canada81ExpansionSeriesIds.has(series.id))
+    ));
+    expect(manifest.series.map((series) => series.series_id).sort())
+      .toEqual(expected.map((series) => series.id).sort());
 
     const providerCounts = manifest.series.reduce<Record<string, number>>(
       (counts, series) => {
@@ -228,8 +258,8 @@ describe("promoted Canada data", () => {
       },
       {},
     );
-    expect(providerCounts["Canada Energy Regulator"]).toBe(2);
-    expect(providerCounts["Statistics Canada"]).toBeGreaterThanOrEqual(67);
+    expect(providerCounts["Canada Energy Regulator"]).toBe(manifest.series.length === 96 ? 17 : 2);
+    expect(providerCounts["Statistics Canada"]).toBe(manifest.series.length === 69 ? 67 : 79);
 
     const available = manifest.series.flatMap((series) =>
       series.geographies

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2026-08-10.canada-expanded-products-inventories",
+  "registry_version": "2026-09-10.cer-ngl-exports-pipeline-throughput",
   "country_code": "CAN",
   "activation_status": "active",
   "bootstrap_period_start_by_frequency": {"weekly": "2014-01-01", "monthly": "2016-01"},
@@ -71,10 +71,32 @@
     }
   ],
   "geography_profiles": {
+    "cer_ngl_export_origins": {
+      "source_geography_ids": ["ca.ab", "ca.bc", "ca.mb", "ca.nb", "ca.nl", "ca.nt", "ca.ns", "ca.on", "ca.pe", "ca.qc", "ca.sk", "ca.yt", "ca"],
+      "source_geography_level_ids": ["province_territory", "national"],
+      "unsupported_levels": [
+        {"level_id": "city", "reason": "CER reports the province of exportation, not a city, border crossing or producing province."},
+        {"level_id": "census_metropolitan_area", "reason": "No metropolitan-area export observations are published in this file."},
+        {"level_id": "source_region", "reason": "CER refinery confidentiality regions are not NGL export origins."},
+        {"level_id": "pipeline_key_point", "reason": "All-mode NGL exports cannot be assigned to pipeline reporting points."}
+      ]
+    },
+    "cer_trans_northern_points": {
+      "source_geography_ids": ["ca.cer.trans_northern.montreal_west", "ca.cer.trans_northern.nanticoke_east", "ca.cer.trans_northern.system"],
+      "source_geography_level_ids": ["pipeline_key_point"],
+      "unsupported_levels": [
+        {"level_id": "city", "reason": "A pipeline reporting point is not a city-wide petroleum balance."},
+        {"level_id": "census_metropolitan_area", "reason": "No metropolitan-area throughput is published."},
+        {"level_id": "province_territory", "reason": "Trans-Northern reporting points are not allocated to provincial totals."},
+        {"level_id": "national", "reason": "Trans-Northern system throughput is not total Canadian throughput."},
+        {"level_id": "source_region", "reason": "Pipeline reporting points differ from refinery confidentiality regions."}
+      ]
+    },
     "national": {
       "source_geography_ids": ["ca"],
       "source_geography_level_ids": ["national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "This coordinate is published only for Canada; no city value is inferred."},
         {"level_id": "census_metropolitan_area", "reason": "This coordinate is published only for Canada; no CMA value is inferred."},
         {"level_id": "province_territory", "reason": "Statistics Canada does not publish this product/measure coordinate by province or territory."},
@@ -85,6 +107,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.nb", "ca.nl", "ca.ns", "ca.nt", "ca.nu", "ca.on", "ca.pe", "ca.qc", "ca.sk", "ca.yt"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Table 25-10-0081-01 does not publish city observations."},
         {"level_id": "census_metropolitan_area", "reason": "Provincial petroleum balances are not allocated to CMAs."},
         {"level_id": "source_region", "reason": "Statistics Canada does not publish a compatible intermediate region for this coordinate."}
@@ -94,6 +117,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.nb", "ca.nl", "ca.ns", "ca.nt", "ca.on", "ca.pe", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Table 25-10-0081-01 does not publish city observations."},
         {"level_id": "census_metropolitan_area", "reason": "Provincial petroleum balances are not allocated to CMAs."},
         {"level_id": "source_region", "reason": "Statistics Canada does not publish a compatible intermediate region for this coordinate."}
@@ -103,6 +127,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.ns", "ca.on", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Table 25-10-0081-02 does not publish propane field production at city or facility level."},
         {"level_id": "census_metropolitan_area", "reason": "Published propane field production is not allocated to CMAs."},
         {"level_id": "source_region", "reason": "Statistics Canada does not publish a compatible intermediate region for this coordinate."}
@@ -112,6 +137,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.nt", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Table 25-10-0075-01 publishes transporter inventories by province or territory, not by city or terminal."},
         {"level_id": "census_metropolitan_area", "reason": "Transporter inventories are not allocated to census metropolitan areas."},
         {"level_id": "source_region", "reason": "No compatible intermediate Canadian region is published for these inventory coordinates."}
@@ -121,6 +147,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Renewable-fuel production is not published at city or plant level."},
         {"level_id": "census_metropolitan_area", "reason": "Published production is not allocated to CMAs."},
         {"level_id": "source_region", "reason": "Statistics Canada does not publish a compatible intermediate region for this coordinate."}
@@ -130,6 +157,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.mb", "ca.nl", "ca.nt", "ca.on", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Table 25-10-0063-01 does not publish city observations."},
         {"level_id": "census_metropolitan_area", "reason": "Crude production is not allocated to CMAs."}
       ]
@@ -138,6 +166,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Heavy crude production is not published at city or facility level."},
         {"level_id": "census_metropolitan_area", "reason": "Heavy crude production is not allocated to CMAs."},
         {"level_id": "source_region", "reason": "No compatible intermediate region is published for this grade."}
@@ -147,6 +176,7 @@
       "source_geography_ids": ["ca", "ca.ab"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "This bitumen coordinate is not published at city or facility level."},
         {"level_id": "census_metropolitan_area", "reason": "This bitumen coordinate is not allocated to CMAs."},
         {"level_id": "source_region", "reason": "No compatible intermediate region is published for this bitumen coordinate."}
@@ -156,6 +186,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.ns", "ca.nt", "ca.on", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Equivalent-product production is not published at city or facility level."},
         {"level_id": "census_metropolitan_area", "reason": "Equivalent-product production is not allocated to CMAs."}
       ]
@@ -164,6 +195,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.ns", "ca.on", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Condensate production is not published at city or facility level."},
         {"level_id": "census_metropolitan_area", "reason": "Condensate production is not allocated to CMAs."}
       ]
@@ -172,6 +204,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.nt", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Pentanes-plus production is not published at city or facility level."},
         {"level_id": "census_metropolitan_area", "reason": "Pentanes-plus production is not allocated to CMAs."},
         {"level_id": "source_region", "reason": "No compatible intermediate region is published for pentanes plus."}
@@ -181,6 +214,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.nb", "ca.nl", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Grade-specific refinery inputs are not published at city or refinery level."},
         {"level_id": "census_metropolitan_area", "reason": "Grade-specific refinery inputs are not allocated to CMAs."}
       ]
@@ -189,6 +223,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.nb", "ca.nl", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Grade-specific refinery inputs are not published at city or refinery level."},
         {"level_id": "census_metropolitan_area", "reason": "Grade-specific refinery inputs are not allocated to CMAs."}
       ]
@@ -197,6 +232,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.nb", "ca.on", "ca.qc"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Crude-bitumen refinery inputs are not published at city or refinery level."},
         {"level_id": "census_metropolitan_area", "reason": "Crude-bitumen refinery inputs are not allocated to CMAs."}
       ]
@@ -205,6 +241,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.nb", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Synthetic-crude refinery inputs are not published at city or refinery level."},
         {"level_id": "census_metropolitan_area", "reason": "Synthetic-crude refinery inputs are not allocated to CMAs."}
       ]
@@ -213,6 +250,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.mb", "ca.nb", "ca.nl", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Crude imports are not published at city or terminal level."},
         {"level_id": "census_metropolitan_area", "reason": "Published crude imports are not allocated to CMAs."}
       ]
@@ -221,6 +259,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.nb", "ca.nl", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Refinery inputs are not published at city or refinery level in this table."},
         {"level_id": "census_metropolitan_area", "reason": "Published refinery inputs are not allocated to CMAs."}
       ]
@@ -229,6 +268,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.mb", "ca.nl", "ca.ns", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Crude exports are not published at city or terminal level."},
         {"level_id": "census_metropolitan_area", "reason": "Published crude exports are not allocated to CMAs."}
       ]
@@ -237,6 +277,7 @@
       "source_geography_ids": ["ca", "ca.statcan.atlantic", "ca.ab", "ca.bc", "ca.mb", "ca.nb", "ca.nl", "ca.ns", "ca.nt", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Crude inventories are not published at city or facility level in this table."},
         {"level_id": "census_metropolitan_area", "reason": "Published inventories are not allocated to CMAs."}
       ]
@@ -245,6 +286,7 @@
       "source_geography_ids": ["ca", "ca.ab", "ca.bc", "ca.mb", "ca.nt", "ca.on", "ca.qc", "ca.sk"],
       "source_geography_level_ids": ["province_territory", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "Table 25-10-0077-01 publishes shipping and receiving regions, not city or terminal observations."},
         {"level_id": "census_metropolitan_area", "reason": "Pipeline movements are not allocated to census metropolitan areas."},
         {"level_id": "source_region", "reason": "No compatible intermediate Canadian region is published for these movement coordinates."}
@@ -254,6 +296,7 @@
       "source_geography_ids": ["ca.cer.ontario", "ca.cer.quebec_eastern", "ca.cer.western", "ca"],
       "source_geography_level_ids": ["source_region", "national"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "CER publishes confidentiality regions, not city or refinery observations."},
         {"level_id": "census_metropolitan_area", "reason": "CER confidentiality regions cannot be allocated to CMAs."},
         {"level_id": "province_territory", "reason": "CER source regions cannot be allocated to individual provinces."}
@@ -263,6 +306,7 @@
       "source_geography_ids": ["ca.cer.ontario", "ca.cer.quebec_eastern", "ca.cer.western"],
       "source_geography_level_ids": ["source_region"],
       "unsupported_levels": [
+        {"level_id": "pipeline_key_point", "reason": "This source series does not publish pipeline reporting-point observations."},
         {"level_id": "city", "reason": "CER publishes confidentiality regions, not city or refinery observations."},
         {"level_id": "census_metropolitan_area", "reason": "CER confidentiality regions cannot be allocated to CMAs."},
         {"level_id": "province_territory", "reason": "CER source regions cannot be allocated to individual provinces."},
@@ -271,6 +315,593 @@
     }
   },
   "series": [
+    {
+      "id": "can.cer.ngl.propane.exports.total.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_total",
+      "name": "CER propane exports — All first destinations (source total)",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "Total",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-total",
+        "measure_label": "Exports → All first destinations (source total)",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 800
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: All first destinations (source total); not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.propane.exports.padd1.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_padd1",
+      "name": "CER propane exports — PADD 1 — East Coast",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "PADD I",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-padd1",
+        "measure_label": "Exports → PADD 1 — East Coast",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 801
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 1 — East Coast; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.propane.exports.padd2.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_padd2",
+      "name": "CER propane exports — PADD 2 — Midwest",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "PADD II",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-padd2",
+        "measure_label": "Exports → PADD 2 — Midwest",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 802
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 2 — Midwest; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.propane.exports.padd3.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_padd3",
+      "name": "CER propane exports — PADD 3 — Gulf Coast",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "PADD III",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-padd3",
+        "measure_label": "Exports → PADD 3 — Gulf Coast",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 803
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 3 — Gulf Coast; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.propane.exports.padd4.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_padd4",
+      "name": "CER propane exports — PADD 4 — Rocky Mountain",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "PADD IV",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-padd4",
+        "measure_label": "Exports → PADD 4 — Rocky Mountain",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 804
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 4 — Rocky Mountain; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.propane.exports.padd5.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_padd5",
+      "name": "CER propane exports — PADD 5 — West Coast",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "PADD V",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-padd5",
+        "measure_label": "Exports → PADD 5 — West Coast",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 805
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 5 — West Coast; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.propane.exports.other.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_propane_exports_other",
+      "name": "CER propane exports — Other countries (source bucket)",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Propane",
+        "Destination / PADD": "Other",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-propane-exports",
+        "product_label": "Propane — CER export reporting",
+        "measure_id": "exports-to-other",
+        "measure_label": "Exports → Other countries (source bucket)",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 806
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: Other countries (source bucket); not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.total.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_total",
+      "name": "CER butane exports — All first destinations (source total)",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "Total",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-total",
+        "measure_label": "Exports → All first destinations (source total)",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 810
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: All first destinations (source total); not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.padd1.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_padd1",
+      "name": "CER butane exports — PADD 1 — East Coast",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "PADD I",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-padd1",
+        "measure_label": "Exports → PADD 1 — East Coast",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 811
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 1 — East Coast; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.padd2.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_padd2",
+      "name": "CER butane exports — PADD 2 — Midwest",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "PADD II",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-padd2",
+        "measure_label": "Exports → PADD 2 — Midwest",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 812
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 2 — Midwest; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.padd3.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_padd3",
+      "name": "CER butane exports — PADD 3 — Gulf Coast",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "PADD III",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-padd3",
+        "measure_label": "Exports → PADD 3 — Gulf Coast",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 813
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 3 — Gulf Coast; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.padd4.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_padd4",
+      "name": "CER butane exports — PADD 4 — Rocky Mountain",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "PADD IV",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-padd4",
+        "measure_label": "Exports → PADD 4 — Rocky Mountain",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 814
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 4 — Rocky Mountain; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.padd5.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_padd5",
+      "name": "CER butane exports — PADD 5 — West Coast",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "PADD V",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-padd5",
+        "measure_label": "Exports → PADD 5 — West Coast",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 815
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: PADD 5 — West Coast; not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.ngl.butane.exports.other.monthly",
+      "provider_id": "cer",
+      "dataset_id": "ngl_exports_monthly",
+      "metric_id": "cer_butane_exports_other",
+      "name": "CER butane exports — Other countries (source bucket)",
+      "source_url": "https://www.cer-rec.gc.ca/en/data-analysis/energy-commodities/natural-gas-liquids/statistics/propane-butanes-export-summary/",
+      "unit": "cubic_metres",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_ngl_export_origins",
+      "bootstrap_period_start": "2016-01",
+      "source_filters": {
+        "Product": "Butane",
+        "Destination / PADD": "Other",
+        "Mode of Transportation": "Total"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-ngl-trade",
+        "product_family_label": "CER NGL exports",
+        "product_id": "cer-butane-exports",
+        "product_label": "Butane — CER export reporting",
+        "measure_id": "exports-to-other",
+        "measure_label": "Exports → Other countries (source bucket)",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-ngl-exports"
+        ],
+        "display_order": 816
+      },
+      "caveats": [
+        "CER export province is where exportation occurs, not necessarily the producing province. First reported export destination: Other countries (source bucket); not necessarily final consumption. All transport modes (source Total). Monthly export volume; no inferred daily-rate view. Canada and Total destinations are overlapping source totals, not additive components. Missing facts remain missing, not zero. This CER reporting boundary is separate from Statistics Canada supply/disposition balances."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Monthly source data; weekday polling, release timestamp not inferred from file metadata.",
+      "revision_policy": "Re-fetch source file and merge revised values; reject removed overlapping facts.",
+      "activation_status": "active"
+    },
+    {
+      "id": "can.cer.pipeline.trans_northern.throughput.monthly",
+      "provider_id": "cer",
+      "dataset_id": "trans_northern_throughput",
+      "metric_id": "trans_northern_rpp_throughput",
+      "name": "Trans-Northern refined-products throughput",
+      "source_url": "https://apps.cer-rec.gc.ca/PPS/en/pipeline-profiles/trans-northern",
+      "unit": "thousand_cubic_metres_per_day",
+      "frequency": "monthly",
+      "geography_profile_id": "cer_trans_northern_points",
+      "bootstrap_period_start": "2014-01",
+      "source_filters": {
+        "Company": "Trans-Northern Pipelines Inc.",
+        "Pipeline": "Trans-Northern pipeline",
+        "Direction Of Flow": "not available",
+        "Trade Type": "intracanada",
+        "Product": "refined petroleum products"
+      },
+      "display": {
+        "dashboard_group": "canada_refined_products",
+        "product_family_id": "cer-pipeline-logistics",
+        "product_family_label": "CER pipeline logistics",
+        "product_id": "trans-northern-refined-products",
+        "product_label": "Trans-Northern — refined products (broad)",
+        "measure_id": "pipeline-throughput",
+        "measure_label": "Pipeline throughput",
+        "component_role": "source_defined_product",
+        "parent_product_id": null,
+        "reference_term_ids": [
+          "cer-pipeline-throughput"
+        ],
+        "display_order": 850
+      },
+      "caveats": [
+        "Monthly source-published average daily throughput; file updated quarterly or as needed. Key points are pipeline reporting scopes, not provincial supply or a province-to-province route matrix. System and segment throughput may overlap and must not be added. Broad refined petroleum products; no gasoline/diesel/jet allocation. Capacity is absent in this CSV; no capacity or utilization is inferred."
+      ],
+      "aggregation_rule": "source_published_only",
+      "expected_release_rule": "Quarterly/as-needed file publication of monthly observations; weekday polling, no inferred release timestamp.",
+      "revision_policy": "Full file validation and bounded historical revision merge.",
+      "activation_status": "active"
+    },
     {
       "id": "can.cer.refinery.crude_runs.weekly", "provider_id": "cer", "metric_id": "refinery_crude_runs", "name": "Refinery crude runs", "unit": "thousand_cubic_metres_per_day", "frequency": "weekly", "geography_profile_id": "cer_runs", "source_url": "https://open.canada.ca/data/en/dataset/5c0099e0-7081-404e-a95f-b0541de06630",
       "display": {"dashboard_group": "canada_refining", "product_family_id": "refining", "product_family_label": "Refining", "product_id": "refinery-crude-runs", "product_label": "Refinery crude runs", "measure_id": "crude-runs", "measure_label": "Crude runs", "component_role": "headline", "parent_product_id": null, "reference_term_ids": ["cer-refinery-crude-runs"], "display_order": 50},

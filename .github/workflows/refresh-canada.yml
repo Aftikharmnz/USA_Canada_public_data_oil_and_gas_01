@@ -17,7 +17,7 @@ on:
         required: false
         type: string
       expected_monthly_period:
-        description: Optional expected Statistics Canada month (YYYY-MM)
+        description: Optional expected month for selected monthly sources (YYYY-MM; source calendars differ)
         required: false
         type: string
       expected_weekly_period:
@@ -31,7 +31,9 @@ on:
         type: boolean
   # Statistics Canada releases at 08:30 Eastern on business days. Two
   # non-round polls provide an automatic retry window and also cover delayed
-  # monthly tables. CER weekly releases are captured by the same schedule.
+  # monthly tables. CER weekly refinery, monthly NGL exports and Trans-Northern
+  # throughput use this same schedule. Monthly observations do not imply that
+  # each CER file is updated monthly; pipeline files are quarterly/as needed.
   schedule:
     - cron: "53 10 * * 1-5"
       timezone: America/Toronto

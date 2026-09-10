@@ -20,6 +20,7 @@ import {
 import { SeasonalChart } from "../components/dashboard/SeasonalChart";
 import {
   availableCanadaSeries,
+  canadaCerContext,
   canadaHasCompatibleCombination,
   canadaReferenceEntries,
   resolveCanadaDashboardSelection,
@@ -72,6 +73,8 @@ function errorMessage(error: unknown): string {
 }
 
 function geographyBoundaryMessage(series: CanadaManifestSeries): string {
+  const cerContext = canadaCerContext(series);
+  if (cerContext) return cerContext.boundaryMessage;
   if (series.frequency.toLowerCase().includes("week")) {
     return "CER weekly refinery observations stop at three confidentiality regions; province, refinery, and city values are not inferred.";
   }
@@ -374,6 +377,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
   );
   const contributionSpec = regionalContributionSpec("canada", series);
   const movementContext = canadaMovementContext(series);
+  const cerContext = canadaCerContext(series, selection.geographyLevelId);
   const validatedMovementRoute = movementContext && singleAsset
     ? movementRouteFromAsset(series, singleAsset, geography)
     : null;
@@ -475,7 +479,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
 
           <RegionSelectionControl
             idPrefix="canada-market"
-            label={`3 / ${movementContext?.geographyRole ?? "Official region"}`}
+            label={`3 / ${movementContext?.geographyRole ?? cerContext?.geographyLabel ?? "Official region"}`}
             mode={regionMode}
             selectedIds={selection.geographyIds}
             onModeChange={chooseRegionMode}
@@ -686,7 +690,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             onGeographiesChange={aggregationPolicy ? chooseGeographies : undefined}
             onRegionModeChange={aggregationPolicy ? chooseRegionMode : undefined}
             geographyLevelLabel={movementContext ? `${movementContext.geographyRole} level` : undefined}
-            regionLabel={movementContext?.geographyRole}
+            regionLabel={movementContext?.geographyRole ?? cerContext?.geographyLabel}
             displayUnit={displayUnit ?? undefined}
             onDisplayUnitChange={setRequestedDisplayUnit}
             forecast={displayForecast}
@@ -703,7 +707,7 @@ function CanadaDashboard({ manifest }: { manifest: CanadaAssetManifest }) {
             onGeographiesChange={aggregationPolicy ? chooseGeographies : undefined}
             onRegionModeChange={aggregationPolicy ? chooseRegionMode : undefined}
             geographyLevelLabel={movementContext ? `${movementContext.geographyRole} level` : undefined}
-            regionLabel={movementContext?.geographyRole}
+            regionLabel={movementContext?.geographyRole ?? cerContext?.geographyLabel}
             displayUnit={displayUnit ?? undefined}
             onDisplayUnitChange={setRequestedDisplayUnit}
           />
