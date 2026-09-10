@@ -374,6 +374,47 @@ describe("buildCustomRegionView", () => {
     });
   });
 
+  it("keeps a later suppressed source period visible without demanding a combined forecast", async () => {
+    const history = completeHistory("ab");
+    history.push({ period: "2026-05", year: 2026, slot: 5, value: null, status: "suppressed_or_withheld" });
+    const unavailable = componentForecast(alberta, [10, 11, 12], 1);
+    unavailable.status = "latest_source_non_numeric";
+    unavailable.reason = "Latest source period is suppressed.";
+    unavailable.points = [];
+    delete unavailable.aggregation_residuals;
+    const result = await buildCustomRegionView({
+      country: "canada", series, registryPolicy,
+      geographies: [alberta, saskatchewan],
+      assets: [chartAsset(alberta, history), chartAsset(saskatchewan, completeHistory("sk"))],
+      forecasts: [unavailable, componentForecast(saskatchewan, [20, 22, 24], 2)],
+    });
+    expect(result.asset.latest_source).toMatchObject({ period: "2026-05", value: null });
+    expect(result.asset.latest.period).toBe("2026-04");
+    expect(result.forecast).toBeUndefined();
+    expect(result.forecastNotice).toMatch(/observed combined data remain available/i);
+  });
+
+  it("withholds only the combined forecast when individually ready residual windows cease to align", async () => {
+    const abForecast = componentForecast(alberta, [10, 11, 12], 1);
+    const skForecast = componentForecast(saskatchewan, [20, 22, 24], 2);
+    // Each component has 40 samples per horizon, but only 39 exact common
+    // target periods. The next source release must not fail its whole refresh.
+    skForecast.aggregation_residuals!.samples = skForecast.aggregation_residuals!.samples.map((sample) => (
+      sample.target_period === "2020-02" ? { ...sample, target_period: "2024-01" } : sample
+    ));
+    skForecast.aggregation_residuals!.calibration_window.end = "2024-01";
+    skForecast.prediction_intervals!.calibration_window.end = "2024-01";
+    const result = await buildCustomRegionView({
+      country: "canada", series, registryPolicy,
+      geographies: [alberta, saskatchewan],
+      assets: [chartAsset(alberta, completeHistory("ab")), chartAsset(saskatchewan, completeHistory("sk"))],
+      forecasts: [abForecast, skForecast],
+    });
+    expect(result.asset.history?.length).toBeGreaterThan(100);
+    expect(result.forecast).toBeUndefined();
+    expect(result.forecastNotice).toMatch(/39 aligned residuals/i);
+  });
+
   it.each([
     {
       name: "training checksum",

@@ -57,7 +57,7 @@ function usAssetPath(manifest: UsaAssetManifest, seriesId: string): string | und
   )?.asset_path;
 }
 
-function waterfallOption(
+export function waterfallOption(
   model: WeeklyBalanceModel,
   volumeDisplayUnit: DisplayUnitId,
   rateDisplayUnit: DisplayUnitId,
@@ -151,6 +151,7 @@ function waterfallOption(
         name: "__waterfall_base",
         type: "bar",
         stack: "balance",
+        stackStrategy: "all",
         data: steps.map((step) => convertDisplayValue(
           step.base,
           "thousand_barrels",
@@ -165,6 +166,9 @@ function waterfallOption(
         name: "Weekly volume",
         type: "bar",
         stack: "balance",
+        // Positive-height waterfall spans must remain attached to negative
+        // bases; ECharts' default same-sign stacking would move them above zero.
+        stackStrategy: "all",
         data: steps.map((step) => ({
           value: convertDisplayValue(step.size, "thousand_barrels", volumeDisplayUnit),
           itemStyle: { color: step.color },
@@ -202,6 +206,7 @@ export function BalanceWaterfall({
   const registration = balanceFamilyRegistration(familyId);
   const [assets, setAssets] = useState<LoadedAssets | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sourceWarning, setSourceWarning] = useState<string | null>(null);
   const [windowWeeks, setWindowWeeks] = useState<1 | 4>(1);
   const volumeDisplayUnit = resolveDisplayUnit(
     "thousand_barrels",
@@ -222,6 +227,7 @@ export function BalanceWaterfall({
   useEffect(() => {
     setAssets(null);
     setError(null);
+    setSourceWarning(null);
     if (!registration) return;
     const paths = {
       stocks: usAssetPath(manifest, registration.stocks),
@@ -241,10 +247,14 @@ export function BalanceWaterfall({
         if (!("data" in state) || !state.data) {
           throw new Error(`The ${key} asset could not be loaded.`);
         }
-        return [key, state.data] as const;
+        return { key, asset: state.data, stale: state.status === "stale" };
       }),
     ).then((entries) => {
-      setAssets(Object.fromEntries(entries) as unknown as LoadedAssets);
+      if (controller.signal.aborted) return;
+      setAssets(Object.fromEntries(entries.map((entry) => [entry.key, entry.asset])) as unknown as LoadedAssets);
+      if (entries.some((entry) => entry.stale)) {
+        setSourceWarning("One or more balance inputs use previously cached data after a fetch failure.");
+      }
     }).catch((cause: unknown) => {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "The balance assets could not be loaded.");
@@ -252,12 +262,15 @@ export function BalanceWaterfall({
     return () => controller.abort();
   }, [manifest, registration]);
 
-  const model = useMemo(
-    () => (registration && assets
-      ? buildWeeklyBalanceModel(registration.familyLabel, assets, windowWeeks)
-      : null),
-    [assets, registration, windowWeeks],
-  );
+  const balanceState = useMemo(() => {
+    try {
+      return { model: registration && assets
+        ? buildWeeklyBalanceModel(registration.familyLabel, assets, windowWeeks) : null, error: null };
+    } catch (cause: unknown) {
+      return { model: null, error: cause instanceof Error ? cause.message : "The balance inputs are incompatible." };
+    }
+  }, [assets, registration, windowWeeks]);
+  const { model } = balanceState;
 
   if (!registration) return null;
 
@@ -269,8 +282,11 @@ export function BalanceWaterfall({
         </div>
         <div className="graph-first-actions">
           {model ? (
-            <span className="graph-first-location">Week ending {formatPeriod(model.week)}</span>
-          ) : null}
+            <span className="graph-first-location">
+              United States · Week ending {formatPeriod(model.week)}
+              {model.windowWeeks === 4 ? " · 4-week average" : ""}
+            </span>
+          ) : <span className="graph-first-location">United States</span>}
           {onDisplayUnitChange ? (
             <DisplayUnitControl
               sourceUnit="thousand_barrels"
@@ -288,8 +304,10 @@ export function BalanceWaterfall({
       </div>
 
       {error ? <p className="forecast-notice" role="status">{error}</p> : null}
+      {balanceState.error ? <p className="forecast-notice" role="status">{balanceState.error} The balance is withheld.</p> : null}
+      {sourceWarning ? <p className="forecast-notice" role="status">{sourceWarning}</p> : null}
       {!error && !assets ? <p className="forecast-notice" role="status">Loading the five registered balance series…</p> : null}
-      {assets && !model ? (
+      {assets && !model && !balanceState.error ? (
         <p className="forecast-notice" role="status">
           No week has complete numeric values for every registered balance term, so the
           balance is unavailable rather than partially computed.
@@ -298,6 +316,17 @@ export function BalanceWaterfall({
 
       {model ? (
         <div className="chart-stage">
+          {model.usesOlderCompleteWeek ? (
+            <p className="forecast-notice" role="status">
+              Latest source week: {formatPeriod(model.latestSourceWeek)}. Some inputs are incomplete;
+              showing the most recent complete balance ending {formatPeriod(model.week)}, not a current-week estimate.
+            </p>
+          ) : null}
+          {model.sourceStatuses.length ? (
+            <p className="forecast-notice" role="status">
+              Source status: {model.sourceStatuses.map((status) => status.replaceAll("_", " ")).join(", ")}.
+            </p>
+          ) : null}
           <p className="balance-context graph-first-location">
             Stocks {formatDisplayValue(model.stocksLevel, "thousand_barrels", volumeDisplayUnit)} ·
             actual Δ {formatSignedDisplayValue(model.actualChange, "thousand_barrels", volumeDisplayUnit)} ·
@@ -308,7 +337,7 @@ export function BalanceWaterfall({
             ariaLabel={`${registration.familyLabel} weekly balance waterfall: production and imports add supply, exports and product supplied remove it, and the residual between implied and actual stock change is labelled unaccounted.`}
           />
           <ChartDetailsToggle
-            summary={`${model.windowWeeks === 1 ? "Latest week" : "4-week average"} · national U.S. only · product supplied is implied demand · unaccounted is an explicit residual`}
+            summary={`${model.windowWeeks === 1 ? "Most recent complete week" : "4-week average"} · national U.S. only · product supplied is implied demand · unaccounted is an explicit residual`}
           >
             <fieldset className="balance-window-control">
               <legend>Averaging window</legend>
@@ -322,7 +351,7 @@ export function BalanceWaterfall({
                       checked={windowWeeks === weeks}
                       onChange={() => setWindowWeeks(weeks as 1 | 4)}
                     />
-                    <span>{weeks === 1 ? "Latest week" : "4-week average"}</span>
+                    <span>{weeks === 1 ? "Most recent complete week" : "4-week average"}</span>
                   </label>
                 ))}
               </div>

@@ -382,3 +382,31 @@ Calculate with normalized full precision, retain provider precision, and round o
 ## Reproducibility metadata
 
 Every derived asset records methodology version, source/canonical checksum, generation time, series/geography IDs, period window, baseline years, exclusions, aggregation lineage, sample size, and calculation parameters.
+
+## National weekly balance display safeguards
+
+The distillate and kerosene-type-jet waterfall independently validates all five
+registered asset roles before computing the accounting identity: exact source
+series, national `us` geography, weekly frequency, stocks in thousand barrels,
+flows in thousand barrels per day, and registered product/process dimensions.
+Inputs must share their schema, generation time, and observed methodology.
+Duplicate periods, non-Friday weekly endpoints, unknown observation statuses,
+numeric/suppressed contradictions, or inconsistent latest-source metadata
+withhold the balance with a visible explanation; they do not silently enter a
+partial calculation. Fetched last-known-good inputs retain a visible warning.
+
+The waterfall uses the most recent **complete** one- or four-week window. If a
+newer source period exists but any required input is unavailable, the older
+window remains explicitly dated and an always-visible note identifies the
+newer incomplete period. Preliminary, revised, or use-with-caution inputs keep
+their status visible. Four-week mode displays average volume **per week**, not
+the total four-week volume, and labels the averaging window outside optional
+details. The unaccounted term remains actual minus implied stock change; it is
+not assigned to an invented movement or other economic category.
+
+Waterfall spans retain their signed start/end positions, including stock draws
+below zero and components crossing zero. Historical min–max, interquartile, and
+prediction-interval shading follows the same rule: a positive range width stays
+attached to its actual lower bound even when that bound is negative. Display-unit
+changes scale both the hidden baseline and visible span by the same conversion.
+These are presentation safeguards; canonical observations and forecasts are unchanged.

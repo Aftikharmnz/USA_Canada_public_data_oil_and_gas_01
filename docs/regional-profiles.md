@@ -9,7 +9,7 @@ The country dashboards have two local views:
 
 USA, Canada, and Reference remain the only primary navigation pages. The profile is a country-local side page, not a third data source or a replacement for the explorer.
 
-Profiles are manifest-backed, so registry activation and public availability are deliberately separate. The active Canada registry contains 81 definitions (32 Crude and 49 Refined), while the current promoted last-known-good manifest still contains 69 (31 Crude and 38 Refined). Until a complete expanded refresh passes and is promoted atomically, `/canada/profile/` continues to show only compatible assets from that 69-definition public generation.
+Profiles are manifest-backed, so registry activation and public availability are deliberately separate. Verified on 2026-09-10 UTC, the promoted manifests contain all 78 USA and 81 Canada definitions. The public manifest, not this dated inventory, remains the authority for available chart coordinates.
 
 ## Selection order
 
@@ -27,7 +27,17 @@ The USA defaults to PADD because it is the finest geography supporting a useful 
 
 ### Product balance
 
-Only the exact selected product and geography are shown. A national value is never substituted for a missing PADD or province value. Available imports, exports, production, refinery inputs, stocks, stock change, product supplied, and days supply appear as separate compact charts when the manifest publishes that exact coordinate. Once the first 78-definition USA generation is promoted, a PADD crude-oil profile also receives the exact monthly PSM ending-stocks, stock-change, imports, exports, refinery/blender-net-input, product-supplied, supply-adjustment, net-receipts, and transfers-to-supply cards. Once the first 81-definition Canada generation is promoted, exact provincial propane and residual-fuel measures appear only where the shared Statistics Canada `25100081` cube publishes that product/measure/geography coordinate; unavailable combinations remain absent or explicitly nonnumeric. Complete-coverage custom province/territory profiles are authorized for all four propane measures plus residual-fuel net production, imports, exports, stock change, and ending stocks. Residual product supplied remains national-only, and both transporter-stock definitions remain source-published-geography only.
+Only the exact selected product and geography are shown. A national value is never substituted for a missing PADD or province value. Available imports, exports, production, refinery inputs, stocks, stock change, product supplied, and days supply appear as separate compact charts when the manifest publishes that exact coordinate. The promoted 78-definition USA generation includes exact monthly PSM crude ending-stocks, stock-change, imports, exports, refinery/blender-net-input, product-supplied, supply-adjustment, net-receipts, and transfers-to-supply cards. The promoted 81-definition Canada generation includes propane and residual-fuel measures only where the shared Statistics Canada `25100081` cube publishes that product/measure/geography coordinate; unavailable combinations remain absent or explicitly nonnumeric. Complete-coverage custom province/territory sums are authorized for all four propane measures plus residual-fuel net production, imports, exports, stock change, and ending stocks in the explorer; the profile binds one official region. Residual product supplied remains national-only, and both transporter-stock definitions remain source-published-geography only.
+
+### Refined supply and demand components
+
+Refined profiles add a synchronized component comparison above the individual seasonal charts. Select an exact official geography, product, frequency and historical source period; compare that period with the immediately preceding month or week, return to Latest, change display units, or expand the panel. Changing geography preserves the selected product if it remains available.
+
+The comparison is explicitly **not a closed balance**. It displays independent, unstacked source measures with original signs; exports are not automatically negated, negative refinery/blender net inputs remain negative, and no residual demand or balancing item is invented. Inventory levels use a separate chart and unit selector. Missing, suppressed and unavailable coordinates stay nonnumeric. The default source period is the newest period present in any selected measure, not an older date chosen to make every bar numeric. Every row uses that exact period; its previous-period change requires both exact adjacent observations.
+
+Units remain display-only. Registered Canadian monthly flows support `bbl/d`, `kb/d` and other actual-calendar-day rates. Current and previous months are converted using their own day counts before calculating the displayed change. Stocks stay volume-only. Native monthly data take precedence over authorized weekly-derived monthly duplicates. The model validates source identity, geography, product, units, generation, history statuses, duplicate periods and ISO week coordinates before comparison.
+
+Unavailable demand and receipt terms remain visible; details explain whether a term is missing from the source, not yet registered in the app, or unavailable for the requested display. Statistics Canada provincial finished gasoline and blending-component profiles do not publish provincial product supplied. The declared net-interregional-receipts dimension currently has no fact rows. Broad HGL/refined-products pipeline routes cannot fill either gap. EIA native monthly refined PADD balances are a documented app coverage gap: the source publishes richer terms, but this release does not activate new ingestion definitions. See the [refined regional audit](audits/2026-09-10-refined-regional-audit.md).
 
 ### Related source boundary
 
@@ -100,7 +110,7 @@ Each profile card has its own compact chart-edge display-unit selector because s
 
 ## Current hard gaps and expansion boundary
 
-Each country's current deployed page exposes only assets in its promoted last-known-good generation. The active USA registry contains 78 definitions while its public manifest still contains 69; the active Canada registry contains 81 while its public manifest also still contains 69. The new USA monthly PADD crude-balance cards and the new Canada propane, residual-fuel, and transporter-inventory cards require their respective next successful refresh/promotion. Neither registry expansion implies equivalent coverage for every product or geography. Important remaining gaps are:
+Each country's current deployed page exposes only assets in its promoted last-known-good generation. On 2026-09-10 UTC, the USA and Canada manifests contain all 78 and 81 active definitions respectively. The monthly crude-balance and Canadian propane, residual-fuel and transporter-inventory expansions are now promoted, but this does not imply equivalent coverage for every product or geography. Important remaining gaps are:
 
 - weekly EIA exports and product supplied are often U.S.-only;
 - weekly EIA surveys do not publish PADD-to-PADD transfers;

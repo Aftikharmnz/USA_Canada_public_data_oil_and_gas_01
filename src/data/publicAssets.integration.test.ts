@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import usaSeriesRegistry from "../../config/series/usa.json";
+import canadaSeriesRegistry from "../../config/series/canada.json";
 import { parseCanadaChartAsset, parseCanadaManifest } from "./canadaAssets";
 import { customAggregationPolicy } from "./customAggregation";
 import { forecastMismatchReason, parseForecastAsset } from "./forecastAssets";
@@ -24,9 +26,16 @@ import {
   buildMonthlyAverageRateAsset,
   monthlyAverageRateForecastPoints,
 } from "../lib/periodAverageRate";
+import type { ForecastAsset } from "../types/energyAssets";
 
 const publicRoot = new URL("../../public/data/usa/", import.meta.url);
 const canadaPublicRoot = new URL("../../public/data/canada/", import.meta.url);
+const usaManifest = parseUsaManifest(JSON.parse(
+  readFileSync(new URL("manifest.json", publicRoot), "utf8"),
+) as unknown);
+const canadaManifest = parseCanadaManifest(JSON.parse(
+  readFileSync(new URL("manifest.json", canadaPublicRoot), "utf8"),
+) as unknown);
 const reviewedUsaPublicSeriesCounts = [69, 78] as const;
 const reviewedCanadaPublicSeriesCounts = [69, 81] as const;
 const usaMonthlyCrudeBalanceSeriesIds = new Set([
@@ -51,9 +60,34 @@ async function readJson(url: URL): Promise<unknown> {
   return JSON.parse(await readFile(url, "utf8")) as unknown;
 }
 
+/** Independent availability oracle: ready components alone do not guarantee
+ * that their origins and 40-per-horizon calibration target sets align. */
+function combinationHasAlignedForecasts(forecasts: ForecastAsset[]): boolean {
+  if (!forecasts.length || forecasts.some((forecast) => (
+    !["ok", "limited_history"].includes(forecast.status)
+    || forecast.points.length !== 3
+    || !forecast.aggregation_residuals
+  ))) return false;
+  if (new Set(forecasts.map((forecast) => forecast.origin.period)).size !== 1) return false;
+  if (new Set(forecasts.map((forecast) => forecast.methodology_version)).size !== 1) return false;
+  return [1, 2, 3].every((horizon) => {
+    if (new Set(forecasts.map((forecast) => (
+      forecast.points.find((point) => point.horizon === horizon)?.target_period
+    ))).size !== 1) return false;
+    const targetSets = forecasts.map((forecast) => new Set(
+      forecast.aggregation_residuals!.samples
+        .filter((sample) => sample.horizon === horizon)
+        .map((sample) => sample.target_period),
+    ));
+    return [...targetSets[0]!].filter((target) => (
+      targetSets.every((targets) => targets.has(target))
+    )).length >= 40;
+  });
+}
+
 describe("promoted USA data", () => {
-  it("matches the frontend contract for every manifest asset", async () => {
-    const manifest = parseUsaManifest(await readJson(new URL("manifest.json", publicRoot)));
+  it("matches the exact reviewed manifest cohort", () => {
+    const manifest = usaManifest;
     // The checked-in public generation may be the reviewed 69-series LKG or
     // the complete 78-series registry promotion, never a partial transition.
     expect(reviewedUsaPublicSeriesCounts).toContain(manifest.series.length);
@@ -91,8 +125,14 @@ describe("promoted USA data", () => {
       expect(familyCounts["jet-fuel"]).toBeGreaterThanOrEqual(5);
     }
     expect(available.length).toBeGreaterThanOrEqual(361);
+  });
 
-    for (const { series, geography } of available) {
+  // Each independent series gets its own bounded test rather than charging
+  // every growing USA observed/forecast history against one 30-second timer.
+  it.each(usaManifest.series)("validates every $series_id observed and forecast asset", async (series) => {
+    const available = series.geographies.filter((geography) => geography.status === "available");
+    for (const geography of available) {
+      expect(geography.asset_path).toBeTruthy();
       const asset = parseUsaChartAsset(
         await readJson(new URL(geography.asset_path!, publicRoot)),
       );
@@ -175,10 +215,8 @@ describe("promoted USA data", () => {
 });
 
 describe("promoted Canada data", () => {
-  it("matches the frontend contract for every manifest asset", async () => {
-    const manifest = parseCanadaManifest(
-      await readJson(new URL("manifest.json", canadaPublicRoot)),
-    );
+  it("matches the reviewed manifest cohort and provider boundary", () => {
+    const manifest = canadaManifest;
     // Canada has the same fail-closed transition contract: the reviewed
     // 69-series LKG or the complete 81-series promotion, never a partial set.
     expect(reviewedCanadaPublicSeriesCounts).toContain(manifest.series.length);
@@ -206,8 +244,12 @@ describe("promoted Canada data", () => {
     expect(cerUtilization).toBeDefined();
     expect(cerUtilization?.geographies.some((geography) => geography.geography_id === "ca"))
       .toBe(false);
+  });
 
-    for (const { series, geography } of available) {
+  it.each(canadaManifest.series)("validates every $series_id observed and forecast asset", async (series) => {
+    const available = series.geographies.filter((geography) => geography.status === "available");
+    for (const geography of available) {
+      expect(geography.asset_path).toBeTruthy();
       const asset = parseCanadaChartAsset(
         await readJson(new URL(geography.asset_path!, canadaPublicRoot)),
       );
@@ -238,17 +280,14 @@ describe("promoted Canada data", () => {
     {
       seriesId: "can.statcan.crude.pipeline_movements.to_ontario.monthly",
       productLabel: "Crude & equivalents pipeline movements",
-      minimumAvailableRoutes: 19,
     },
     {
       seriesId: "can.statcan.refined.hgl_rpp.pipeline_movements.to_ontario.monthly",
       productLabel: "HGL + refined products pipeline movements",
-      minimumAvailableRoutes: 14,
     },
   ])("joins the exact $seriesId siblings into a province origin-destination matrix", async ({
     seriesId,
     productLabel,
-    minimumAvailableRoutes,
   }) => {
     const manifest = parseCanadaManifest(
       await readJson(new URL("manifest.json", canadaPublicRoot)),
@@ -258,10 +297,23 @@ describe("promoted Canada data", () => {
     );
     expect(active).toBeDefined();
     const plan = canadaOriginDestinationAssetPlan(manifest.series, active!);
-    // Only source-published routes with an available public asset are loaded.
-    // Other dimension-declared routes have no numeric public history and
-    // remain unpublished rather than being treated as zero.
-    expect(plan).toHaveLength(minimumAvailableRoutes);
+    // The registry fixes the product and endpoint meanings, not the number of
+    // corridors that will acquire numeric history in future source releases.
+    const registeredSiblingIds = new Set(canadaSeriesRegistry.series.filter((series) => (
+      series.activation_status === "active"
+      && series.table_pid === "25100077"
+      && series.display?.product_id === active!.classification?.product_id
+      && series.display?.measure_id !== "to-canada"
+    )).map((series) => series.id));
+    const expectedIdentities = manifest.series.filter((series) => (
+      registeredSiblingIds.has(series.series_id)
+    )).flatMap((series) => series.geographies.filter((geography) => (
+      geography.level_id === "province_territory" && geography.status === "available"
+    )).map((geography) => `${series.series_id}/${geography.geography_id}`)).sort();
+    expect(expectedIdentities.length).toBeGreaterThan(0);
+    expect(plan.map(({ series, geography }) => (
+      `${series.series_id}/${geography.geography_id}`
+    )).sort()).toEqual(expectedIdentities);
     const loaded = await Promise.all(plan.map(async (item) => ({
       ...item,
       asset: parseCanadaChartAsset(
@@ -273,11 +325,17 @@ describe("promoted Canada data", () => {
       active!,
       loaded,
     );
-    const latestSourcePeriods = new Set(
-      loaded.map(({ asset }) => asset.latest_source?.period),
+    expect(model.latestPeriod).toBe(
+      loaded.map(({ asset }) => asset.latest_source!.period).sort().at(-1),
     );
-
-    expect(latestSourcePeriods).toEqual(new Set([model.latestPeriod]));
+    expect(model.routes.map((route) => route.id).sort()).toEqual(expectedIdentities);
+    for (const { series, geography, asset } of loaded) {
+      const cell = model.snapshots.find((snapshot) => snapshot.period === model.latestPeriod)!
+        .cells.find((candidate) => candidate.routeId === `${series.series_id}/${geography.geography_id}`)!;
+      const observation = asset.history!.find((point) => point.period === model.latestPeriod);
+      expect(cell.value).toBe(observation?.value ?? null);
+      expect(cell.status).toBe(observation?.status ?? "missing");
+    }
     expect(model.productLabel).toBe(productLabel);
     expect(model.origins.some((node) => node.label === "Alberta")).toBe(true);
     expect(model.destinations.some((node) => node.label === "Ontario")).toBe(true);
@@ -389,16 +447,29 @@ describe("promoted custom-region examples", () => {
     expect(result.asset.geography_id).toContain("computed:");
     expect(result.asset.aggregation_lineage?.component_geography_ids).toEqual(geographyIds);
     expect(result.asset.history?.length).toBeGreaterThan(100);
-    expect(result.forecast?.points).toHaveLength(3);
-    expect(result.forecast?.prediction_intervals?.method)
-      .toBe("aligned_component_residual_sum_empirical_quantiles");
+    expect(Boolean(result.forecast)).toBe(combinationHasAlignedForecasts(forecasts));
+    if (result.forecast) {
+      expect(result.forecast.points).toHaveLength(3);
+      expect(result.forecast.prediction_intervals?.method)
+        .toBe("aligned_component_residual_sum_empirical_quantiles");
+      for (const point of result.forecast.points) {
+        expect(point.value).toBeCloseTo(forecasts.reduce((sum, forecast) => (
+          sum + forecast.points.find((component) => component.horizon === point.horizon)!.value
+        ), 0), 8);
+        expect(point.calibration_errors).toBeGreaterThanOrEqual(40);
+      }
+    } else {
+      expect(result.forecastNotice).toBeTruthy();
+    }
     if (country === "canada") {
       const rateAsset = buildMonthlyAverageRateAsset(result.asset);
-      const rateForecast = monthlyAverageRateForecastPoints(result.forecast!);
       expect(rateAsset.unit).toBe("thousand_barrels_per_day");
       expect(rateAsset.aggregation_lineage?.component_geography_ids).toEqual(geographyIds);
-      expect(rateForecast).toHaveLength(3);
-      expect(rateForecast.every((point) => Number.isFinite(point.value))).toBe(true);
+      if (result.forecast) {
+        const rateForecast = monthlyAverageRateForecastPoints(result.forecast);
+        expect(rateForecast).toHaveLength(3);
+        expect(rateForecast.every((point) => Number.isFinite(point.value))).toBe(true);
+      }
     }
   }, 30_000);
 });

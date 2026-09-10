@@ -188,6 +188,48 @@ function optionSeries(option: ReturnType<typeof buildSeasonalEChartsOption>) {
 }
 
 describe("seasonal forecast chart", () => {
+  it.each(["thousand_barrels", "million_barrels"] as const)(
+    "anchors negative and cross-zero historical/forecast bands in %s",
+    (displayUnit) => {
+      const negativeAsset = {
+        ...asset,
+        baseline: {
+          ...asset.baseline,
+          status: "ok",
+          slots: [{ slot: 1, min: -100, q1: -80, median: -60, mean: -55, q3: -20, max: 40, count: 10 }],
+        },
+      } as UsaChartAsset;
+      const negativeForecast = {
+        ...forecast,
+        points: [{
+          ...forecast.points[0]!, value: -10,
+          intervals: {
+            "80": { lower: -20, upper: -5 },
+            "90": { lower: -30, upper: 10 },
+            "95": { lower: -40, upper: 20 },
+          },
+        }],
+      } as ForecastAsset;
+      const option = buildSeasonalEChartsOption(negativeAsset, series.title, negativeForecast, 90, displayUnit);
+      const rendered = optionSeries(option);
+      const divisor = displayUnit === "million_barrels" ? 1000 : 1;
+      for (const [baseName, rangeName, expectedLower, expectedUpper] of [
+        ["__range_base", "Historical range", -100, 40],
+        ["__iqr_base", "Middle 50%", -80, -20],
+        ["__forecast_base_2026", "90% prediction interval", -30, 10],
+      ] as const) {
+        const base = rendered.find((item) => item.name === baseName)!;
+        const range = rendered.find((item) => item.name === rangeName)!;
+        expect(base.stackStrategy).toBe("all");
+        expect(range.stackStrategy).toBe("all");
+        const lower = (base.data as number[])[0]!;
+        const width = (range.data as number[])[0]!;
+        expect(lower).toBeCloseTo(expectedLower / divisor);
+        expect(lower + width).toBeCloseTo(expectedUpper / divisor);
+      }
+    },
+  );
+
   it("renders graph-first chrome with one collapsed details disclosure", () => {
     const html = renderToStaticMarkup(
       <SeasonalChart

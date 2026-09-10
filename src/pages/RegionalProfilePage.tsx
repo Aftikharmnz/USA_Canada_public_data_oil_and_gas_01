@@ -7,6 +7,7 @@ import {
   type ProfileFrequencyMode,
 } from "../components/dashboard/ProfileMetricCard";
 import { ProfileMovementCard } from "../components/dashboard/ProfileMovementCard";
+import { RegionalSupplyDemandPanel } from "../components/dashboard/RegionalSupplyDemandPanel";
 import {
   DashboardError,
   DashboardLoading,
@@ -363,7 +364,6 @@ function ProfileDashboard({
           <span>Official region</span>
           <select value={geography?.geographyId ?? ""} onChange={(event) => {
             setGeographyId(event.target.value);
-            setProductId("");
           }}>
             {activeLevel?.geographies.map((candidate) => (
               <option key={candidate.geographyId} value={candidate.geographyId}>
@@ -433,6 +433,17 @@ function ProfileDashboard({
               <h2 id="profile-balance-title">{profile.product.label} · {geography?.label}</h2>
             </div>
           </div>
+          {segment === "refined" && availableProductMeasures.length ? (
+            <RegionalSupplyDemandPanel
+              key={`${country}:${profile.product.selectionId}:${geography?.geographyId}:${frequency}`}
+              country={country}
+              profile={profile}
+              frequency={frequency}
+              generatedAt={manifest.generated_at}
+              geographies={activeLevel?.geographies ?? []}
+              onGeographyChange={setGeographyId}
+            />
+          ) : null}
           {availableProductMeasures.length ? (
             <div className="profile-chart-grid">
               {availableProductMeasures.map((measure) => (

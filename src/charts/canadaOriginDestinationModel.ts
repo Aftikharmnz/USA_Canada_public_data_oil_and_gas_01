@@ -242,12 +242,15 @@ export function buildCanadaOriginDestinationModel(
   if (expectedByIdentity.size) {
     throw new Error("One or more available Canada movement assets were not loaded.");
   }
-  if (sourcePeriods.size !== 1 || productLabels.size !== 1 || modeLabels.size !== 1) {
+  if (productLabels.size !== 1 || modeLabels.size !== 1) {
     throw new Error(
-      "Canada movement siblings disagree on source period, product, or transport mode.",
+      "Canada movement siblings disagree on product or transport mode.",
     );
   }
-  const latestPeriod = [...sourcePeriods][0]!;
+  // A newer source fact on one corridor must not hide valid history on every
+  // other corridor. The matrix looks up exact periods and leaves lagging routes
+  // missing; it never carries an older route value into the newest month.
+  const latestPeriod = [...sourcePeriods].sort().at(-1)!;
   const periods = [...new Set(routes.flatMap(
     (route) => route.history.map((observation) => observation.period),
   ))].sort();

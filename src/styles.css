@@ -897,6 +897,11 @@ h3 {
   transform: none;
 }
 
+/* Component display rules must not resurrect the hidden expand trigger. */
+.profile-expand-button[hidden] {
+  display: none;
+}
+
 .expandable-panel.is-expanded {
   position: fixed;
   z-index: 1000;

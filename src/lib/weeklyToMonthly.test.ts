@@ -258,4 +258,27 @@ describe("buildMonthlyViewFromWeekly", () => {
       history,
     ))).toThrow(/expected thousand_barrels_per_day/);
   });
+
+  it("leaves a newly numeric weekly series valid when no completed monthly view exists yet", () => {
+    const source = asset(
+      "usa.eia.crude.commercial_imports.weekly",
+      "thousand_barrels_per_day",
+      weeklyHistory("2026-08-07", "2026-08-07", () => 100),
+    );
+    expect(() => buildMonthlyViewFromWeekly(source)).toThrow(/no completed calendar months/);
+    expect(source.history).toHaveLength(1);
+    expect(source.history![0]!.value).toBe(100);
+  });
+
+  it("does not mistake old nonnumeric months for a completed numeric rate history", () => {
+    const source = asset(
+      "usa.eia.crude.commercial_imports.weekly",
+      "thousand_barrels_per_day",
+      weeklyHistory("2026-07-03", "2026-08-07",
+        (period) => period === "2026-08-07" ? 100 : null,
+        (period) => period === "2026-08-07" ? "observed" : "suppressed_or_withheld"),
+    );
+    expect(() => buildMonthlyViewFromWeekly(source)).toThrow(/no numeric completed calendar month/);
+    expect(source.latest.value).toBe(100);
+  });
 });

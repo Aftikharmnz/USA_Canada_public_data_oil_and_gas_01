@@ -5,6 +5,10 @@ import {
   movementRouteFromAsset,
   movementRouteLabelFromSelection,
 } from "./canadaMovement";
+import {
+  buildCanadaOriginDestinationModel,
+  canadaOriginDestinationAssetPlan,
+} from "../charts/canadaOriginDestinationModel";
 
 function series(measureId: string): UsaManifestSeries {
   return {
@@ -173,5 +177,81 @@ describe("Canada movement route semantics", () => {
       wrongProduct,
       { geography_id: "ca.sk", label: "Saskatchewan" },
     )).toBeNull();
+  });
+});
+
+describe("Canada movement source-vintage changes", () => {
+  function vintageFixture() {
+    const siblings = [series("to-british-columbia"), series("to-ontario")];
+    for (const [index, sibling] of siblings.entries()) {
+      sibling.geographies = [["ca.ab", "Alberta"], ["ca.bc", "British Columbia"], ["ca.on", "Ontario"]]
+        .map(([id, label]) => ({
+          geography_id: id!, label: label!, level_id: "province_territory",
+          level_label: "Province / territory", origin: "source-published",
+          status: id === (index === 0 ? "ca.ab" : "ca.bc") ? "available" : "unavailable",
+          ...(id === (index === 0 ? "ca.ab" : "ca.bc")
+            ? { asset_path: `${sibling.series_id}/${id}.json` } : {}),
+        }));
+    }
+    const load = (item: ReturnType<typeof canadaOriginDestinationAssetPlan>[number]) => {
+      const source = asset(item.series, item.geography.geography_id, item.geography.label,
+        canadaMovementContext(item.series)!.fixedEndpoint);
+      source.history = [{ period: "2025-12", year: 2025, slot: 12, value: 10, status: "observed" }];
+      source.latest = { ...source.latest, value: 10 };
+      source.latest_source = { period: "2025-12", value: 10, status: "observed" };
+      return { ...item, asset: source };
+    };
+    return { siblings, load, loaded: canadaOriginDestinationAssetPlan(siblings, siblings[0]!).map(load) };
+  }
+
+  it.each([
+    { value: 12, status: "observed" },
+    { value: null, status: "suppressed_or_withheld" },
+  ])("retains staggered route months when the new source point is $status", ({ value, status }) => {
+    const { siblings, loaded } = vintageFixture();
+    const advanced = loaded[0]!.asset;
+    advanced.history!.push({ period: "2026-01", year: 2026, slot: 1, value, status });
+    advanced.latest_source = { period: "2026-01", value, status };
+    if (value !== null) advanced.latest = { ...advanced.latest, period: "2026-01", value };
+
+    const model = buildCanadaOriginDestinationModel(siblings, siblings[0]!, loaded);
+    const newest = model.snapshots.find((snapshot) => snapshot.period === "2026-01")!;
+    expect(model.latestPeriod).toBe("2026-01");
+    expect(newest.cells.find((cell) => cell.origin.id === "ca.ab" && cell.destination.id === "ca.bc"))
+      .toMatchObject({ value, status, declared: true });
+    expect(newest.cells.find((cell) => cell.origin.id === "ca.bc" && cell.destination.id === "ca.on"))
+      .toMatchObject({ value: null, status: "missing", declared: true });
+    expect(model.snapshots.find((snapshot) => snapshot.period === "2025-12")!.numericRouteCount).toBe(2);
+  });
+
+  it("loads a newly available registered corridor without a frozen route count", () => {
+    const { siblings, loaded, load } = vintageFixture();
+    const newGeography = siblings[1]!.geographies.find((geography) => geography.geography_id === "ca.ab")!;
+    newGeography.status = "available";
+    newGeography.asset_path = `${siblings[1]!.series_id}/ca.ab.json`;
+    const plan = canadaOriginDestinationAssetPlan(siblings, siblings[0]!);
+    expect(plan).toHaveLength(3);
+    const nextLoaded = plan.map(load);
+    const model = buildCanadaOriginDestinationModel(siblings, siblings[0]!, nextLoaded);
+    expect(model.routes).toHaveLength(3);
+    expect(model.snapshots[0]!.cells.find((cell) => cell.origin.id === "ca.ab" && cell.destination.id === "ca.on"))
+      .toMatchObject({ value: 10, status: "observed", declared: true });
+    expect(() => buildCanadaOriginDestinationModel(siblings, siblings[0]!, loaded))
+      .toThrow(/complete set/i);
+  });
+
+  it("still rejects incompatible product, source vintage, mode, and duplicate assets", () => {
+    for (const mutate of [
+      (value: UsaChartAsset) => { value.dimensions.source_product = "Unreviewed product"; },
+      (value: UsaChartAsset) => { value.dimensions.mode_of_transport = "Truck"; },
+      (value: UsaChartAsset) => { value.generated_at = "2026-01-02T00:00:00Z"; },
+    ]) {
+      const { siblings, loaded } = vintageFixture();
+      mutate(loaded[0]!.asset);
+      expect(() => buildCanadaOriginDestinationModel(siblings, siblings[0]!, loaded)).toThrow();
+    }
+    const { siblings, loaded } = vintageFixture();
+    expect(() => buildCanadaOriginDestinationModel(siblings, siblings[0]!, [loaded[0]!, loaded[0]!]))
+      .toThrow(/escaped.*plan/i);
   });
 });
