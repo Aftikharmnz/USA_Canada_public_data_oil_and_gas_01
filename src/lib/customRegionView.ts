@@ -9,6 +9,7 @@ import type {
   UsaManifestSeries,
 } from "../types/energyAssets";
 import { buildCustomChartAsset } from "./customChartAnalytics";
+import { eiaRegionalDimensions } from "./eiaRegionalDimensions";
 import {
   aggregateAdditiveRegionHistory,
   aggregateBottomUpPointForecasts,
@@ -70,8 +71,12 @@ function status(value: string, hasNumericValue: boolean): CanonicalObservationSt
 
 function normalizedProviderDimensions(
   input: Pick<CustomRegionViewInput, "country" | "series">,
+  geographyId: string,
   dimensions: Record<string, string>,
 ): Record<string, string> {
+  if (input.country === "usa") {
+    return eiaRegionalDimensions(input.series, geographyId, dimensions);
+  }
   if (input.country !== "canada" || input.series.source.name !== "Statistics Canada") {
     return { ...dimensions };
   }
@@ -88,10 +93,10 @@ function normalizedProviderDimensions(
 function compatibleDimensions(input: CustomRegionViewInput): Record<string, string> {
   const first = input.assets[0]?.dimensions;
   if (!first) throw new Error("Custom aggregation requires component dimensions.");
-  const normalized = normalizedProviderDimensions(input, first);
+  const normalized = normalizedProviderDimensions(input, input.assets[0]!.geography_id, first);
   const canonical = canonicalJson(normalized);
   for (const asset of input.assets.slice(1)) {
-    if (canonicalJson(normalizedProviderDimensions(input, asset.dimensions)) !== canonical) {
+    if (canonicalJson(normalizedProviderDimensions(input, asset.geography_id, asset.dimensions)) !== canonical) {
       throw new Error("Selected regions do not share the same source dimensions.");
     }
   }
@@ -265,7 +270,11 @@ function combineForecast(
     return forecast;
   });
   for (const forecast of verifiedForecasts) {
-    if (canonicalJson(normalizedProviderDimensions({ country: policy.country_code as "usa" | "canada", series }, forecast.dimensions))
+    if (canonicalJson(normalizedProviderDimensions(
+      { country: policy.country_code as "usa" | "canada", series },
+      forecast.geography_id,
+      forecast.dimensions,
+    ))
         !== policy.dimensions_hash) {
       throw new Error(`Forecast for ${forecast.geography_id} has incompatible source dimensions.`);
     }

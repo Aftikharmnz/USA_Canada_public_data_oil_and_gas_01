@@ -229,3 +229,94 @@ describe("regional contribution model", () => {
     )).toThrow(/incompatible value\/status pair/i);
   });
 });
+
+describe("monthly crude import contribution lineage", () => {
+  const monthlySeries: UsaManifestSeries = {
+    ...series,
+    view_id: "usa.eia.crude.imports.monthly",
+    series_id: "usa.eia.crude.imports.monthly",
+    frequency: "monthly",
+  };
+  const monthlySpec: RegionalContributionSpec = {
+    ...spec,
+    components: [1, 2, 3, 4, 5].map((padd) => ({
+      geographyId: `us.padd.${padd}`,
+      label: `PADD ${padd}`,
+      assetPath: `padd${padd}.json`,
+    })),
+  };
+
+  function monthlyAsset(padd?: number): UsaChartAsset {
+    const value = padd === undefined ? 151 : padd * 10;
+    return asset(padd === undefined ? "us" : `us.padd.${padd}`, [value, value], undefined, {
+      series_id: monthlySeries.series_id,
+      frequency: "monthly",
+      dimensions: {
+        duoarea: padd === undefined ? "NUS-Z00" : `R${padd}0-Z00`,
+        series: padd === undefined ? "MCRIMUS2" : `MCRIMP${padd}2`,
+        product: "EPC0",
+        process: "IM0",
+      },
+      history: [
+        { period: "2026-04", year: 2026, slot: 4, value, status: "observed" },
+        { period: "2026-05", year: 2026, slot: 5, value, status: "observed" },
+      ],
+      latest_source: { period: "2026-05", value, status: "observed" },
+    });
+  }
+
+  function components() {
+    return monthlySpec.components.map((geography, index) => ({
+      geography,
+      asset: monthlyAsset(index + 1),
+    }));
+  }
+
+  it("accepts all five exact PADD keys alongside the separate official national key", () => {
+    const national = monthlyAsset();
+    const regional = components();
+    const before = structuredClone(regional);
+    const model = buildRegionalContributionModel(monthlySeries, monthlySpec, national, regional);
+
+    expect(model.latest).toMatchObject({
+      period: "2026-05",
+      nationalValue: 151,
+      componentSum: 150,
+      complete: true,
+      reconciliationDifference: 1,
+      numericComponentCount: 5,
+    });
+    expect(model.latest.components[0]!.shareOfNational).toBeCloseTo(10 / 151 * 100);
+    expect(regional).toEqual(before);
+    expect(national.dimensions.series).toBe("MCRIMUS2");
+  });
+
+  it.each([
+    { name: "wrong PADD for source key", change: { duoarea: "R20-Z00" } },
+    { name: "wrong source key", change: { series: "MCRIMP22" } },
+    { name: "unknown source key", change: { series: "MCRIM_UNKNOWN" } },
+    { name: "foreign product", change: { product: "EPP0" } },
+    { name: "export process", change: { process: "EEX" } },
+    { name: "absent lineage", change: { series: "" } },
+  ])("rejects $name before normalizing geography lineage", ({ change }) => {
+    const regional = components();
+    Object.assign(regional[0]!.asset.dimensions, change);
+    expect(() => buildRegionalContributionModel(
+      monthlySeries, monthlySpec, monthlyAsset(), regional,
+    )).toThrow(/source dimensions.*registered identity/i);
+  });
+
+  it("also validates the national reference and keeps unknown semantic dimensions compared", () => {
+    const national = monthlyAsset();
+    national.dimensions.series = "MCRIMP12";
+    expect(() => buildRegionalContributionModel(
+      monthlySeries, monthlySpec, national, components(),
+    )).toThrow(/registered identity/i);
+
+    const regional = components();
+    regional[0]!.asset.dimensions.mode = "pipeline";
+    expect(() => buildRegionalContributionModel(
+      monthlySeries, monthlySpec, monthlyAsset(), regional,
+    )).toThrow(/incompatible source dimensions/i);
+  });
+});

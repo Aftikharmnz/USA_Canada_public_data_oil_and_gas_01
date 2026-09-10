@@ -48,6 +48,15 @@ codes and `NUS-Z00` for the published national row. Net receipts use the exact
 nodes without changing their geographic meaning. Net receipts has no
 registered national source row.
 
+Regional import composition and custom PADD combinations validate each asset's
+`series` and `duoarea` against these exact pairs and the registered geography
+aliases before comparing semantic dimensions. Only those two geography-specific
+lineage fields are excluded from the comparison; `product`, `process`, and any
+other dimensions must still match. The original assets retain their source
+identifiers and checksums. An unknown source key, reversed geography pairing,
+missing dimension, or different product/process is rejected before a sum or
+contribution chart can be shown.
+
 ## Market semantics
 
 - PADD imports are district-of-entry observations, not the ultimate consuming

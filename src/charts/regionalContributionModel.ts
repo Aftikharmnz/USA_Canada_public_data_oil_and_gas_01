@@ -7,6 +7,7 @@ import type {
   RegionalContributionGeography,
   RegionalContributionSpec,
 } from "../data/regionalContributions";
+import { eiaRegionalDimensions } from "../lib/eiaRegionalDimensions";
 
 export interface RegionalContributionAsset {
   geography: RegionalContributionGeography;
@@ -60,9 +61,10 @@ const NONNUMERIC_STATUSES = new Set([
 
 function canonicalDimensions(
   series: UsaManifestSeries,
+  geographyId: string,
   dimensions: Record<string, string>,
 ): string {
-  let semanticDimensions = { ...dimensions };
+  let semanticDimensions = eiaRegionalDimensions(series, geographyId, dimensions);
   if (series.source.name === "Statistics Canada") {
     const hasCoordinate = Object.hasOwn(semanticDimensions, "coordinate");
     const hasVector = Object.hasOwn(semanticDimensions, "vector");
@@ -133,7 +135,10 @@ function validateAsset(
   if (asset.generated_at !== reference.generated_at) {
     throw new Error(`Regional contribution asset ${geographyId} belongs to a different generated vintage.`);
   }
-  if (canonicalDimensions(series, asset.dimensions) !== canonicalDimensions(series, reference.dimensions)) {
+  if (
+    canonicalDimensions(series, asset.geography_id, asset.dimensions)
+    !== canonicalDimensions(series, reference.geography_id, reference.dimensions)
+  ) {
     throw new Error(`Regional contribution asset ${geographyId} has incompatible source dimensions.`);
   }
 }

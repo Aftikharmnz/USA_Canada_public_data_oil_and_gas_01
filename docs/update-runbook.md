@@ -326,8 +326,15 @@ The public status shows latest observation period, provider release/update time 
 ### Partial build/deploy failure
 
 - A failure before the refresh commit leaves repository data and the existing Pages deployment unchanged.
+- A local bot commit inside a runner is not a published update. A frontend-validation failure after that commit but before `Push the exact tested revision` leaves both repository data and Pages unchanged. A green ordinary code deployment also does not prove that either provider refresh has succeeded.
 - A failure after the bot push but before deploy leaves the previous Pages artifact live. Rerun manual dispatch with `publish_unchanged: true`; otherwise a source no-op would correctly skip the rebuild.
 - Rebuild from deterministic canonical inputs; do not hand-edit generated public JSON.
+
+#### September 2026 expanded-cohort frontend failures
+
+On September 9, the EIA and Canada jobs successfully fetched and verified complete 78-series and 81-series candidates, respectively, but frontend validation blocked the push and deployment. EIA's monthly crude-balance `duoarea` and `series` dimensions are geography-specific lineage, not evidence of a product mismatch: validate their exact registry pairing before excluding them from cross-region semantic comparison. Preserve all other semantic dimensions and original lineage. The Canada unit-availability test incorrectly classified two pipeline-transporter closing inventories as flows; these remain volume-only, and the positive daily-rate registry is unchanged.
+
+Regression coverage must exercise the expanded registry even while the checked-in public assets remain the older 69-series cohorts. Recovery is complete only when the provider refresh passes frontend checks, pushes the tested data, deploys successfully, and the live country manifest reports the new generation. Verify manifest dates directly rather than treating historical run IDs elsewhere in these docs as a live status report.
 
 ### Canonical size guard
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CustomAggregationPolicy } from "../data/customAggregation";
+import { customAggregationPolicy, type CustomAggregationPolicy } from "../data/customAggregation";
 import type {
   DistributionSample,
   ForecastAsset,
@@ -423,6 +423,70 @@ describe("buildCustomRegionView", () => {
     expect(result.forecast).toBeUndefined();
     expect(result.forecastNotice).toMatch(expected);
     expect(result.forecastNotice).toMatch(/observed combined data remain available/i);
+  });
+});
+
+describe("USA monthly balance PADD combinations", () => {
+  const padds: ManifestGeography[] = [1, 2].map((padd) => ({
+    geography_id: `us.padd.${padd}`,
+    label: `PADD ${padd}`,
+    level_id: "padd",
+    level_label: "PADD",
+    origin: "source-published",
+    status: "available",
+  }));
+
+  it.each([
+    ["ending_stocks", "SAE", "MCRSTP11", "MCRSTP21", ""],
+    ["stock_change", "SCG", "MCRSCP12", "MCRSCP22", ""],
+    ["imports", "IM0", "MCRIMP12", "MCRIMP22", "-Z00"],
+    ["exports", "EEX", "MCREXP12", "MCREXP22", "-Z00"],
+    ["refinery_inputs", "YIR", "MCRRIP12", "MCRRIP22", ""],
+    ["product_supplied", "VPP", "MCRUPP12", "MCRUPP22", ""],
+    ["supply_adjustment", "VUA", "MCRUA_R10_2", "MCRUA_R20_2", ""],
+    ["net_receipts", "VNR", "MCRNRP12", "MCRNRP22", "-Z0P"],
+    ["transfers_to_supply", "TVP", "M_EPC0_TVP_R10_MBBLD", "M_EPC0_TVP_R20_MBBLD", ""],
+  ])("combines registered %s keys without treating their geographic lineage as different products", async (
+    measure, process, padd1Key, padd2Key, geographySuffix,
+  ) => {
+    const seriesId = `usa.eia.crude.${measure}.monthly`;
+    const monthlySeries: UsaManifestSeries = {
+      ...series,
+      view_id: seriesId,
+      series_id: seriesId,
+      unit: measure === "ending_stocks" ? "thousand_barrels" : "thousand_barrels_per_day",
+      source: { name: "U.S. Energy Information Administration" },
+      geographies: padds,
+    };
+    const assets = padds.map((padd, index) => ({
+      ...chartAsset(padd, completeHistory(index === 0 ? "ab" : "sk")),
+      series_id: seriesId,
+      unit: monthlySeries.unit,
+      dimensions: {
+        duoarea: `R${index + 1}0${geographySuffix}`,
+        series: index === 0 ? padd1Key! : padd2Key!,
+        product: "EPC0",
+        process: process!,
+      },
+    }));
+    const before = structuredClone(assets);
+    const result = await buildCustomRegionView({
+      country: "usa",
+      series: monthlySeries,
+      registryPolicy: customAggregationPolicy("usa", seriesId, "padd")!,
+      geographies: padds,
+      assets,
+    });
+
+    expect(result.asset.history?.at(-1)?.value).toBe(
+      assets[0]!.latest.value! + assets[1]!.latest.value!,
+    );
+    expect(result.asset.dimensions).toEqual({ product: "EPC0", process });
+    expect(result.asset.aggregation_lineage).toMatchObject({
+      component_geography_ids: ["us.padd.1", "us.padd.2"],
+      coverage_ratio: 1,
+    });
+    expect(assets).toEqual(before);
   });
 });
 
